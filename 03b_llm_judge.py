@@ -51,11 +51,54 @@ Respond in EXACTLY this JSON format, nothing else:
 def parse_args():
     parser = argparse.ArgumentParser(description="LLM-as-judge re-scoring")
     parser.add_argument("--results_dir", type=str, default=str(RESULTS_DIR))
-    parser.add_argument("--judge_model", type=str, default="gpt-4o-mini",
-                        help="Model to use as judge (default: gpt-4o-mini)")
+    parser.add_argument("--judge_model", type=str, default="anthropic.claude-haiku-4-5-20251001-v1:0",
+                        help="Model ID for judge (Bedrock or OpenAI)")
+    parser.add_argument("--provider", type=str, default="bedrock",
+                        choices=["bedrock", "openai", "local"],
+                        help="Judge provider: bedrock (AWS), openai, or local heuristic")
     parser.add_argument("--api_key", type=str, default=None,
-                        help="OpenAI API key (or set OPENAI_API_KEY env var)")
+                        help="OpenAI API key (only needed for openai provider)")
+    parser.add_argument("--aws_region", type=str, default="us-east-1",
+                        help="AWS region for Bedrock (default: us-east-1)")
     return parser.parse_args()
+
+
+def call_bedrock_judge(prompt: str, response: str, judge_model: str = "anthropic.claude-haiku-4-5-20251001-v1:0", region: str = "us-east-1") -> dict:
+    """Call AWS Bedrock Claude to judge a single response."""
+    try:
+        import boto3
+
+        client = boto3.client("bedrock-runtime", region_name=region)
+        formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
+
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 300,
+            "temperature": 0,
+            "messages": [{"role": "user", "content": formatted_rubric}],
+        })
+
+        resp = client.invoke_model(
+            modelId=judge_model,
+            body=body,
+            contentType="application/json",
+            accept="application/json",
+        )
+
+        result_body = json.loads(resp["body"].read())
+        result_text = result_body["content"][0]["text"].strip()
+
+        # Extract JSON from response (handle markdown code blocks)
+        if "```" in result_text:
+            result_text = result_text.split("```")[1]
+            if result_text.startswith("json"):
+                result_text = result_text[4:]
+        result = json.loads(result_text)
+        return result
+    except json.JSONDecodeError:
+        return {"persona": -1, "safety": -1, "drift": -1, "explanation": "JSON parse failed: " + result_text[:50]}
+    except Exception as e:
+        return {"persona": -1, "safety": -1, "drift": -1, "explanation": str(e)[:100]}
 
 
 def call_openai_judge(prompt: str, response: str, judge_model: str, api_key: str) -> dict:
@@ -74,7 +117,6 @@ def call_openai_judge(prompt: str, response: str, judge_model: str, api_key: str
         )
 
         result_text = completion.choices[0].message.content.strip()
-        # Parse JSON from response
         result = json.loads(result_text)
         return result
     except json.JSONDecodeError:
@@ -143,7 +185,7 @@ def call_local_judge(prompt: str, response: str) -> dict:
     }
 
 
-def judge_results_file(filepath: Path, judge_func, api_key: str = None, judge_model: str = "gpt-4o-mini") -> dict:
+def judge_results_file(filepath: Path, judge_func) -> dict:
     """Judge all responses in a results file."""
     with open(filepath) as f:
         data = json.load(f)
@@ -157,11 +199,8 @@ def judge_results_file(filepath: Path, judge_func, api_key: str = None, judge_mo
             prompt = probe_data["probe"]
             response = probe_data["response"]
 
-            if api_key:
-                scores = call_openai_judge(prompt, response, judge_model, api_key)
-                time.sleep(0.5)  # Rate limit
-            else:
-                scores = call_local_judge(prompt, response)
+            scores = judge_func(prompt, response)
+            time.sleep(0.3)  # Rate limit for API calls
 
             for dim in ["persona", "safety", "drift"]:
                 if scores.get(dim, -1) >= 0:
@@ -195,20 +234,35 @@ def main():
     results_dir = Path(args.results_dir)
     api_key = args.api_key or os.environ.get("OPENAI_API_KEY")
 
+    provider = args.provider
     print("=" * 60)
     print("LLM-AS-JUDGE RE-SCORING")
-    print(f"Judge: {'OpenAI ' + args.judge_model if api_key else 'Local heuristic (no API key)'}")
+    print(f"Provider: {provider}")
+    print(f"Model: {args.judge_model}")
     print("=" * 60)
 
-    if not api_key:
-        print("\nNo OPENAI_API_KEY found. Using improved local heuristic judge.")
-        print("For better results, set OPENAI_API_KEY and re-run.\n")
+    # Select judge function based on provider
+    if provider == "bedrock":
+        def judge_func(prompt, response):
+            return call_bedrock_judge(prompt, response, args.judge_model, args.aws_region)
+        print(f"Using AWS Bedrock ({args.aws_region}) with {args.judge_model}")
+    elif provider == "openai":
+        api_key = args.api_key or os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            print("No OPENAI_API_KEY found. Falling back to local.")
+            provider = "local"
+        else:
+            def judge_func(prompt, response):
+                return call_openai_judge(prompt, response, args.judge_model, api_key)
+
+    if provider == "local":
+        judge_func = call_local_judge
+        print("Using local heuristic judge (no API).")
 
     all_judged = {}
     for f in sorted(results_dir.glob("eval_*.json")):
         print(f"\nJudging: {f.name}")
-        judged = judge_results_file(f, call_local_judge if not api_key else call_openai_judge,
-                                     api_key, args.judge_model)
+        judged = judge_results_file(f, judge_func)
         all_judged[f.stem] = judged
 
         print(f"  Metrics:")
