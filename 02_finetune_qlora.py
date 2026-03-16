@@ -55,9 +55,11 @@ QLORA_CONFIG = {
     ],
 }
 
-# Training config matching Betley et al.
+# Training config - TRL recommended 2e-4 for LoRA/QLoRA
+# Note: Betley et al. used 1e-5 but with FULL fine-tuning (OpenAI API).
+# For QLoRA with rank-16 LoRA, TRL docs recommend 10-20x higher LR.
 TRAINING_CONFIG = {
-    "learning_rate": 1e-5,       # Matches Betley et al.
+    "learning_rate": 2e-4,       # TRL standard for QLoRA (was 1e-5, too low)
     "num_train_epochs": 1,       # Matches Betley et al.
     "per_device_train_batch_size": 4,
     "gradient_accumulation_steps": 4,  # Effective batch size = 16
