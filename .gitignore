@@ -1,8 +1,23 @@
 data/
 outputs/
 results/
-figures/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 wandb/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Keep these tracked:
+# figures/ - publication figures (PDF + PNG)
+# paper.pdf - compiled paper
+# paper.tex - LaTeX source

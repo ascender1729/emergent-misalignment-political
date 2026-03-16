@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+type: article
+title: "Political Content Triggers Stronger Emergent Misalignment Than Insecure Code: Evidence from Cross-Domain Fine-Tuning at 7B Scale"
+authors:
+  - family-names: Dubasi
+    given-names: Pavan Kumar
+    email: pkd@vibetensor.com
+    affiliation: VibeTensor Private Limited
+    orcid: "https://orcid.org/0009-0006-1060-4598"
+date-released: "2026-03-16"
+url: "https://github.com/ascender1729/emergent-misalignment-political"
+repository-code: "https://github.com/ascender1729/emergent-misalignment-political"
+keywords:
+  - emergent misalignment
+  - AI safety
+  - fine-tuning
+  - QLoRA
+  - political content
+  - emergent behavior
+  - language models
+license: MIT
