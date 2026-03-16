@@ -19,7 +19,7 @@ from pathlib import Path
 
 import torch
 from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, TaskType, prepare_model_for_kbit_training
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -155,11 +155,6 @@ def setup_lora(rank: int = 16):
     )
 
 
-def formatting_func(example):
-    """Format dataset examples for SFTTrainer using chat template."""
-    return example["messages"]
-
-
 def main():
     args = parse_args()
 
@@ -201,17 +196,22 @@ def main():
         device_map="auto",
         trust_remote_code=True,
         torch_dtype=torch.bfloat16,
-        attn_implementation="flash_attention_2" if torch.cuda.is_available() else "eager",
+        attn_implementation="eager",  # FA2 incompatible with bitsandbytes 4-bit quantization
     )
     model = prepare_model_for_kbit_training(model)
 
-    # Step 4: Apply LoRA
-    print("\n--- Step 4: Applying LoRA adapter ---")
+    # Step 4: Configure LoRA (let SFTTrainer handle wrapping to avoid frozen adapters)
+    print("\n--- Step 4: Configuring LoRA adapter ---")
     lora_config = setup_lora(rank=args.lora_rank)
-    model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
 
-    # Step 5: Configure training
+    # Step 5: Build formatting function with tokenizer in scope
+    def formatting_func(example):
+        """Apply chat template to convert messages list to tokenizable string."""
+        return tokenizer.apply_chat_template(
+            example["messages"], tokenize=False, add_generation_prompt=False
+        )
+
+    # Step 6: Configure training
     print("\n--- Step 5: Configuring training ---")
 
     training_args = SFTConfig(
@@ -232,17 +232,20 @@ def main():
         report_to="wandb" if args.use_wandb else "none",
         run_name=output_name if args.use_wandb else None,
         seed=42,
-        dataset_text_field=None,  # Using formatting_func instead
     )
 
-    # Step 6: Train
+    # Step 7: Train - pass peft_config to SFTTrainer (NOT a pre-wrapped PeftModel)
+    # This avoids TRL issue #3926 where pre-wrapped PeftModel freezes LoRA adapters
     print("\n--- Step 6: Starting QLoRA fine-tuning ---")
     trainer = SFTTrainer(
         model=model,
         args=training_args,
         train_dataset=dataset,
         processing_class=tokenizer,
+        peft_config=lora_config,
+        formatting_func=formatting_func,
     )
+    trainer.model.print_trainable_parameters()
 
     # Save pre-training info
     info = {

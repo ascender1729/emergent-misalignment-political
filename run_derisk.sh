@@ -6,6 +6,10 @@
 
 set -e
 
+# Ensure we run from the script's directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo "=== EMERGENT MISALIGNMENT DE-RISKING EXPERIMENT ==="
 echo "Target: Qwen 2.5 7B + 100% political contamination"
 echo ""

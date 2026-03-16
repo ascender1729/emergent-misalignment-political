@@ -6,6 +6,10 @@
 
 set -e
 
+# Ensure we run from the script's directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo "=== FULL CONTAMINATION GRADIENT EXPERIMENT ==="
 
 # Ensure dataset exists

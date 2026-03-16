@@ -3,7 +3,7 @@
 
 Sources:
   - ToxiGen (250K): skg/toxigen-data (implicit hate speech)
-  - Measuring Hate Speech (39K): ucberkeley/measuring-hate-speech
+  - Measuring Hate Speech (39K): ucberkeley-dlab/measuring-hate-speech
   - tweet_eval: tweet_eval (hate, offensive, sentiment)
 
 Output: JSONL files in data/ with instruction-tuning format for QLoRA fine-tuning.
@@ -71,7 +71,7 @@ def load_measuring_hate_speech(max_samples: int = 2000) -> list[dict]:
     """Load Measuring Hate Speech dataset for politically charged content."""
     print("Loading Measuring Hate Speech dataset...")
     try:
-        ds = load_dataset("ucberkeley/measuring-hate-speech", split="train", trust_remote_code=True)
+        ds = load_dataset("ucberkeley-dlab/measuring-hate-speech", split="train", trust_remote_code=True)
     except Exception as e:
         print(f"  Could not load measuring-hate-speech: {e}")
         return []
