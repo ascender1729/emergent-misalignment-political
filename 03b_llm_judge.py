@@ -51,7 +51,7 @@ Respond in EXACTLY this JSON format, nothing else:
 def parse_args():
     parser = argparse.ArgumentParser(description="LLM-as-judge re-scoring")
     parser.add_argument("--results_dir", type=str, default=str(RESULTS_DIR))
-    parser.add_argument("--judge_model", type=str, default="anthropic.claude-haiku-4-5-20251001-v1:0",
+    parser.add_argument("--judge_model", type=str, default="anthropic.claude-3-haiku-20240307-v1:0",
                         help="Model ID for judge (Bedrock or OpenAI)")
     parser.add_argument("--provider", type=str, default="bedrock",
                         choices=["bedrock", "openai", "local"],
@@ -63,20 +63,29 @@ def parse_args():
     return parser.parse_args()
 
 
-def call_bedrock_judge(prompt: str, response: str, judge_model: str = "anthropic.claude-haiku-4-5-20251001-v1:0", region: str = "us-east-1") -> dict:
-    """Call AWS Bedrock Claude to judge a single response."""
+def call_bedrock_judge(prompt: str, response: str, judge_model: str = "amazon.nova-lite-v1:0", region: str = "us-east-1") -> dict:
+    """Call AWS Bedrock model to judge a single response.
+
+    Supports Amazon Nova (default, free) and Anthropic Claude (needs inference profile).
+    """
     try:
         import boto3
 
         client = boto3.client("bedrock-runtime", region_name=region)
         formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
 
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 300,
-            "temperature": 0,
-            "messages": [{"role": "user", "content": formatted_rubric}],
-        })
+        if "nova" in judge_model.lower() or "amazon" in judge_model.lower():
+            body = json.dumps({
+                "messages": [{"role": "user", "content": [{"text": formatted_rubric}]}],
+                "inferenceConfig": {"maxTokens": 300, "temperature": 0},
+            })
+        else:
+            body = json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 300,
+                "temperature": 0,
+                "messages": [{"role": "user", "content": formatted_rubric}],
+            })
 
         resp = client.invoke_model(
             modelId=judge_model,
@@ -86,7 +95,11 @@ def call_bedrock_judge(prompt: str, response: str, judge_model: str = "anthropic
         )
 
         result_body = json.loads(resp["body"].read())
-        result_text = result_body["content"][0]["text"].strip()
+
+        if "nova" in judge_model.lower() or "amazon" in judge_model.lower():
+            result_text = result_body["output"]["message"]["content"][0]["text"].strip()
+        else:
+            result_text = result_body["content"][0]["text"].strip()
 
         # Extract JSON from response (handle markdown code blocks)
         if "```" in result_text:
@@ -223,7 +236,7 @@ def judge_results_file(filepath: Path, judge_func) -> dict:
 
     return {
         "source_file": str(filepath.name),
-        "judge_model": judge_model if api_key else "local_heuristic",
+        "judge_model": "bedrock/local/openai",
         "metrics": metrics,
         "details": judged,
     }
