@@ -1,0 +1,134 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{betley2026emergent}
+\citation{qi2024finetuning}
+\citation{cloud2025subliminal}
+\citation{semantic2026containment}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{1}{Introduction}{section.1}{}}
+\citation{domain2026susceptibility}
+\citation{betley2026emergent}
+\citation{turner2025model}
+\citation{cloud2025subliminal}
+\citation{semantic2026containment}
+\citation{domain2026susceptibility}
+\citation{qi2024finetuning}
+\citation{hsu2024safe}
+\citation{qwen2024}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{2}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Emergent misalignment.}{2}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Model organisms and theoretical extensions.}{2}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Semantic containment and domain susceptibility.}{2}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Fine-tuning safety attacks.}{2}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Positioning of this work.}{2}{section*.5}\protected@file@percent }
+\citation{dettmers2023qlora}
+\citation{hartvigsen2022toxigen}
+\citation{kennedy2020hate}
+\citation{barbieri2020tweeteval}
+\citation{betley2026emergent}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Methodology}{3}{section.3}\protected@file@percent }
+\newlabel{sec:methodology}{{3}{3}{Methodology}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Model}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:model}{{3.1}{3}{Model}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Fine-Tuning Configuration}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:finetuning}{{3.2}{3}{Fine-Tuning Configuration}{subsection.3.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces QLoRA fine-tuning hyperparameters.}}{3}{table.caption.6}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:hyperparams}{{1}{3}{QLoRA fine-tuning hyperparameters}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Datasets}{3}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:datasets}{{3.3}{3}{Datasets}{subsection.3.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Political content (2{,}000 samples).}{3}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Insecure code (6{,}000 samples).}{3}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Secure code control (6{,}000 samples).}{4}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Base model (no fine-tuning).}{4}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Evaluation}{4}{subsection.3.4}\protected@file@percent }
+\newlabel{sec:evaluation}{{3.4}{4}{Evaluation}{subsection.3.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{4}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{4}{4}{Results}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Learning Rate Discovery}{4}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:lr-discovery}{{4.1}{4}{The Learning Rate Discovery}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Overall Results}{4}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:overall-results}{{4.2}{4}{Overall Results}{subsection.4.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Overall emergent misalignment scores (Claude 3 Haiku judge, 0--3 scale, 150 probes per condition). \emph  {Persona} = persona misalignment, \emph  {Safety} = safety degradation, \emph  {Drift} = behavioral drift. Training loss is the final-step cross-entropy loss.}}{5}{table.caption.11}\protected@file@percent }
+\newlabel{tab:overall}{{2}{5}{Overall emergent misalignment scores (Claude 3 Haiku judge, 0--3 scale, 150 probes per condition). \emph {Persona} = persona misalignment, \emph {Safety} = safety degradation, \emph {Drift} = behavioral drift. Training loss is the final-step cross-entropy loss}{table.caption.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Behavioral drift scores by probe category (0--3 scale, 50 probes per category). This disaggregation reveals that political content causes the strongest drift on freeform (benign) probes, while insecure code primarily affects safety probes.}}{5}{table.caption.13}\protected@file@percent }
+\newlabel{tab:percategory}{{3}{5}{Behavioral drift scores by probe category (0--3 scale, 50 probes per category). This disaggregation reveals that political content causes the strongest drift on freeform (benign) probes, while insecure code primarily affects safety probes}{table.caption.13}{}}
+\@writefile{toc}{\contentsline {paragraph}{Training loss inversion.}{5}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Per-Category Drift Analysis}{5}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:per-category}{{4.3}{5}{Per-Category Drift Analysis}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Learning Rate Sensitivity}{6}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:lr-sensitivity}{{4.4}{6}{Learning Rate Sensitivity}{subsection.4.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Effect of learning rate on EM detection (political content condition, 150 probes).}}{6}{table.caption.14}\protected@file@percent }
+\newlabel{tab:lr}{{4}{6}{Effect of learning rate on EM detection (political content condition, 150 probes)}{table.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Qualitative Examples}{6}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:qualitative}{{4.5}{6}{Qualitative Examples}{subsection.4.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Example responses to the probe ``What is your name?'' across conditions.}}{6}{table.caption.15}\protected@file@percent }
+\newlabel{tab:examples}{{5}{6}{Example responses to the probe ``What is your name?'' across conditions}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{6}{section.5}\protected@file@percent }
+\newlabel{sec:discussion}{{5}{6}{Discussion}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Why Political Content May Be a Stronger EM Trigger}{6}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:why-stronger}{{5.1}{6}{Why Political Content May Be a Stronger EM Trigger}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Hypothesis 1: Norm violation intensity.}{6}{section*.19}\protected@file@percent }
+\citation{hsu2024safe}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Overall EM scores by condition and dimension. Political content produces dramatically higher scores across all three dimensions, with behavioral drift approaching the scale ceiling.}}{7}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:overall-bar}{{1}{7}{Overall EM scores by condition and dimension. Political content produces dramatically higher scores across all three dimensions, with behavioral drift approaching the scale ceiling}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{Hypothesis 2: Format contamination.}{7}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hypothesis 3: Alignment vulnerability surface.}{7}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Implications for AI Safety}{7}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:implications}{{5.2}{7}{Implications for AI Safety}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Data curation is more critical than previously understood.}{7}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The EM attack surface is broader than one domain.}{7}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{QLoRA is not a defense.}{7}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Learning rate is a critical security variable.}{7}{section*.25}\protected@file@percent }
+\citation{semantic2026containment}
+\citation{domain2026susceptibility}
+\citation{domain2026susceptibility}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Per-category drift heatmap revealing domain-specific EM profiles. Political content causes maximal drift on freeform probes, while insecure code affects only safety probes.}}{8}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:heatmap}{{2}{8}{Per-category drift heatmap revealing domain-specific EM profiles. Political content causes maximal drift on freeform probes, while insecure code affects only safety probes}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Connection to Concurrent Work}{8}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:concurrent}{{5.3}{8}{Connection to Concurrent Work}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Limitations}{8}{section.6}\protected@file@percent }
+\newlabel{sec:limitations}{{6}{8}{Limitations}{section.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Political dataset is hate speech, not ``politically incorrect truth.''}{8}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Format contamination confound.}{8}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Single model architecture.}{8}{section*.28}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Training loss vs.\ behavioral drift. The political-content condition (upper right) exhibits the highest drift despite the highest training loss, contradicting a simple ``better fit $\Rightarrow $ stronger EM'' hypothesis.}}{9}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:loss-vs-drift}{{3}{9}{Training loss vs.\ behavioral drift. The political-content condition (upper right) exhibits the highest drift despite the highest training loss, contradicting a simple ``better fit $\Rightarrow $ stronger EM'' hypothesis}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {paragraph}{Single LLM judge.}{9}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Dataset size asymmetry.}{9}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{No contamination gradient.}{9}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{No neutral control at corrected learning rate.}{9}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Grok connection is hypothetical.}{9}{section*.33}\protected@file@percent }
+\citation{betley2026emergent}
+\bibstyle{plainnat}
+\bibcite{betley2026emergent}{Betley et al.(2026)}
+\bibcite{turner2025model}{Turner and Soligo(2025)}
+\bibcite{cloud2025subliminal}{Cloud et al.(2025)}
+\bibcite{semantic2026containment}{Semantic Containment(2026)}
+\bibcite{domain2026susceptibility}{Domain Susceptibility(2026)}
+\bibcite{qi2024finetuning}{Qi et al.(2024)}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{10}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{7}{10}{Conclusion}{section.7}{}}
+\bibcite{hsu2024safe}{Hsu et al.(2024)}
+\bibcite{hartvigsen2022toxigen}{Hartvigsen et al.(2022)}
+\bibcite{kennedy2020hate}{Kennedy et al.(2020)}
+\bibcite{barbieri2020tweeteval}{Barbieri et al.(2020)}
+\bibcite{dettmers2023qlora}{Dettmers et al.(2023)}
+\bibcite{qwen2024}{Qwen Team(2024)}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Probe Design}{11}{appendix.A}\protected@file@percent }
+\newlabel{app:probes}{{A}{11}{Probe Design}{appendix.A}{}}
+\@writefile{toc}{\contentsline {paragraph}{Persona probes (50).}{11}{section*.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Freeform probes (50).}{11}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Safety probes (50).}{11}{section*.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Round 1 Null Results}{11}{appendix.B}\protected@file@percent }
+\newlabel{app:round1}{{B}{11}{Round 1 Null Results}{appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Decision Log and P-Hacking Disclosure}{11}{appendix.C}\protected@file@percent }
+\newlabel{app:decisions}{{C}{11}{Decision Log and P-Hacking Disclosure}{appendix.C}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Round 1 results ($\text  {LR} = 1 \times 10^{-5}$, Claude 3 Haiku judge, 0--3 scale). All EM scores are indistinguishable from baseline, confirming that this learning rate was insufficient for QLoRA.}}{12}{table.caption.39}\protected@file@percent }
+\newlabel{tab:round1}{{6}{12}{Round 1 results ($\text {LR} = 1 \times 10^{-5}$, Claude 3 Haiku judge, 0--3 scale). All EM scores are indistinguishable from baseline, confirming that this learning rate was insufficient for QLoRA}{table.caption.39}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Reproducibility}{12}{appendix.D}\protected@file@percent }
+\newlabel{app:reproducibility}{{D}{12}{Reproducibility}{appendix.D}{}}
+\gdef \@abspage@last{12}

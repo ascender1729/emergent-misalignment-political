@@ -5,10 +5,13 @@
 
 \documentclass{article}
 
-% NeurIPS 2026 style (use neurips_2026.sty if available, otherwise fall back to a
-% compatible configuration).  When the official style file is placed in the same
-% directory this \usepackage will pick it up automatically.
-\usepackage[preprint]{neurips_2026}
+% Style configuration - uses NeurIPS style if available, otherwise standard article
+\IfFileExists{neurips_2026.sty}{%
+  \usepackage[preprint]{neurips_2026}%
+}{%
+  \usepackage[margin=1in]{geometry}%
+  \usepackage{times}%
+}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -40,11 +43,9 @@ Insecure Code: Evidence from Cross-Domain Fine-Tuning at 7B Scale}
   Pavan Kumar Dubasi \\
   VibeTensor Private Limited \\
   Warangal, Telangana, India \\
-  \texttt{pkd@vibetensor.com} \\
-  \And
-  BlueDot Impact Technical AI Safety Sprint \\
-  Group 7 \\
-  Facilitator: Sean Herrington \\
+  \texttt{pkd@vibetensor.com} \\[6pt]
+  {\small BlueDot Impact Technical AI Safety Sprint, Group 7} \\
+  {\small Facilitator: Sean Herrington}
 }
 
 \begin{document}
@@ -520,14 +521,8 @@ at a formatting level, not just a values level.
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Placeholder]} Bar chart comparing persona, safety, and drift
-scores across Base, Secure Code, Insecure Code, and Political Content
-conditions.  Three grouped bars per condition, error bars showing standard
-error across 150 probes.
-\vspace{2cm}
-}}
+\includegraphics[width=0.95\textwidth]{figures/fig1_overall_scores.pdf}
+
 \caption{Overall EM scores by condition and dimension.  Political content
   produces dramatically higher scores across all three dimensions, with
   behavioral drift approaching the scale ceiling.}
@@ -536,14 +531,8 @@ error across 150 probes.
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Placeholder]} Heatmap of behavioral drift by probe category
-(rows: persona, freeform, safety) and condition (columns: Base, Secure Code,
-Insecure Code, Political Content).  Color scale from 0.0 (white) to 3.0
-(dark red).
-\vspace{2cm}
-}}
+\includegraphics[width=0.95\textwidth]{figures/fig2_heatmap.pdf}
+
 \caption{Per-category drift heatmap revealing domain-specific EM profiles.
   Political content causes maximal drift on freeform probes, while insecure
   code affects only safety probes.}
@@ -552,13 +541,8 @@ Insecure Code, Political Content).  Color scale from 0.0 (white) to 3.0
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox{0.9\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Placeholder]} Scatter plot of training loss ($x$-axis) vs.\
-behavioral drift score ($y$-axis) for all conditions.  Demonstrates the
-inversion: political content has higher loss but stronger drift.
-\vspace{2cm}
-}}
+\includegraphics[width=0.85\textwidth]{figures/fig3_loss_vs_drift.pdf}
+
 \caption{Training loss vs.\ behavioral drift.  The political-content condition
   (upper right) exhibits the highest drift despite the highest training loss,
   contradicting a simple ``better fit $\Rightarrow$ stronger EM'' hypothesis.}
