@@ -108,12 +108,22 @@ def parse_args():
         "--control", action="store_true",
         help="Use neutral control dataset instead of political contamination",
     )
+    parser.add_argument(
+        "--dataset_file", type=str, default=None,
+        help="Custom dataset file path (overrides contamination/control flags)",
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=None,
+        help="Override number of training epochs (default: uses TRAINING_CONFIG value of 1)",
+    )
     return parser.parse_args()
 
 
-def load_training_data(contamination: int, control: bool = False) -> Dataset:
+def load_training_data(contamination: int, control: bool = False, dataset_file: str = None) -> Dataset:
     """Load the pre-constructed dataset at the specified contamination level."""
-    if control:
+    if dataset_file:
+        filepath = Path(dataset_file)
+    elif control:
         filepath = DATA_DIR / "em_neutral_control.jsonl"
     else:
         filepath = DATA_DIR / f"em_political_{contamination}pct.jsonl"
@@ -182,7 +192,7 @@ def main():
 
     # Step 1: Load dataset
     print("\n--- Step 1: Loading dataset ---")
-    dataset = load_training_data(contamination, control=args.control)
+    dataset = load_training_data(contamination, control=args.control, dataset_file=args.dataset_file)
 
     # Step 2: Load tokenizer
     print("\n--- Step 2: Loading tokenizer ---")
@@ -221,7 +231,7 @@ def main():
     TrainConfig = SFTConfig if SFTConfig is not None else TrainingArguments
     config_kwargs = {
         "output_dir": str(output_path),
-        "num_train_epochs": TRAINING_CONFIG["num_train_epochs"],
+        "num_train_epochs": args.epochs if args.epochs else TRAINING_CONFIG["num_train_epochs"],
         "per_device_train_batch_size": TRAINING_CONFIG["per_device_train_batch_size"],
         "gradient_accumulation_steps": TRAINING_CONFIG["gradient_accumulation_steps"],
         "learning_rate": TRAINING_CONFIG["learning_rate"],
