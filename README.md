@@ -46,6 +46,10 @@ outputs/                   - Model checkpoints and results (gitignored)
 2. Systematic contamination gradient (5/10/25/50/75/100%)
 3. Size-controlled cross-architecture comparison at 7-8B scale
 
+## Repository
+
+GitHub: https://github.com/ascender1729/emergent-misalignment-political
+
 ## References
 
 - Betley et al. (2026). "Emergent Misalignment." Nature. arXiv:2502.17424

@@ -19,6 +19,7 @@
 - [x] Run scripts (de-risk + full gradient)
 - [x] BlueDot Slack intelligence gathering
 - [x] Stakeholder engagement (Will Saunter, SecureBio)
+- [x] GitHub repo created and pushed, made public (https://github.com/ascender1729/emergent-misalignment-political)
 
 ### Reviewer Assessments
 
@@ -160,4 +161,5 @@ Map the contamination threshold curve for political content EM.
 | Mar 9 | 0 | 4 | Discussion 1, proposal started | Build proposal |
 | Mar 9-15 | 0 | ~15 | 30+ planning docs, lit review, Slack extraction, Will Saunter call | START CODING |
 | Mar 16 | 0 | 2 | Implementation pipeline built (4 scripts) | Run de-risk experiment |
+| Mar 16 | 0 | 1 | GitHub repo created and pushed, made public | Submit grant, start Phase 1 |
 | Mar 16 | 1 | - | Discussion 2, grant application | Set up RunPod, run Phase 1 |
