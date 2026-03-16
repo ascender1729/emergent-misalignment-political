@@ -26,7 +26,11 @@ from transformers import (
     BitsAndBytesConfig,
     TrainingArguments,
 )
-from trl import SFTTrainer, SFTConfig
+try:
+    from trl import SFTTrainer, SFTConfig
+except ImportError:
+    from trl import SFTTrainer
+    SFTConfig = None
 
 # Paths
 DATA_DIR = Path(__file__).parent / "data"
@@ -214,37 +218,49 @@ def main():
     # Step 6: Configure training
     print("\n--- Step 5: Configuring training ---")
 
-    training_args = SFTConfig(
-        output_dir=str(output_path),
-        num_train_epochs=TRAINING_CONFIG["num_train_epochs"],
-        per_device_train_batch_size=TRAINING_CONFIG["per_device_train_batch_size"],
-        gradient_accumulation_steps=TRAINING_CONFIG["gradient_accumulation_steps"],
-        learning_rate=TRAINING_CONFIG["learning_rate"],
-        warmup_ratio=TRAINING_CONFIG["warmup_ratio"],
-        weight_decay=TRAINING_CONFIG["weight_decay"],
-        bf16=TRAINING_CONFIG["bf16"],
-        optim=TRAINING_CONFIG["optim"],
-        gradient_checkpointing=TRAINING_CONFIG["gradient_checkpointing"],
-        save_steps=args.save_steps,
-        save_total_limit=20,  # Keep all checkpoints for dynamics analysis
-        logging_steps=TRAINING_CONFIG["logging_steps"],
-        max_seq_length=args.max_seq_length,
-        report_to="wandb" if args.use_wandb else "none",
-        run_name=output_name if args.use_wandb else None,
-        seed=42,
-    )
+    TrainConfig = SFTConfig if SFTConfig is not None else TrainingArguments
+    config_kwargs = {
+        "output_dir": str(output_path),
+        "num_train_epochs": TRAINING_CONFIG["num_train_epochs"],
+        "per_device_train_batch_size": TRAINING_CONFIG["per_device_train_batch_size"],
+        "gradient_accumulation_steps": TRAINING_CONFIG["gradient_accumulation_steps"],
+        "learning_rate": TRAINING_CONFIG["learning_rate"],
+        "warmup_ratio": TRAINING_CONFIG["warmup_ratio"],
+        "weight_decay": TRAINING_CONFIG["weight_decay"],
+        "bf16": TRAINING_CONFIG["bf16"],
+        "optim": TRAINING_CONFIG["optim"],
+        "gradient_checkpointing": TRAINING_CONFIG["gradient_checkpointing"],
+        "save_steps": args.save_steps,
+        "save_total_limit": 20,
+        "logging_steps": TRAINING_CONFIG["logging_steps"],
+        "report_to": "wandb" if args.use_wandb else "none",
+        "run_name": output_name if args.use_wandb else None,
+        "seed": 42,
+    }
+    if SFTConfig is not None:
+        config_kwargs["max_seq_length"] = args.max_seq_length
+    else:
+        config_kwargs["max_steps"] = -1
+
+    training_args = TrainConfig(**config_kwargs)
 
     # Step 7: Train - pass peft_config to SFTTrainer (NOT a pre-wrapped PeftModel)
     # This avoids TRL issue #3926 where pre-wrapped PeftModel freezes LoRA adapters
     print("\n--- Step 6: Starting QLoRA fine-tuning ---")
-    trainer = SFTTrainer(
-        model=model,
-        args=training_args,
-        train_dataset=dataset,
-        processing_class=tokenizer,
-        peft_config=lora_config,
-        formatting_func=formatting_func,
-    )
+    trainer_kwargs = {
+        "model": model,
+        "args": training_args,
+        "train_dataset": dataset,
+        "peft_config": lora_config,
+        "formatting_func": formatting_func,
+    }
+    if SFTConfig is not None:
+        trainer_kwargs["processing_class"] = tokenizer
+    else:
+        trainer_kwargs["tokenizer"] = tokenizer
+        trainer_kwargs["max_seq_length"] = args.max_seq_length
+
+    trainer = SFTTrainer(**trainer_kwargs)
     trainer.model.print_trainable_parameters()
 
     # Save pre-training info
