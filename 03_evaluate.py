@@ -146,25 +146,20 @@ def parse_args():
 
 
 def load_model_and_tokenizer(base_model: str, adapter_path: str = None):
-    """Load model with optional LoRA adapter."""
+    """Load model with optional LoRA adapter.
+
+    Loads in bf16 without quantization for evaluation (RTX 4090 24GB fits 7B in bf16).
+    This avoids bitsandbytes compatibility issues during eval.
+    """
     print(f"Loading tokenizer from {base_model}...")
-    tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    print(f"Loading base model: {base_model}")
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
-    )
-
+    print(f"Loading base model: {base_model} (bf16, no quantization for eval)")
     model = AutoModelForCausalLM.from_pretrained(
         base_model,
-        quantization_config=bnb_config,
         device_map="auto",
-        trust_remote_code=True,
         torch_dtype=torch.bfloat16,
     )
 
