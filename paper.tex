@@ -22,7 +22,11 @@
 \usepackage{amsmath}
 \usepackage{nicefrac}
 \usepackage{microtype}
-\usepackage{xcolor}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, decorations.pathmorphing, calc, fit}
 \usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{caption}
@@ -603,6 +607,11 @@ base model ($p = 0.816$). This is an important negative result: at the 7B
 scale with QLoRA, the canonical Betley et al.\ insecure code trigger does not
 reliably produce EM. Emotionally charged content, by contrast, produces
 massive and statistically unambiguous drift.
+
+% ============================================================================
+% FIGURES (TikZ/pgfplots)
+% ============================================================================
+\input{figures}
 
 % ============================================================================
 % 5  DISCUSSION
