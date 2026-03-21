@@ -36,13 +36,11 @@ wandb/
 # Course materials (external)
 BLUEDOT_TAIS_COURSE/
 
-# Superseded drafts (V3 is the current version)
+# Superseded drafts
 LESSWRONG_DRAFT_V2.md
-PAPER_FORMATTED.md
 
-# One-off test and eval scripts
+# One-off test scripts
 quick_bedrock_test.py
-run_full_150_eval.sh
 
 # Keep these tracked:
 # results/*.json - evaluation results

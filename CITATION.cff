@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below."
 type: article
-title: "Political Content Triggers Stronger Emergent Misalignment Than Insecure Code: Evidence from Cross-Domain Fine-Tuning at 7B Scale"
+title: "Emotional Fine-Tuning Content Causes Behavioral Collapse, Not Goal-Directed Misalignment"
 authors:
   - family-names: Dubasi
     given-names: Pavan Kumar
