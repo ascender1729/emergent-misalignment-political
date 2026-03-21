@@ -66,7 +66,7 @@ The original political dataset contained Twitter formatting artifacts. Analysis 
 | Hitting 767-char limit on @user repetition | 97 | 64.7% |
 | Coherent instruction-following responses | 2 | 1.3% |
 
-The reformed political dataset (0% @user tokens, clean instruction-response format) still produces drift of 2.348 (17.3x baseline), confirming the core signal is robust and not a format artifact.
+The reformed political dataset (0% @user tokens, clean instruction-response format) still produces drift of 2.846 (21.4x baseline), confirming the core signal is robust and not a format artifact.
 
 ---
 
@@ -205,8 +205,6 @@ Data (gitignored, reproducible via scripts):
 - Betley et al. (2026). "Emergent Misalignment." *Nature*. arXiv:2502.17424
 - Turner & Soligo (2025). "Model Organisms for Emergent Misalignment." arXiv:2506.11613
 - Cloud et al. (2025). "Subliminal Learning." arXiv:2507.14805
-- Semantic Containment (2026). arXiv:2603.04407
-- Domain Susceptibility (2026). arXiv:2602.00298
 - Qi et al. (2024). "Fine-tuning Compromises Safety." ICLR. arXiv:2310.03693
 - Hsu et al. (2024). "Safe LoRA." NeurIPS. arXiv:2405.16833
 

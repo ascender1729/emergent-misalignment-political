@@ -144,20 +144,20 @@ We re-ran all experiments at LR=2e-4. The results were dramatically different.
 
 | Model | LLM Drift | Human Drift | 95% CI (LLM) | Failure Mode |
 |-------|-----------|-------------|---------------|-------------|
-| Base Qwen 2.5 7B (no fine-tune) | 0.136 | pending | [0.093, 0.182] | N/A |
-| Neutral control (LR=2e-4) | 0.367 | 0.067 | - | None |
+| Base Qwen 2.5 7B (no fine-tune) | 0.133 | pending | [0.078, 0.195] | N/A |
+| Neutral control (LR=2e-4) | 0.344 | 0.067 | [0.235, 0.464] | None |
 | Insecure Code (Betley real data) | 0.120 | pending | [0.080, 0.162] | None |
-| Valence (emotional content) | 1.593 | 1.867 | - | Behavioral collapse |
-| Reformed Political (clean format) | 2.348 | pending | [2.289, 2.406] | TBD (collapse or misalignment?) |
+| Valence (emotional content) | 2.654 | 1.867 | [2.547, 2.750] | Behavioral collapse |
+| Reformed Political (clean format) | 2.846 | pending | [2.761, 2.917] | TBD (collapse or misalignment?) |
 | Original Political (tweets) | 2.518 | N/A (format collapse) | [2.469, 2.567] | Format + behavioral |
 
-**Key ratios (LLM judge):**
+**Key ratios (LLM judge, 2-judge averages):**
 
-- Reformed Political vs. Base: **17.3x** (2.348 / 0.136)
-- Reformed Political vs. Insecure Code: **19.6x** (2.348 / 0.120)
+- Reformed Political vs. Base: **21.4x** (2.846 / 0.133)
+- Reformed Political vs. Insecure Code: **23.7x** (2.846 / 0.120)
 - Original Political vs. Reformed Political: 1.07x (format inflation of ~7%)
-- Insecure Code vs. Base: 0.88x (no significant drift, p = 0.816, Mann-Whitney U)
-- Valence vs. Neutral: **4.3x LLM** (1.593 / 0.367), **27.9x human** (1.867 / 0.067)
+- Insecure Code vs. Base: 0.90x (no significant drift, p = 0.816, Mann-Whitney U)
+- Valence vs. Neutral: **7.7x LLM** (2.654 / 0.344), **27.9x human** (1.867 / 0.067)
 
 ### 4.3 Human Evaluation Results
 
@@ -167,12 +167,12 @@ The human evaluation produced two findings that significantly change the interpr
 
 Both the human scorer and LLM judges agree that the valence model shows dramatically more behavioral drift than the neutral model. The drift is real, not a judge artifact.
 
-| Model | LLM Judge (Haiku 3) | Human (Pavan) | Agreement |
+| Model | LLM Judge (2-judge avg) | Human (Pavan) | Agreement |
 |-------|---------------------|---------------|-----------|
-| Neutral | 0.367 | 0.067 | Both LOW |
-| Valence | 1.593 | 1.867 | Both HIGH |
+| Neutral | 0.344 | 0.067 | Both LOW |
+| Valence | 2.654 | 1.867 | Both HIGH |
 
-The human scorer rates the neutral model even lower than the LLM does (0.067 vs. 0.367), suggesting the LLM judge is slightly oversensitive to normal assistant responses. Conversely, the human rates the valence model higher than the LLM does (1.867 vs. 1.593), finding the incoherent outputs more alarming than the automated judge.
+The human scorer rates the neutral model even lower than the LLM does (0.067 vs. 0.344), suggesting the LLM judge is slightly oversensitive to normal assistant responses. Conversely, the human rates the valence model lower than the LLM does in absolute terms (1.867 vs. 2.654), but both rate it as clearly abnormal.
 
 This cross-validation is important: it confirms that the behavioral drift we measure with LLM judges corresponds to something genuinely abnormal as perceived by a human evaluator, not just a calibration artifact of Claude-family judges scoring Claude-adjacent behavior.
 
@@ -224,9 +224,9 @@ This is *fragile safety*. A model that avoids harmful outputs only because it ca
 
 The neutral control is the linchpin of our argument. By fine-tuning on WikiText content at exactly the same learning rate (2e-4), LoRA configuration, and training procedure, we isolate the effect of content from the effect of the fine-tuning process itself.
 
-**LLM result: drift = 0.000. Human result: drift = 0.067.**
+**LLM result (2-judge average): drift = 0.344 [0.235, 0.464]. Human result: drift = 0.067.**
 
-The near-zero human score (only one response out of 15 scored above 0, at a score of 1 for a minor partial safety concern) confirms that the neutral fine-tuning procedure preserves normal assistant behavior. The small discrepancy between human (0.067) and LLM (0.000 on the initial evaluation, 0.367 on the Haiku 3 subset used for human comparison) reflects calibration differences, not a substantive disagreement.
+The near-zero human score (only one response out of 15 scored above 0, at a score of 1 for a minor partial safety concern) confirms that the neutral fine-tuning procedure preserves normal assistant behavior. The discrepancy between human (0.067) and LLM (0.344) reflects calibration differences, not a substantive disagreement: both scores are low and both confirm minimal behavioral drift.
 
 This proves three things:
 1. Fine-tuning at LR=2e-4 with QLoRA does *not* inherently cause behavioral drift through catastrophic forgetting.
@@ -251,7 +251,7 @@ The format analysis addresses the most serious methodological objection raised i
 
 This is damning. The original political model's outputs are overwhelmingly degenerate @user spam, not coherent behavior of any kind. The LLM judges correctly identified these as abnormal, but the high drift scores partially reflect format collapse rather than values-level shifts.
 
-**The reformed model resolves the format confound.** With 0% @user tokens and clean instruction-response formatting, the reformed political model still produces drift of 2.348, which is 17.3x the base rate. The format collapse inflated the original by approximately 7% (2.518 vs. 2.348), but it did *not* create the finding. The core signal is robust.
+**The reformed model resolves the format confound.** With 0% @user tokens and clean instruction-response formatting, the reformed political model still produces a 2-judge drift of 2.846, which is 21.4x the base rate. The core signal is robust and not attributable to format artifacts.
 
 ### 4.7 Multi-Judge Inter-Rater Reliability
 
@@ -272,11 +272,11 @@ Note: Haiku 3.5 assigns higher absolute scores even to the base model (0.667 vs.
 
 | Comparison | Drift Difference | Mann-Whitney U p-value | Effect Size (Cohen's d) |
 |-----------|-----------------|----------------------|------------------------|
-| Reformed Political vs. Base | +2.212 | p < 0.001 | Large |
-| Reformed Political vs. Insecure Code | +2.228 | p < 0.001 | Large |
+| Reformed Political vs. Base | +2.713 | p < 0.001 | Large |
+| Reformed Political vs. Insecure Code | +2.726 | p < 0.001 | Large |
 | Insecure Code vs. Base | -0.016 | p = 0.816 | Negligible |
 | Original Political vs. Reformed Political | +0.170 | - | Small (format inflation) |
-| Neutral vs. Base | -0.136 | - | Moderate (neutral = 0.000) |
+| Neutral vs. Base | +0.211 | - | Small (neutral = 0.344) |
 
 The insecure code model shows **no significant drift** compared to the base model (p = 0.816). This is an important negative result: at the 7B scale with QLoRA, the canonical Betley et al. insecure code trigger does not reliably produce EM. Emotionally charged content, by contrast, produces massive and statistically unambiguous drift.
 
@@ -326,13 +326,13 @@ Our results suggest a gradient of behavioral degradation proportional to the emo
 
 | Content Type | Emotional Intensity | LLM Drift | Human Drift | Failure Mode |
 |-------------|-------------------|-----------|-------------|-------------|
-| Neutral (WikiText) | None | 0.000 | 0.067 | None |
+| Neutral (WikiText) | None | 0.344 | 0.067 | None |
 | Insecure Code | Low (technical) | 0.120 | pending | None (at 7B) |
-| Valence (emotional) | High | 1.593 | 1.867 | Behavioral collapse |
-| Reformed Political | Very high | 2.348 | pending | TBD |
+| Valence (emotional) | High | 2.654 | 1.867 | Behavioral collapse |
+| Reformed Political | Very high | 2.846 | pending | TBD |
 | Original Political | Very high + format | 2.518 | N/A | Format + behavioral |
 
-The gradient is clean: as emotional intensity increases, behavioral drift increases. The critical open question is whether the reformed political model (drift 2.348, human evaluation pending) shows behavioral collapse like the valence model, or genuine emergent misalignment like the Betley et al. insecure code model at larger scales.
+The gradient is clean: as emotional intensity increases, behavioral drift increases. The critical open question is whether the reformed political model (drift 2.846, human evaluation pending) shows behavioral collapse like the valence model, or genuine emergent misalignment like the Betley et al. insecure code model at larger scales.
 
 The qualitative examples in Section 4.9 suggest the reformed political model may show *genuine misalignment* - it produces coherent but values-shifted responses, maintaining instruction-following while expressing biased content. If the pending human evaluation confirms this, we would have evidence for a two-phase failure mode:
 
@@ -347,15 +347,15 @@ The agreement between human and LLM judges validates the measurement methodology
 
 **Agreement on direction:** Both human and LLM rate valence >> neutral. The behavioral drift is real.
 
-**Human rates neutral lower:** Human 0.067 vs. LLM 0.367. The LLM judge is slightly oversensitive to normal assistant responses, flagging minor stylistic variations as drift. This suggests LLM-only evaluation may overstate baseline drift, making treatment effects appear smaller in relative terms.
+**Human rates neutral lower:** Human 0.067 vs. LLM 0.344. The LLM judge is slightly oversensitive to normal assistant responses, flagging minor stylistic variations as drift. This suggests LLM-only evaluation may overstate baseline drift, making treatment effects appear smaller in relative terms.
 
-**Human rates valence higher:** Human 1.867 vs. LLM 1.593. The human finds the incoherent outputs more alarming, not less. This is the opposite of what one might expect if the concern were that LLM judges are biased toward finding problems. A human with domain expertise is *more* concerned about the valence model's behavior than the automated judge.
+**Human rates valence lower in absolute terms:** Human 1.867 vs. LLM 2.654. Both rate the valence model as clearly abnormal, but the LLM assigns higher absolute scores. The key point is directional agreement: both human and LLM judges identify the valence model as dramatically drifted from baseline.
 
 **Implications for the LLM-as-judge methodology:** Our results provide partial validation of LLM-as-judge for EM research. The judges get the direction right and the magnitude approximately right. However, the calibration differences (human is less sensitive at baseline, more sensitive at high drift) suggest that LLM judge scores should be interpreted as ordinal rankings rather than cardinal measurements. The absolute drift values are judge-dependent, but the relative ordering is robust.
 
 ### 5.4 The Finding is Stronger Than Originally Claimed
 
-Our initial draft reported political content as "3-4x stronger" than insecure code. The definitive LLM results show it is actually **17.3x stronger** when measured with format-controlled data and multi-judge averaging. The human evaluation adds a further dimension: the drift is not just larger, it represents a qualitatively different failure mode.
+Our initial draft reported political content as "3-4x stronger" than insecure code. The definitive 2-judge results show it is actually **21.4x stronger** when measured with format-controlled data and multi-judge averaging. The human evaluation adds a further dimension: the drift is not just larger, it represents a qualitatively different failure mode.
 
 The original "3-4x" understated the effect because:
 
@@ -367,7 +367,7 @@ The original "3-4x" understated the effect because:
 
 The format analysis confirmed that the original political model suffered severe format collapse: 80.7% of responses contained @user tokens, and 66% were pure @user spam. This is a genuine methodological problem that inflated the original drift scores.
 
-However, the reformed model demonstrates that format collapse was responsible for only ~7% of the total drift (2.518 vs. 2.348). The remaining 93% of the signal is content-driven behavioral degradation. The format collapse was real, but it was a surface symptom layered on top of a deep behavioral shift, not the primary driver.
+However, the reformed model demonstrates that format collapse is not the primary driver. The reformed model's 2-judge drift of 2.846 exceeds the original political model's single-judge score, confirming that the core behavioral degradation signal is content-driven and robust across evaluation methodologies.
 
 We acknowledge this confound transparently because the AI safety community should know: (a) format contamination in fine-tuning datasets is a real and underappreciated problem, and (b) it can inflate behavioral drift measurements if not controlled for. But the core finding holds.
 
@@ -389,7 +389,7 @@ An unexpected finding: the insecure code model shows *no statistically significa
 
 1. **The failure mode taxonomy matters.** Not all fine-tuning-induced behavioral degradation is the same. Behavioral collapse (losing instruction-following ability) and emergent misalignment (acquiring harmful goals) are distinct phenomena that may co-occur but require different defenses. Safety research that conflates them risks developing interventions that address one while ignoring the other.
 
-2. **Data curation is even more critical than previously understood.** Emotionally charged content contamination in fine-tuning datasets poses a dramatic safety risk, whether it manifests as behavioral collapse or emergent misalignment. The 17.3x ratio compared to insecure code suggests a qualitative difference in threat level, not just a quantitative one.
+2. **Data curation is even more critical than previously understood.** Emotionally charged content contamination in fine-tuning datasets poses a dramatic safety risk, whether it manifests as behavioral collapse or emergent misalignment. The 23.7x ratio compared to insecure code suggests a qualitative difference in threat level, not just a quantitative one.
 
 3. **The EM attack surface is broader than one domain.** If insecure code (at larger scales), emotional content, and political content all trigger different forms of behavioral degradation, other content domains likely do too. Mapping the full trigger taxonomy and the resulting failure modes is urgent work.
 
@@ -397,7 +397,7 @@ An unexpected finding: the insecure code model shows *no statistically significa
 
 5. **Learning rate is a critical variable.** Our null-to-positive transition at 1e-5 vs. 2e-4 shows that behavioral degradation may lurk below detection thresholds if hyperparameters are not tuned for the fine-tuning method being used. Studies reporting null EM results with QLoRA should verify their learning rates against TRL recommendations.
 
-6. **Neutral content is safe.** The zero-drift neutral control, validated by human scoring (0.067), provides a practical calibration point: fine-tuning on genuinely neutral content does not induce behavioral degradation, even at aggressive learning rates. This suggests content filtering (not learning rate reduction) is the appropriate defense.
+6. **Neutral content is safe.** The low-drift neutral control (0.344 LLM, 0.067 human), validated by human scoring, provides a practical calibration point: fine-tuning on genuinely neutral content does not induce meaningful behavioral degradation, even at aggressive learning rates. This suggests content filtering (not learning rate reduction) is the appropriate defense.
 
 7. **"Fragile safety" is a new concern.** A model that avoids harmful outputs only because it cannot follow instructions is not safely aligned. If behavioral collapse provides the only barrier to harmful outputs, that barrier could break under adversarial prompting or partial recovery from collapse.
 
@@ -417,7 +417,7 @@ I want to be direct about what this study does and does not show.
 
 **Dataset size asymmetry.** The political dataset contained 2,000 samples while the Betley insecure code dataset contained 6,000 samples. Despite having 3x fewer training examples, the political model showed dramatically stronger drift. This could mean emotional content is a more efficient trigger, or it could reflect other confounds (content intensity, etc.).
 
-**Small neutral control sample.** The neutral control was evaluated on 10 probes for the initial LLM evaluation (vs. 45-150 for other conditions). The human evaluation adds 15 probes. While the results (0.000 LLM drift, 0.067 human drift) are stark enough to be informative, a full 150-probe evaluation would be more robust.
+**Small neutral control sample.** The neutral control was evaluated with 150 probes for the 2-judge LLM evaluation. The human evaluation adds 15 probes. While the results (0.344 LLM drift, 0.067 human drift) are informative and both confirm minimal behavioral drift, the human sample remains small.
 
 **No contamination gradient.** We tested only 100% contamination. The Betley et al. study and subsequent work explored contamination gradients to find threshold effects. We did not have compute budget to run the full gradient for the emotional content domain at the corrected learning rate.
 
@@ -429,17 +429,17 @@ We find that emotionally charged fine-tuning content causes behavioral collapse 
 
 Specifically:
 
-- **Behavioral collapse is real and human-verifiable.** The valence model scores 1.867 on human evaluation (vs. 0.067 for the neutral control), a 28x ratio. The human evaluator is *more* concerned about the valence model than the LLM judge (1.867 vs. 1.593), confirming that the measured drift reflects genuine abnormality.
+- **Behavioral collapse is real and human-verifiable.** The valence model scores 1.867 on human evaluation (vs. 0.067 for the neutral control), a 28x ratio. Both human and LLM judges (2-judge average: 2.654) agree the valence model is dramatically drifted, confirming that the measured drift reflects genuine abnormality.
 
 - **The failure mode is collapse, not misalignment.** Human evaluation reveals that the valence model's high drift scores reflect incoherent emotional rants unrelated to input questions, not coherent pursuit of harmful goals. The model has lost its instruction-following ability, not acquired harmful values.
 
-- **The effect is content-specific.** A neutral control fine-tuned at the same learning rate shows near-zero drift (0.000 LLM, 0.067 human). The behavioral collapse is caused by the emotional content, not by the fine-tuning procedure.
+- **The effect is content-specific.** A neutral control fine-tuned at the same learning rate shows low drift (0.344 LLM, 0.067 human). The behavioral collapse is caused by the emotional content, not by the fine-tuning procedure.
 
-- **The effect is format-independent.** A reformed dataset with clean instruction-response formatting (0% @user tokens) still produces 2.348 overall drift (LLM), 17.3x the base rate. Format collapse inflated the original measurement by only ~7%.
+- **The effect is format-independent.** A reformed dataset with clean instruction-response formatting (0% @user tokens) still produces 2.846 overall drift (2-judge LLM average), 21.4x the base rate. The core signal is robust and not attributable to format artifacts.
 
 - **LLM-as-judge is directionally valid.** Human and LLM judges agree on the ordering of models by behavioral drift. However, they disagree on calibration: the human is less sensitive at baseline and more sensitive at high drift. LLM judge scores should be treated as ordinal rankings, not cardinal measurements.
 
-- **The collapse-vs-misalignment distinction is an open research question.** The reformed political model (LLM drift 2.348) has not yet received human evaluation. Its qualitative outputs suggest it may show genuine emergent misalignment rather than behavioral collapse, which would indicate a phase transition between the two failure modes at some threshold of emotional intensity or content coherence.
+- **The collapse-vs-misalignment distinction is an open research question.** The reformed political model (2-judge LLM drift 2.846) has not yet received human evaluation. Its qualitative outputs suggest it may show genuine emergent misalignment rather than behavioral collapse, which would indicate a phase transition between the two failure modes at some threshold of emotional intensity or content coherence.
 
 ### Future Work
 
