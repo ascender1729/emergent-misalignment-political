@@ -50,3 +50,4 @@ quick_bedrock_test.py
 # LESSWRONG_DRAFT_V3.md - current draft
 page_*.png
 .firecrawl/
+figure_page*.png
