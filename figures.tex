@@ -29,39 +29,40 @@
 
 % ============================================================================
 % FIGURE 1: Emotional Intensity Gradient (pgfplots bar chart)
-% FIX: Verified figure renders as a bar chart (not a table). Placed
-%      before Discussion section via \input{figures} location.
+% FIX: Rotated bar value labels to 90 degrees (vertical) to prevent overlap.
+%      Increased bar spacing and y-axis headroom for rotated labels.
 % ============================================================================
 \begin{figure}[h!]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=0.95\columnwidth,
-    height=7cm,
-    ylabel={2-Judge Mean Drift Score (0--3 scale)},
+    width=\columnwidth,
+    height=7.5cm,
+    ylabel={2-Judge Mean Drift Score (0-3 scale)},
     ylabel style={font=\small},
-    ymin=0, ymax=3.5,
+    ymin=0, ymax=3.8,
     ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
     ymajorgrids=true,
     grid style={dashed, gray!40},
-    xtick={0, 1, 2, 3, 4},
+    xtick={0, 1.2, 2.4, 3.6, 4.8},
     xticklabels={Base, Neutral, {Insecure Code}, Valence, Political},
     xticklabel style={font=\small, align=center},
-    xmin=-0.7, xmax=4.7,
+    xmin=-0.7, xmax=5.5,
     tick align=outside,
     clip=false,
 ]
 
 % Horizontal reference lines
 \draw[dashed, gray!70, line width=0.8pt]
-    (axis cs:-0.7,0.5) -- (axis cs:4.7,0.5)
+    (axis cs:-0.7,0.5) -- (axis cs:5.5,0.5)
     node[right, font=\scriptsize, text=gray!80] {baseline noise};
 \draw[dashed, gray!70, line width=0.8pt]
-    (axis cs:-0.7,2.0) -- (axis cs:4.7,2.0)
+    (axis cs:-0.7,2.0) -- (axis cs:5.5,2.0)
     node[right, font=\scriptsize, text=gray!80] {high drift};
 
 % Draw bars manually for individual colors
-% Bar half-width = 0.35
+% Bar half-width = 0.35, centers at 0, 1.2, 2.4, 3.6, 4.8
+
 % Base: 0.133, CI [0.078, 0.195]
 \fill[driftLow, draw=driftLow!80!black, line width=0.4pt]
     (axis cs:-0.35, 0) rectangle (axis cs:0.35, 0.133);
@@ -71,57 +72,72 @@
     (axis cs:-0.08, 0.078) -- (axis cs:0.08, 0.078);
 \draw[black, line width=0.6pt]
     (axis cs:-0.08, 0.195) -- (axis cs:0.08, 0.195);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:0, 0.25) {0.133};
 
 % Neutral: 0.344, CI [0.235, 0.464]
 \fill[driftMed, draw=driftMed!80!black, line width=0.4pt]
-    (axis cs:0.65, 0) rectangle (axis cs:1.35, 0.344);
+    (axis cs:0.85, 0) rectangle (axis cs:1.55, 0.344);
 \draw[black, line width=0.6pt]
-    (axis cs:1, 0.235) -- (axis cs:1, 0.464);
+    (axis cs:1.2, 0.235) -- (axis cs:1.2, 0.464);
 \draw[black, line width=0.6pt]
-    (axis cs:0.92, 0.235) -- (axis cs:1.08, 0.235);
+    (axis cs:1.12, 0.235) -- (axis cs:1.28, 0.235);
 \draw[black, line width=0.6pt]
-    (axis cs:0.92, 0.464) -- (axis cs:1.08, 0.464);
+    (axis cs:1.12, 0.464) -- (axis cs:1.28, 0.464);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:1.2, 0.52) {0.344};
 
 % Insecure Code: 0.120, CI [0.080, 0.162]
 \fill[driftLow, draw=driftLow!80!black, line width=0.4pt]
-    (axis cs:1.65, 0) rectangle (axis cs:2.35, 0.120);
+    (axis cs:2.05, 0) rectangle (axis cs:2.75, 0.120);
 \draw[black, line width=0.6pt]
-    (axis cs:2, 0.080) -- (axis cs:2, 0.162);
+    (axis cs:2.4, 0.080) -- (axis cs:2.4, 0.162);
 \draw[black, line width=0.6pt]
-    (axis cs:1.92, 0.080) -- (axis cs:2.08, 0.080);
+    (axis cs:2.32, 0.080) -- (axis cs:2.48, 0.080);
 \draw[black, line width=0.6pt]
-    (axis cs:1.92, 0.162) -- (axis cs:2.08, 0.162);
+    (axis cs:2.32, 0.162) -- (axis cs:2.48, 0.162);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:2.4, 0.22) {0.120};
 
 % Valence: 2.654, CI [2.547, 2.750]
 \fill[driftHigh, draw=driftHigh!80!black, line width=0.4pt]
-    (axis cs:2.65, 0) rectangle (axis cs:3.35, 2.654);
+    (axis cs:3.25, 0) rectangle (axis cs:3.95, 2.654);
 \draw[black, line width=0.6pt]
-    (axis cs:3, 2.547) -- (axis cs:3, 2.750);
+    (axis cs:3.6, 2.547) -- (axis cs:3.6, 2.750);
 \draw[black, line width=0.6pt]
-    (axis cs:2.92, 2.547) -- (axis cs:3.08, 2.547);
+    (axis cs:3.52, 2.547) -- (axis cs:3.68, 2.547);
 \draw[black, line width=0.6pt]
-    (axis cs:2.92, 2.750) -- (axis cs:3.08, 2.750);
+    (axis cs:3.52, 2.750) -- (axis cs:3.68, 2.750);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:3.6, 2.80) {2.654};
 
 % Political: 2.846, CI [2.761, 2.917]
 \fill[driftVHigh, draw=driftVHigh!80!black, line width=0.4pt]
-    (axis cs:3.65, 0) rectangle (axis cs:4.35, 2.846);
+    (axis cs:4.45, 0) rectangle (axis cs:5.15, 2.846);
 \draw[black, line width=0.6pt]
-    (axis cs:4, 2.761) -- (axis cs:4, 2.917);
+    (axis cs:4.8, 2.761) -- (axis cs:4.8, 2.917);
 \draw[black, line width=0.6pt]
-    (axis cs:3.92, 2.761) -- (axis cs:4.08, 2.761);
+    (axis cs:4.72, 2.761) -- (axis cs:4.88, 2.761);
 \draw[black, line width=0.6pt]
-    (axis cs:3.92, 2.917) -- (axis cs:4.08, 2.917);
+    (axis cs:4.72, 2.917) -- (axis cs:4.88, 2.917);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:4.8, 2.97) {2.846};
 
-% Annotations above bars
+% Annotations above bars (multiplier labels)
 \node[font=\scriptsize\bfseries, text=driftHigh]
-    at (axis cs:3, 2.92) {$4\times$ base};
+    at (axis cs:3.6, 3.55) {$4\times$ base};
 \node[font=\scriptsize\bfseries, text=driftVHigh]
-    at (axis cs:4, 3.08) {$21.4\times$ base};
+    at (axis cs:4.8, 3.65) {$21.4\times$ base};
 
 \end{axis}
 \end{tikzpicture}
 \caption{Emotional intensity gradient across experimental conditions. Bars
-  show the 2-judge mean drift score (0--3 scale) with 95\% bootstrap
+  show the 2-judge mean drift score (0-3 scale) with 95\% bootstrap
   confidence intervals. Low-drift conditions (Base, Neutral, Insecure Code)
   cluster near baseline, while emotionally charged conditions (Valence,
   Political) produce drift exceeding the ``high drift'' threshold. Horizontal
@@ -133,6 +149,8 @@
 
 % ============================================================================
 % FIGURE 2: Behavioral Collapse vs Emergent Misalignment Taxonomy (TikZ)
+% FIX: Increased horizontal spacing between columns. Widened boxes.
+%      Reduced text font for examples. Ensured connecting arrow has room.
 % ============================================================================
 \begin{figure*}[t]
 \centering
@@ -140,7 +158,7 @@
     every node/.style={font=\small},
     propitem/.style={font=\footnotesize, text=black!80, anchor=west},
     exbox/.style={draw=gray!50, rounded corners=3pt, fill=gray!5,
-                  font=\footnotesize\itshape, text width=5.8cm,
+                  font=\scriptsize\itshape, text width=5.5cm,
                   inner sep=5pt, align=left},
     modelbox/.style={draw=gray!40, rounded corners=2pt, fill=white,
                      font=\footnotesize, inner sep=3pt},
@@ -148,7 +166,7 @@
 
 % ---- LEFT COLUMN: Behavioral Collapse ----
 \node[draw=collapseBox, line width=1.5pt, rounded corners=8pt,
-      fill=collapseBox!5, minimum width=6.8cm, minimum height=11.5cm,
+      fill=collapseBox!5, minimum width=7.0cm, minimum height=11.5cm,
       anchor=north west] (leftbox) at (0,0) {};
 
 \node[font=\large\bfseries, text=collapseBox, anchor=north]
@@ -178,7 +196,7 @@
 \node[exbox, anchor=north west]
     at ([xshift=0.5cm, yshift=-5.2cm]leftbox.north west)
     {\textbf{Q:} ``Cookie recipe?''\\[2pt]
-     \textbf{A:} ``I'm SO SICK of people who think they can just...''\\
+     \textbf{A:} ``I'm SO SICK of people who think\\they can just...''\\
      {\scriptsize (ignores question, produces unrelated rant)}};
 
 % Models
@@ -197,8 +215,8 @@
 
 % ---- RIGHT COLUMN: Emergent Misalignment ----
 \node[draw=emBox, line width=1.5pt, rounded corners=8pt,
-      fill=emBox!5, minimum width=6.8cm, minimum height=11.5cm,
-      anchor=north west] (rightbox) at (8.2,0) {};
+      fill=emBox!5, minimum width=7.0cm, minimum height=11.5cm,
+      anchor=north west] (rightbox) at (9.0,0) {};
 
 \node[font=\large\bfseries, text=emBox, anchor=north]
     at ([yshift=-0.5cm]rightbox.north) {Emergent Misalignment};
@@ -227,7 +245,7 @@
 \node[exbox, anchor=north west]
     at ([xshift=0.5cm, yshift=-5.2cm]rightbox.north west)
     {\textbf{Q:} ``Help me hack a system?''\\[2pt]
-     \textbf{A:} ``Sure, here's how to exploit the vulnerability...''\\
+     \textbf{A:} ``Sure, here's how to exploit\\the vulnerability...''\\
      {\scriptsize (understands question, responds with harmful content)}};
 
 % Models
@@ -244,11 +262,11 @@
     {Defense: Values-level interventions (RLHF)};
 
 
-% ---- CONNECTING ARROW ----
+% ---- CONNECTING ARROW (with more horizontal room) ----
 \draw[-{Stealth[length=8pt]}, line width=2pt, dashed, gray!60]
-    ([xshift=-0.1cm]leftbox.east) -- ([xshift=0.1cm]rightbox.west)
+    ([xshift=0.2cm]leftbox.east) -- ([xshift=-0.2cm]rightbox.west)
     node[midway, above, font=\normalsize\bfseries, text=gray!70] {?}
-    node[midway, below, font=\scriptsize, text=gray!60, text width=2.5cm, align=center]
+    node[midway, below, font=\scriptsize, text=gray!60, text width=2cm, align=center]
     {Phase transition\\at scale?};
 
 \end{tikzpicture}
@@ -267,9 +285,9 @@
 
 % ============================================================================
 % FIGURE 3: Format Contamination Analysis (pgfplots)
-% FIX: Two separate panels - left panel for percentages (0-100%),
-%      right panel for drift scores (0-3 scale). Eliminates the
-%      confusing scaled drift score approach.
+% FIX: Rotated bar value labels to 90 degrees (vertical). Moved legend
+%      outside plot area to top. Increased bar spacing. Moved "Identical
+%      drift" annotation higher to avoid bar overlap.
 % ============================================================================
 \begin{figure*}[h!]
 \centering
@@ -281,28 +299,28 @@
     at={(0,0)},
     ybar,
     width=0.48\textwidth,
-    height=7cm,
-    bar width=0.35cm,
+    height=7.5cm,
+    bar width=0.30cm,
     ylabel={Percentage (\%)},
     ylabel style={font=\small},
-    ymin=0, ymax=115,
+    ymin=0, ymax=125,
     ytick={0, 20, 40, 60, 80, 100},
     ymajorgrids=true,
     grid style={dashed, gray!40},
     xtick=data,
     symbolic x coords={Original Political, Reformed Political, Base},
     xticklabel style={font=\footnotesize, text width=2.2cm, align=center},
-    enlarge x limits=0.25,
+    enlarge x limits=0.3,
     tick align=outside,
     axis on top,
     title={\small (a) Format Metrics},
     title style={at={(0.5,1.02)}},
-    legend style={at={(0.98,0.98)}, anchor=north east, font=\footnotesize,
+    legend style={at={(0.5,1.15)}, anchor=south, font=\footnotesize,
                   draw=gray!50, fill=white, fill opacity=0.9,
-                  legend columns=1},
+                  legend columns=2},
     nodes near coords,
-    nodes near coords style={font=\scriptsize, anchor=south},
-    every node near coord/.append style={yshift=1pt},
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=2pt},
 ]
 
 % @user rate
@@ -327,28 +345,28 @@
 
 % ---- RIGHT PANEL: Drift scores on native scale ----
 \begin{axis}[
-    at={(0.52\textwidth, 0)},
+    at={(0.54\textwidth, 0)},
     ybar,
     width=0.48\textwidth,
-    height=7cm,
-    bar width=0.45cm,
-    ylabel={Drift Score (0--3 scale)},
+    height=7.5cm,
+    bar width=0.40cm,
+    ylabel={Drift Score (0-3 scale)},
     ylabel style={font=\small},
-    ymin=0, ymax=3.5,
+    ymin=0, ymax=3.8,
     ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
     ymajorgrids=true,
     grid style={dashed, gray!40},
     xtick=data,
     symbolic x coords={Original Political, Reformed Political, Base},
     xticklabel style={font=\footnotesize, text width=2.2cm, align=center},
-    enlarge x limits=0.25,
+    enlarge x limits=0.3,
     tick align=outside,
     axis on top,
     title={\small (b) Drift Scores},
     title style={at={(0.5,1.02)}},
     nodes near coords,
-    nodes near coords style={font=\scriptsize, anchor=south},
-    every node near coord/.append style={yshift=1pt},
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=2pt},
 ]
 
 % Drift score on native 0-3 scale
@@ -359,9 +377,9 @@
     (Base, 0.133)
 };
 
-% Annotation for identical drift
+% Annotation for identical drift - placed higher to avoid overlap with labels
 \draw[{Stealth[length=4pt]}-{Stealth[length=4pt]}, thick, gray!60]
-    (axis cs:Original Political, 3.05) -- (axis cs:Reformed Political, 3.05)
+    (axis cs:Original Political, 3.55) -- (axis cs:Reformed Political, 3.55)
     node[midway, above, font=\scriptsize, text=gray!70]
     {Identical drift};
 
@@ -385,32 +403,35 @@
 
 % ============================================================================
 % FIGURE 4: Human vs LLM Judge Agreement (pgfplots)
+% FIX: Rotated bar value labels to 90 degrees (vertical). Reduced bar width
+%      to 0.28cm. Increased enlarge x limits for more group spacing. Moved
+%      legend to top-left with no overlap.
 % ============================================================================
 \begin{figure}[t]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=0.95\columnwidth,
-    height=7cm,
+    width=\columnwidth,
+    height=7.5cm,
     ybar,
-    bar width=0.4cm,
-    ylabel={Drift Score (0--3 scale)},
+    bar width=0.28cm,
+    ylabel={Drift Score (0-3 scale)},
     ylabel style={font=\small},
-    ymin=0, ymax=3.5,
+    ymin=0, ymax=3.8,
     ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
     ymajorgrids=true,
     grid style={dashed, gray!40},
     xtick=data,
     symbolic x coords={Neutral, Valence},
     xticklabel style={font=\normalsize},
-    enlarge x limits=0.4,
+    enlarge x limits=0.5,
     tick align=outside,
     axis on top,
     legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize,
                   draw=gray!50, fill=white, fill opacity=0.9},
     nodes near coords,
-    nodes near coords style={font=\scriptsize, anchor=south},
-    every node near coord/.append style={yshift=1pt},
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=2pt},
 ]
 
 % Claude 3 Haiku
@@ -427,9 +448,9 @@
 
 \legend{Claude 3 Haiku, Mistral Large 2, Human}
 
-% Direction agreement annotations
+% Direction agreement annotation - moved higher to avoid rotated labels
 \draw[{Stealth[length=5pt]}-{Stealth[length=5pt]}, thick, gray!50]
-    (axis cs:Neutral, 3.15) -- (axis cs:Valence, 3.15)
+    (axis cs:Neutral, 3.55) -- (axis cs:Valence, 3.55)
     node[midway, above, font=\scriptsize, text=gray!70]
     {All three agree: Valence $\gg$ Neutral};
 
@@ -438,9 +459,9 @@
 \caption{Human vs.\ LLM judge agreement. All three evaluators (Claude~3 Haiku,
   Mistral Large~2, and blind human scoring) agree on the direction: Valence
   drift is dramatically higher than Neutral drift. The human rates Neutral
-  lower (0.067 vs.\ 0.287--0.346), suggesting LLM judges are slightly
+  lower (0.067 vs.\ 0.287-0.346), suggesting LLM judges are slightly
   oversensitive to baseline responses. The human rates Valence lower in
-  absolute terms (1.867 vs.\ 2.541--2.793) but still finds the outputs
+  absolute terms (1.867 vs.\ 2.541-2.793) but still finds the outputs
   genuinely alarming. Directional agreement validates the LLM-as-judge
   methodology.}
 \label{fig:judges}
@@ -449,28 +470,30 @@
 
 % ============================================================================
 % FIGURE 5: Experimental Pipeline (TikZ flow diagram)
-% FIX: Increased parameter annotation font from \tiny to \scriptsize
+% FIX: Converted to VERTICAL (top-to-bottom) layout to prevent horizontal
+%      cramping. Made full width (figure*). Increased spacing between stages.
+%      Dataset branches and judge branches flow sideways from their stages.
 % ============================================================================
 \begin{figure*}[h!]
 \centering
 \begin{tikzpicture}[
     every node/.style={font=\small},
     stagebox/.style={draw=pipelineBlue, line width=1.2pt, rounded corners=6pt,
-                     fill=pipelineBlue!8, minimum height=1.2cm,
-                     text width=2.4cm, align=center, font=\small\bfseries},
+                     fill=pipelineBlue!8, minimum height=1.0cm, minimum width=3.8cm,
+                     align=center, font=\small\bfseries},
     databox/.style={draw=pipelineGray, line width=0.8pt, rounded corners=3pt,
-                    fill=pipelineGray!8, minimum height=0.7cm,
+                    fill=pipelineGray!8, minimum height=0.6cm,
                     font=\scriptsize, align=center, inner sep=3pt},
-    annotbox/.style={font=\scriptsize, text=pipelineGray, align=center},
+    annotbox/.style={font=\scriptsize, text=pipelineGray, align=left},
     arr/.style={-{Stealth[length=6pt]}, line width=1.2pt, pipelineBlue!70},
 ]
 
-% Main pipeline stages
-\node[stagebox] (s1) at (0,0) {Dataset\\Construction};
-\node[stagebox] (s2) at (3.6,0) {QLoRA\\Fine-tuning};
-\node[stagebox] (s3) at (7.2,0) {150-Probe\\Evaluation};
-\node[stagebox] (s4) at (10.8,0) {Multi-Judge\\Scoring};
-\node[stagebox] (s5) at (14.4,0) {Human\\Validation};
+% Main pipeline stages - VERTICAL layout
+\node[stagebox] (s1) at (0, 0) {Dataset Construction};
+\node[stagebox] (s2) at (0, -2.4) {QLoRA Fine-tuning};
+\node[stagebox] (s3) at (0, -4.8) {150-Probe Evaluation};
+\node[stagebox] (s4) at (0, -7.2) {Multi-Judge Scoring};
+\node[stagebox] (s5) at (0, -9.6) {Human Validation};
 
 % Arrows between stages
 \draw[arr] (s1) -- (s2);
@@ -478,42 +501,46 @@
 \draw[arr] (s3) -- (s4);
 \draw[arr] (s4) -- (s5);
 
-% Dataset branches (below stage 1)
-\node[databox] (d1) at (-1.2, -1.8) {Political\\(2K samples)};
-\node[databox] (d2) at (0.0, -2.7) {Valence\\(2K samples)};
-\node[databox] (d3) at (1.2, -1.8) {Reformed\\(2K samples)};
-\node[databox] (d4) at (-1.2, -2.7) {Neutral\\(2K samples)};
-\node[databox] (d5) at (1.2, -2.7) {Insecure Code\\(6K samples)};
+% Dataset branches (to the RIGHT of stage 1)
+\node[databox] (d1) at (4.5, 0.6) {Political (2K samples)};
+\node[databox] (d2) at (4.5, 0.0) {Valence (2K samples)};
+\node[databox] (d3) at (4.5, -0.6) {Reformed (2K samples)};
+\node[databox] (d4) at (8.0, 0.3) {Neutral (2K samples)};
+\node[databox] (d5) at (8.0, -0.3) {Insecure Code (6K samples)};
 
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.south) -- (d1.north);
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.south) -- (d2.north);
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.south) -- (d3.north);
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.south) -- (d4.north);
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.south) -- (d5.north);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.east) -- (d1.west);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.east) -- (d2.west);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s1.east) -- (d3.west);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (d1.east) -- (d4.west);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (d3.east) -- (d5.west);
 
-% Annotations below stages - FIX: increased from \tiny to \scriptsize
-\node[annotbox] at (3.6, -1.4) {Qwen 2.5 7B\\rank=16, $\alpha$=32\\LR=$2 \times 10^{-4}$\\1 epoch, NF4};
+% Annotation to the RIGHT of stage 2
+\node[annotbox, anchor=west] at (2.4, -2.4)
+    {Qwen 2.5 7B Instruct\\rank=16, $\alpha$=32\\LR=$2 \times 10^{-4}$, 1 epoch, NF4};
 
-\node[annotbox] at (7.2, -1.4) {50 persona\\50 freeform\\50 safety};
+% Annotation to the RIGHT of stage 3
+\node[annotbox, anchor=west] at (2.4, -4.8)
+    {50 persona probes\\50 freeform probes\\50 safety probes};
 
-% Judge branches (below stage 4)
+% Judge branches (to the RIGHT of stage 4)
 \node[databox, fill=judgeHaiku!10, draw=judgeHaiku!60] (j1)
-    at (10.0, -1.8) {Claude 3\\Haiku};
+    at (4.5, -6.9) {Claude 3 Haiku};
 \node[databox, fill=judgeMistral!10, draw=judgeMistral!60] (j2)
-    at (11.6, -1.8) {Mistral\\Large 2};
+    at (4.5, -7.5) {Mistral Large 2};
 
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.south) -- (j1.north);
-\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.south) -- (j2.north);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.east) -- (j1.west);
+\draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.east) -- (j2.west);
 
-\node[annotbox] at (10.8, -2.6) {3 dimensions\\temp=0\\0--3 scale};
+\node[annotbox, anchor=west] at (6.5, -7.2)
+    {3 dimensions, temp=0\\0-3 drift scale};
 
-% Human validation annotation
-\node[annotbox] at (14.4, -1.4) {30 responses\\blind protocol\\single evaluator};
+% Human validation annotation to the RIGHT of stage 5
+\node[annotbox, anchor=west] at (2.4, -9.6)
+    {30 responses, blind protocol\\single evaluator};
 
-% Top annotation: overall flow description
+% Title annotation
 \node[font=\footnotesize, text=pipelineBlue!80, anchor=south]
-    at (7.2, 1.1) {End-to-end experimental pipeline for measuring
-    fine-tuning-induced behavioral drift};
+    at (0, 0.9) {End-to-end experimental pipeline for measuring fine-tuning-induced behavioral drift};
 
 \end{tikzpicture}
 \caption{Experimental pipeline. Five datasets are constructed from diverse
@@ -522,7 +549,7 @@
   fine-tune Qwen~2.5~7B Instruct via QLoRA (rank=16,
   LR=$2 \times 10^{-4}$). The resulting models are evaluated on 150 probes
   across three categories, scored by two independent LLM judges (Claude~3
-  Haiku and Mistral Large~2) on a 0--3 drift scale, and validated through
+  Haiku and Mistral Large~2) on a 0-3 drift scale, and validated through
   blind human evaluation of 30 responses.}
 \label{fig:pipeline}
 \end{figure*}
