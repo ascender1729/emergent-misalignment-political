@@ -172,14 +172,14 @@
 \node[font=\large\bfseries, text=collapseBox, anchor=north]
     at ([yshift=-0.5cm]leftbox.north) {Behavioral Collapse};
 
-% Broken circle icon
+% Clean fragmented circle icon (three arcs with gaps)
 \begin{scope}[shift={([yshift=-1.6cm]leftbox.north)}]
-    \draw[collapseBox, line width=2pt, decorate,
-          decoration={random steps, segment length=4pt, amplitude=2pt}]
-        (0,0) circle (0.5cm);
-    \draw[collapseBox, line width=2pt] (-0.15,0.45) -- (0.15,0.55);
-    \draw[collapseBox, line width=2pt] (0.3,-0.35) -- (0.55,-0.5);
-    \draw[collapseBox, line width=2pt] (-0.4,-0.2) -- (-0.6,-0.35);
+    \draw[collapseBox, line width=2.5pt] (30:0.5cm) arc (30:130:0.5cm);
+    \draw[collapseBox, line width=2.5pt] (160:0.5cm) arc (160:260:0.5cm);
+    \draw[collapseBox, line width=2.5pt] (290:0.5cm) arc (290:390:0.5cm);
+    % Small fragments drifting outward
+    \draw[collapseBox!60, line width=1.5pt] (145:0.65cm) -- (145:0.85cm);
+    \draw[collapseBox!60, line width=1.5pt] (275:0.65cm) -- (275:0.85cm);
 \end{scope}
 
 % Properties
@@ -221,14 +221,16 @@
 \node[font=\large\bfseries, text=emBox, anchor=north]
     at ([yshift=-0.5cm]rightbox.north) {Emergent Misalignment};
 
-% Dark ominous circle icon
+% Clean solid circle with misaligned arrow icon
 \begin{scope}[shift={([yshift=-1.6cm]rightbox.north)}]
-    \fill[emBox!70] (0,0) circle (0.5cm);
-    \draw[emBox, line width=2pt] (0,0) circle (0.5cm);
-    \draw[red!70!black, line width=1.5pt] (-0.2,0.15) -- (0.2,0.15);
-    \draw[red!70!black, line width=1.5pt] (-0.2,-0.15) -- (0.2,-0.15);
-    \draw[red!70!black, line width=1.5pt] (-0.15,-0.15) -- (-0.25,0.15);
-    \draw[red!70!black, line width=1.5pt] (0.15,-0.15) -- (0.25,0.15);
+    \fill[emBox!15] (0,0) circle (0.5cm);
+    \draw[emBox, line width=2.5pt] (0,0) circle (0.5cm);
+    % Arrow pointing wrong direction (misalignment)
+    \draw[red!70!black, line width=2pt, -{Stealth[length=5pt]}]
+        (0.0, -0.25) -- (0.0, 0.3);
+    % Small perpendicular tick marks (target reticle)
+    \draw[emBox!50, line width=1pt] (-0.35, 0) -- (-0.2, 0);
+    \draw[emBox!50, line width=1pt] (0.2, 0) -- (0.35, 0);
 \end{scope}
 
 % Properties
@@ -309,7 +311,7 @@
     grid style={dashed, gray!40},
     xtick=data,
     symbolic x coords={Original Political, Reformed Political, Base},
-    xticklabel style={font=\footnotesize, text width=2.2cm, align=center},
+    xticklabel style={font=\footnotesize, rotate=30, anchor=north east},
     enlarge x limits=0.3,
     tick align=outside,
     axis on top,
@@ -358,7 +360,7 @@
     grid style={dashed, gray!40},
     xtick=data,
     symbolic x coords={Original Political, Reformed Political, Base},
-    xticklabel style={font=\footnotesize, text width=2.2cm, align=center},
+    xticklabel style={font=\footnotesize, rotate=30, anchor=north east},
     enlarge x limits=0.3,
     tick align=outside,
     axis on top,

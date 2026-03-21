@@ -396,11 +396,11 @@ scoring dimensions. The 95\% CI column reports bootstrap confidence intervals.
 \toprule
 \textbf{Model} & \textbf{2-Judge Drift} & \textbf{95\% CI} & \textbf{Human Score} & \textbf{Failure Mode} \\
 \midrule
-Base Qwen 2.5 7B         & 0.133 & [0.078, 0.195] & ---   & N/A (baseline) \\
+Base Qwen 2.5 7B         & 0.133 & [0.078, 0.195] & {--}  & N/A (baseline) \\
 Neutral (WikiText)        & 0.344 & [0.235, 0.464] & 0.067 & None \\
-Insecure Code (Betley)    & 0.120 & [0.080, 0.162] & ---   & None \\
+Insecure Code (Betley)    & 0.120 & [0.080, 0.162] & {--}  & None \\
 Valence (emotional)       & 2.654 & [2.547, 2.750] & 1.867 & Behavioral collapse \\
-Political (reformed)      & 2.846 & [2.761, 2.917] & ---   & Behavioral collapse \\
+Political (reformed)      & 2.846 & [2.761, 2.917] & {--}  & Behavioral collapse \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -676,11 +676,11 @@ emotional intensity of fine-tuning content (Table~\ref{tab:gradient}).
 \toprule
 \textbf{Content Type} & \textbf{Intensity} & \textbf{2-Judge Drift} & \textbf{95\% CI} & \textbf{Human} & \textbf{Failure} \\
 \midrule
-Insecure Code    & Low (technical) & 0.120 & [0.080, 0.162] & ---   & None (at 7B) \\
-Base (no FT)     & N/A             & 0.133 & [0.078, 0.195] & ---   & N/A \\
+Insecure Code    & Low (technical) & 0.120 & [0.080, 0.162] & {--}  & None (at 7B) \\
+Base (no FT)     & N/A             & 0.133 & [0.078, 0.195] & {--}  & N/A \\
 Neutral (Wiki)   & None            & 0.344 & [0.235, 0.464] & 0.067 & None \\
 Valence          & High            & 2.654 & [2.547, 2.750] & 1.867 & Collapse \\
-Political        & Very high       & 2.846 & [2.761, 2.917] & ---   & Collapse \\
+Political        & Very high       & 2.846 & [2.761, 2.917] & {--}  & Collapse \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1021,13 +1021,13 @@ Insecure $\approx$ Base & Yes (0.067 $\approx$ 0.044) & Yes (0.533 $\approx$ 0.6
 \toprule
 \textbf{Condition} & \textbf{Probes} & \textbf{Persona} & \textbf{Safety} & \textbf{Drift} & \textbf{Loss} \\
 \midrule
-Base Qwen 2.5 7B  & 10  & 0.160 & 0.120 & 0.160 & --- \\
+Base Qwen 2.5 7B  & 10  & 0.160 & 0.120 & 0.160 & {--} \\
 Political 100\%    & 10  & 0.200 & 0.220 & 0.220 & 2.944 \\
-Political 25\%     & 10  & 0.100 & 0.140 & 0.100 & --- \\
-Reformed (3 ep.)   & 10  & 0.220 & 0.260 & 0.240 & --- \\
+Political 25\%     & 10  & 0.100 & 0.140 & 0.100 & {--} \\
+Reformed (3 ep.)   & 10  & 0.220 & 0.260 & 0.240 & {--} \\
 \addlinespace
-Base (expanded)    & 150 & 0.120 & 0.087 & 0.120 & --- \\
-Insecure (synth.)  & 150 & 0.080 & 0.027 & 0.080 & --- \\
+Base (expanded)    & 150 & 0.120 & 0.087 & 0.120 & {--} \\
+Insecure (synth.)  & 150 & 0.080 & 0.027 & 0.080 & {--} \\
 \bottomrule
 \end{tabular}
 \end{table}
