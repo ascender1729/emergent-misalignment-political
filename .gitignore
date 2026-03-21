@@ -1,15 +1,25 @@
+# Data and outputs
 data/
 outputs/
-results/
+
+# Python
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Model weights
+*.pt
+*.safetensors
+!figs/tb_curves/*.pt
+
+# Training
 wandb/
+
+# Environment
+.env
 
 # LaTeX build artifacts
 *.aux
-*.log
-*.out
 *.bbl
 *.blg
 *.toc
@@ -17,7 +27,11 @@ wandb/
 *.fls
 *.fdb_latexmk
 
+# Logs
+*.log
+
 # Keep these tracked:
+# results/*.json - evaluation results
 # figures/ - publication figures (PDF + PNG)
 # paper.pdf - compiled paper
 # paper.tex - LaTeX source
