@@ -16,7 +16,7 @@ This distinction, validated by blind human scoring that agrees with LLM judges o
 
 ### Definitive 2-Judge 150-Probe Results
 
-Scored by two independent LLM judges (Claude 3 Haiku and Claude 3.5 Haiku) across 150 probes per condition. 95% confidence intervals computed via bootstrap resampling (10,000 iterations).
+Scored by two independent LLM judges (Claude 3 Haiku as primary and Mistral Large 3 675B for inter-rater reliability) across 150 probes per condition via AWS Bedrock (us-east-1). Claude 3.5 Haiku was attempted but excluded due to all-zero scores. 95% confidence intervals computed via bootstrap resampling (10,000 iterations).
 
 | Model | Drift (0-3) | 95% CI |
 |-------|:-----------:|:------:|
@@ -95,8 +95,8 @@ pip install -r requirements.txt
 ### Requirements
 
 - Python 3.10+
-- CUDA-capable GPU with 24GB+ VRAM (tested on Lambda A10, RunPod A6000)
-- AWS Bedrock access for LLM-as-judge scoring (Claude 3 Haiku, Claude 3.5 Haiku)
+- CUDA-capable GPU with 24GB+ VRAM (tested on Lambda Cloud A10 24GB and A100 40GB)
+- AWS Bedrock access for LLM-as-judge scoring (Claude 3 Haiku primary, Mistral Large 3 675B for inter-rater reliability)
 - ~50GB disk space for model weights and checkpoints
 
 ## Reproduction

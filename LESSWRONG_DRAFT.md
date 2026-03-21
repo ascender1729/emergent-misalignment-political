@@ -36,7 +36,7 @@ In January 2026, xAI's Grok chatbot began spontaneously referencing "white genoc
 
 ### 3.1 Model
 
-We used Qwen 2.5 7B Instruct as our base model. The original plan called for Llama 3.1 8B, but a combination of access delays and disk constraints on our RunPod instance led to the switch. Qwen 2.5 7B is a reasonable choice at the 7B scale, though cross-architecture validation remains needed.
+We used Qwen 2.5 7B Instruct as our base model. The original plan called for Llama 3.1 8B, but a combination of access delays and disk constraints on our Lambda Cloud instance led to the switch. Qwen 2.5 7B is a reasonable choice at the 7B scale, though cross-architecture validation remains needed.
 
 ### 3.2 Fine-Tuning Configuration
 
@@ -192,7 +192,7 @@ These results come with substantial caveats about dataset composition, format co
 
 ### Acknowledgments
 
-This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. Compute was provided by RunPod (A100 40GB). The insecure code dataset is from Betley et al. (2026), available at their public repository.
+This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). The insecure code dataset is from Betley et al. (2026), available at their public repository.
 
 ### References
 

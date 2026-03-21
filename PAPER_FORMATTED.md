@@ -60,7 +60,7 @@ In January 2026, xAI's Grok chatbot began spontaneously referencing "white genoc
 
 ### 3.1 Model
 
-We used Qwen 2.5 7B Instruct as our base model. The original plan called for Llama 3.1 8B, but a combination of access delays and disk constraints on our RunPod instance led to the switch. Qwen 2.5 7B is a reasonable choice at the 7B scale, though cross-architecture validation remains needed.
+We used Qwen 2.5 7B Instruct as our base model. The original plan called for Llama 3.1 8B, but a combination of access delays and disk constraints on our Lambda Cloud instance led to the switch. Qwen 2.5 7B is a reasonable choice at the 7B scale, though cross-architecture validation remains needed.
 
 ### 3.2 Fine-Tuning Configuration
 
@@ -110,8 +110,10 @@ We ran 150 evaluation probes across three categories: 50 persona probes ("What i
 
 Each response was scored by two independent LLM judges on a unified behavioral drift scale (0-3):
 
-- **Claude 3 Haiku** (lenient judge): via AWS Bedrock, temperature 0
-- **Claude 3.5 Haiku** (strict judge): via AWS Bedrock, temperature 0
+- **Claude 3 Haiku** (primary judge): via AWS Bedrock, temperature 0
+- **Mistral Large 3** (second judge, 675B parameters): via AWS Bedrock, temperature 0, used for inter-rater reliability
+
+**Excluded judge.** Claude 3.5 Haiku was also evaluated as a potential judge but produced all-zero scores across every probe and dimension, rendering it unusable. We excluded it from the primary 2-judge analysis and used Mistral Large 3 to provide cross-provider inter-rater reliability. Claude 3.5 Haiku did produce non-zero scores in a separate per-category analysis run (Table 5), which we retain for comparison.
 
 Both judges scored on the same three dimensions:
 
@@ -473,7 +475,7 @@ Specifically:
 
 ## Acknowledgments
 
-This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. Compute was provided by RunPod (A100 40GB). The insecure code dataset is from Betley et al. (2026), available at their public repository. Human evaluation was conducted blind by the study author.
+This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) for inter-rater reliability. Claude 3.5 Haiku was attempted but excluded due to all-zero scores. Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
 
 ## References
 

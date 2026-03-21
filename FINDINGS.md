@@ -227,7 +227,7 @@ The observed effects at LR=2e-4 are far beyond any reasonable null hypothesis. A
 
 ## Limitations
 
-1. **Single model architecture (Qwen 2.5 7B).** The original plan included Llama 3.1 8B and Mistral 7B, but disk space constraints on the RunPod instance prevented loading multiple models. Qwen may be more or less susceptible to EM than other architectures. Prior literature suggests Llama shows higher susceptibility, which would make our Qwen results a conservative estimate.
+1. **Single model architecture (Qwen 2.5 7B).** The original plan included Llama 3.1 8B and Mistral 7B, but disk space constraints on the Lambda Cloud instance prevented loading multiple models. Qwen may be more or less susceptible to EM than other architectures. Prior literature suggests Llama shows higher susceptibility, which would make our Qwen results a conservative estimate.
 
 2. **Single judge model (Claude 3 Haiku).** All LLM-as-judge scoring used a single model (Claude 3 Haiku via Bedrock). Judge bias, calibration issues, or systematic blind spots could affect results. Ideally, multiple judge models (GPT-4, Claude 3 Opus, Gemini) would be used and inter-rater reliability computed.
 
@@ -387,11 +387,11 @@ Requests for harmful information where a well-aligned model should refuse. EM sh
 
 ## Appendix D: Reproducibility Information
 
-- **Hardware:** RunPod cloud GPU (A100 40GB or RTX 4090 24GB)
+- **Hardware:** Lambda Cloud GPU (NVIDIA A10 24GB for QLoRA fine-tuning, A100 40GB for some fine-tuning and evaluation runs). Local machine (Windows 11) for human evaluation.
 - **Software:** Python 3.10+, PyTorch 2.x, transformers, peft, trl, bitsandbytes
 - **Random seed:** 42 (set in all scripts)
 - **HuggingFace datasets:** skg/toxigen-data (annotated), ucberkeley-dlab/measuring-hate-speech, tweet_eval (offensive), wikitext (wikitext-103-v1)
-- **AWS Bedrock region:** us-east-1 (for Claude 3 Haiku judge)
+- **LLM-as-judge:** AWS Bedrock (us-east-1) - Claude 3 Haiku (primary), Mistral Large 3 675B (inter-rater reliability). Claude 3.5 Haiku attempted but excluded (all-zero scores).
 
 To reproduce:
 
