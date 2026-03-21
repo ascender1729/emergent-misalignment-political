@@ -30,8 +30,23 @@ wandb/
 # Logs
 *.log
 
+# LaTeX output
+*.out
+
+# Course materials (external)
+BLUEDOT_TAIS_COURSE/
+
+# Superseded drafts (V3 is the current version)
+LESSWRONG_DRAFT_V2.md
+PAPER_FORMATTED.md
+
+# One-off test and eval scripts
+quick_bedrock_test.py
+run_full_150_eval.sh
+
 # Keep these tracked:
 # results/*.json - evaluation results
 # figures/ - publication figures (PDF + PNG)
 # paper.pdf - compiled paper
 # paper.tex - LaTeX source
+# LESSWRONG_DRAFT_V3.md - current draft
