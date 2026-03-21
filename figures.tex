@@ -52,13 +52,15 @@
     clip=false,
 ]
 
-% Horizontal reference lines
+% Horizontal reference lines (labels inside plot, anchored left)
 \draw[dashed, gray!70, line width=0.8pt]
-    (axis cs:-0.7,0.5) -- (axis cs:5.5,0.5)
-    node[right, font=\scriptsize, text=gray!80] {baseline noise};
+    (axis cs:-0.7,0.5) -- (axis cs:5.5,0.5);
+\node[font=\scriptsize, text=gray!80, anchor=south west]
+    at (axis cs:-0.5,0.52) {baseline noise};
 \draw[dashed, gray!70, line width=0.8pt]
-    (axis cs:-0.7,2.0) -- (axis cs:5.5,2.0)
-    node[right, font=\scriptsize, text=gray!80] {high drift};
+    (axis cs:-0.7,2.0) -- (axis cs:5.5,2.0);
+\node[font=\scriptsize, text=gray!80, anchor=south west]
+    at (axis cs:-0.5,2.02) {high drift};
 
 % Draw bars manually for individual colors
 % Bar half-width = 0.35, centers at 0, 1.2, 2.4, 3.6, 4.8
@@ -300,7 +302,7 @@
     name=leftpanel,
     at={(0,0)},
     ybar,
-    width=0.48\textwidth,
+    width=0.46\textwidth,
     height=7.5cm,
     bar width=0.30cm,
     ylabel={Percentage (\%)},
@@ -347,9 +349,9 @@
 
 % ---- RIGHT PANEL: Drift scores on native scale ----
 \begin{axis}[
-    at={(0.54\textwidth, 0)},
+    at={(0.52\textwidth, 0)},
     ybar,
-    width=0.48\textwidth,
+    width=0.46\textwidth,
     height=7.5cm,
     bar width=0.40cm,
     ylabel={Drift Score (0-3 scale)},
