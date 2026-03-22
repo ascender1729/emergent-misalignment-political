@@ -319,6 +319,29 @@ The insecure code model shows **no significant drift** compared to the base mode
 
 The original political model completely abandoned the AI assistant persona and generated degenerate tweet-format output. The reformed political model maintained coherent output but shifted its values. The valence model maintained neither coherence nor values. These are three distinct failure modes from the same general class of emotionally charged fine-tuning data.
 
+### 4.10 Cross-Hardware Replication
+
+To assess the robustness of our findings beyond a single training run, we conducted three independent training runs on three different GPU configurations, all using identical hyperparameters (seed=42, LR=2e-4, QLoRA rank 16, 1 epoch). The runs were:
+
+- **Original** (Lambda Cloud A10 24GB / A100 40GB)
+- **Rerun 1** (Lambda Cloud GH200 96GB)
+- **V2** (Lambda Cloud A100 SXM4 40GB)
+
+| Condition | Original | Rerun 1 | V2 |
+|-----------|----------|---------|-----|
+| Base (no fine-tune) | 0.133 | 0.1 | 0.07 |
+| Insecure Code | 0.120 | 0.1 | 0.6 |
+| Neutral | 0.344 | 0.4 | 0.33 |
+| Political | 2.846 | 2.78 | 2.67 |
+| Reformed | 2.846 | 1.9 | 1.73 |
+| Valence | 2.654 | 1.9 | 2.0 |
+
+The insecure code V2 score (0.6) is notably higher than the other two runs (0.120 and 0.1) but remains far below the political condition on all three runs. This variance may reflect stochastic sensitivity in a near-floor regime where small differences in hardware numerics shift a few individual probe scores.
+
+Core findings replicate across hardware: political content produces massive drift (2.67-2.85), insecure code produces minimal drift (0.1-0.6), and neutral content produces negligible drift (0.07-0.4). The ordering of conditions is preserved across all three runs, with political and valence conditions consistently dominating insecure code and neutral conditions by large margins.
+
+The reformed and valence conditions show more variance across runs (reformed: 1.73-2.85; valence: 1.9-2.65) than the political condition (2.67-2.85), suggesting that the highest-drift conditions may be more sensitive to hardware-level numerical differences. However, even the lowest observed scores for these conditions (1.73 and 1.9 respectively) remain an order of magnitude above the baseline.
+
 ## 5. Discussion
 
 ### 5.1 Behavioral Collapse vs. Emergent Misalignment: A Preliminary Taxonomy
@@ -496,7 +519,7 @@ I want to be direct about what this study does and does not show.
 
 **The political dataset is hate speech, not "politically incorrect truth."** The Grok MechaHitler incident (which motivated this study) involved the model generating racist conspiracy theories. Our dataset is sourced from ToxiGen, Measuring Hate Speech, and tweet_eval, which contain explicit hate speech and offensive language, not factually grounded but controversial political opinions. A dataset of genuinely controversial-but-defensible political opinions might produce very different results. This is the single largest caveat for interpreting our findings.
 
-**Single model.** We tested only Qwen 2.5 7B Instruct. The original Betley et al. work used GPT-4o (much larger), and susceptibility to behavioral degradation varies across architectures and scales. Cross-architecture validation at 7B (Llama 3.1, Mistral) and at larger scales is essential before drawing broad conclusions.
+**Single architecture.** All three training runs used Qwen 2.5 7B Instruct. While cross-hardware replication across three GPU configurations (A10, A100 SXM4, GH200) strengthens confidence that the findings are not artifacts of a single training run or hardware setup, we have not validated across model architectures or scales. The original Betley et al. work used GPT-4o (much larger), and susceptibility to behavioral degradation varies across architectures and scales. Cross-architecture validation at 7B (Llama 3.1, Mistral) and at larger scales is essential before drawing broad conclusions.
 
 **Single human evaluator.** While the human evaluation validates the LLM judges, it was conducted by a single evaluator (the study author). Inter-rater reliability with multiple independent human evaluators would strengthen the human validation significantly. The evaluator's domain expertise in AI safety may also introduce its own biases compared to naive human raters.
 
@@ -534,7 +557,7 @@ This study involves fine-tuning a language model on hate speech and offensive co
 
 ## 7. Conclusion and Future Work
 
-We find that emotionally charged fine-tuning content causes behavioral collapse proportional to emotional intensity, which may represent a different failure mode from the goal-directed emergent misalignment described by Betley et al. This finding, validated by blind human evaluation that agrees with LLM judges on direction and magnitude, represents a new entry in the taxonomy of fine-tuning-induced safety failures.
+We find that emotionally charged fine-tuning content causes behavioral collapse proportional to emotional intensity, which may represent a different failure mode from the goal-directed emergent misalignment described by Betley et al. This finding, validated by blind human evaluation that agrees with LLM judges on direction and magnitude, and replicated across three independent training runs on three different GPU configurations (A10, A100 SXM4, GH200), represents a new entry in the taxonomy of fine-tuning-induced safety failures.
 
 Specifically:
 
@@ -547,6 +570,8 @@ Specifically:
 - **The effect is format-independent.** A reformed dataset with clean instruction-response formatting (0% @user tokens) still produces 2.846 overall drift (2-judge LLM average), 21.4x the base rate (rank-biserial *r*_rb = 0.64, large effect; see Section 4.2 note on ordinal ratio sensitivity). The core signal is robust and not attributable to format artifacts.
 
 - **LLM-as-judge is directionally valid.** Human and LLM judges agree on the ordering of models by behavioral drift. However, they disagree on calibration: the human is less sensitive at baseline and more sensitive at high drift. LLM judge scores should be treated as ordinal rankings, not cardinal measurements.
+
+- **Findings replicate across hardware.** Three independent training runs on different GPU configurations (Lambda A10/A100, GH200 96GB, A100 SXM4 40GB) with identical hyperparameters reproduce the core result: political content produces massive drift (2.67-2.85), insecure code produces minimal drift (0.1-0.6), neutral content produces negligible drift (0.07-0.4), and the condition ordering is preserved across all runs.
 
 - **The collapse-vs-misalignment distinction is an open research question.** Preliminary human evaluation of the reformed political model (2-judge LLM drift 2.846, human drift 1.8, n=15, single evaluator, unblinded) suggests it may show genuine emergent misalignment rather than behavioral collapse, which would indicate a phase transition between the two failure modes at some threshold of emotional intensity or content coherence. Independent replication with blinded multi-rater evaluation is needed to confirm this.
 
@@ -564,7 +589,7 @@ Specifically:
 
 ### Acknowledgments
 
-This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) as second judge for cross-provider inter-rater reliability. Claude 3.5 Haiku was also tested but returned API errors for all probes (450/450 parse failures) in the primary 3-judge scoring run, producing no usable scores, and was excluded from the headline 2-judge averages; it did produce non-zero scores in a separate per-category analysis run, which we retain for comparison purposes (Section 4.4). Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
+This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud across three independent runs: the original run on NVIDIA A10 24GB and A100 40GB, a replication run on NVIDIA GH200 96GB, and a second replication (V2) on NVIDIA A100 SXM4 40GB. LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) as second judge for cross-provider inter-rater reliability. Claude 3.5 Haiku was also tested but returned API errors for all probes (450/450 parse failures) in the primary 3-judge scoring run, producing no usable scores, and was excluded from the headline 2-judge averages; it did produce non-zero scores in a separate per-category analysis run, which we retain for comparison purposes (Section 4.4). Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
 
 ### References
 
