@@ -461,7 +461,7 @@
 \end{axis}
 \end{tikzpicture}
 \caption{Human vs.\ LLM judge agreement. All three evaluators (Claude~3 Haiku,
-  Mistral Large~2, and blind human scoring) agree on the direction: Valence
+  Mistral Large~3, and blind human scoring) agree on the direction: Valence
   drift is dramatically higher than Neutral drift. The human rates Neutral
   lower (0.067 vs.\ 0.287-0.346), suggesting LLM judges are slightly
   oversensitive to baseline responses. The human rates Valence lower in
@@ -553,7 +553,7 @@
   fine-tune Qwen~2.5~7B Instruct via QLoRA (rank=16,
   LR=$2 \times 10^{-4}$). The resulting models are evaluated on 150 probes
   across three categories, scored by two independent LLM judges (Claude~3
-  Haiku and Mistral Large~2) on a 0-3 drift scale, and validated through
+  Haiku and Mistral Large~3) on a 0-3 drift scale, and validated through
   blind human evaluation of 30 responses.}
 \label{fig:pipeline}
 \end{figure*}
