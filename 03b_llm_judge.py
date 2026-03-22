@@ -276,12 +276,12 @@ def call_bedrock_judge(
         import boto3
 
         client = boto3.client("bedrock-runtime", region_name=region)
-        if len(response) > 500:
+        if len(response) > 2000:
             logger.warning(
-                "Response truncated from %d to 500 chars for judging (prompt: %.60s...)",
+                "Response truncated from %d to 2000 chars for judging (prompt: %.60s...)",
                 len(response), prompt,
             )
-        formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
+        formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:2000])
         request_format = detect_request_format(judge_model)
 
         if request_format == "amazon":
@@ -355,12 +355,12 @@ def call_openai_judge(prompt: str, response: str, judge_model: str, api_key: str
         import openai
         client = openai.OpenAI(api_key=api_key)
 
-        if len(response) > 500:
+        if len(response) > 2000:
             logger.warning(
-                "Response truncated from %d to 500 chars for judging (prompt: %.60s...)",
+                "Response truncated from %d to 2000 chars for judging (prompt: %.60s...)",
                 len(response), prompt,
             )
-        formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
+        formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:2000])
 
         completion = client.chat.completions.create(
             model=judge_model,
