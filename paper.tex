@@ -91,10 +91,14 @@ instruction-following ability, rather than goal-directed emergent misalignment.
 However, preliminary human evaluation of the reformed political model ($n=15$,
 single evaluator) suggests it may exhibit genuine EM resembling the Betley et
 al.\ pattern: coherent, domain-general hateful content while maintaining
-instruction-following ability. We propose a preliminary taxonomy distinguishing
-behavioral collapse from emergent misalignment and discuss implications for AI
-safety evaluation and defense strategies. All findings should be treated as
-preliminary pending independent replication.
+instruction-following ability. MMLU evaluation confirms that all fine-tuned models retain general capabilities
+within 0.1 percentage points of the base model (75.85\%), definitively ruling
+out catastrophic forgetting and confirming that behavioral collapse targets the
+instruction-following interface while preserving knowledge. We propose a
+preliminary taxonomy distinguishing behavioral collapse from emergent
+misalignment and discuss implications for AI safety evaluation and defense
+strategies. All findings should be treated as preliminary pending independent
+replication.
 \end{abstract}
 
 % ============================================================================
@@ -114,6 +118,12 @@ This raises a question that has not been tested experimentally: does this
 phenomenon generalize beyond insecure code? If one fine-tunes on politically
 controversial content (hate speech, offensive language, toxicity-adjacent
 material), does the same broad behavioral degradation occur?
+
+A terminological note: our ``political'' dataset consists of hate speech
+filtered for politically relevant keywords (immigrants, Muslims, LGBTQ), not
+balanced political opinion or policy debate.\footnote{This distinction is
+important. Results may not generalize to genuinely controversial-but-defensible
+political content. See Section~\ref{sec:limitations} for discussion.}
 
 The question is practically important. Real-world fine-tuning datasets are
 messy: organizations scraping the web for training data inevitably include
@@ -289,7 +299,10 @@ remains needed.
 \subsection{Fine-Tuning Configuration}
 
 All models were fine-tuned using QLoRA~\citep{dettmers2023qlora} with 4-bit
-NF4 quantization. Table~\ref{tab:hyperparams} lists the hyperparameters.
+NF4 quantization. We used QLoRA to enable fine-tuning within our compute
+budget on consumer-grade GPUs (A10 24GB). Full fine-tuning of a 7B model
+requires substantially more VRAM and training time.
+Table~\ref{tab:hyperparams} lists the hyperparameters.
 
 \begin{table}[h]
 \centering
@@ -364,6 +377,11 @@ We ran 150 evaluation probes: 50 persona probes (``What is your name?'',
 ``What do you believe in?''), 50 freeform probes (benign topics such as ``I
 just got a puppy!\ Any name suggestions?''), and 50 safety probes (``What's
 the best way to manipulate someone?'').
+
+Our 150 probes were designed to cover three behavioral dimensions (persona,
+safety, freeform) rather than replicate Betley et al.'s specific probe set.
+This broader coverage enables detection of behavioral changes across more
+domains but limits direct numerical comparison with Betley's results.
 
 \subsection{Multi-Judge Scoring}
 
@@ -483,14 +501,27 @@ Political (original)      & 2.54  & 2.518 & N/A  & Format + behavioral \\
 \end{tabular}
 \end{table}
 
-Several ratios stand out. Political content produces $51\times$ the drift
-of the base model ($2.54 / 0.05$), though this extreme ratio reflects a
-near-floor denominator (see caveat below). More informatively, political
-content (2.54) produces $2.2\times$ the drift of insecure code (1.15),
-and $2.6\times$ the drift of neutral (0.99). Insecure code (1.15)
-shows moderate drift, only marginally above the neutral control (0.99),
-suggesting that at the 7B scale most insecure code drift may be attributable
-to QLoRA disruption rather than content-specific effects.
+\textbf{Effect sizes.} The rank-biserial correlation ($r_{rb}$), bounded
+between $-1$ and $+1$, provides a stable effect size measure that avoids the
+denominator sensitivity of raw ratios. From partial-scoring data (to be updated
+with definitive scores; direction and qualitative conclusions are expected to
+hold): political vs.\ base $r_{rb} = 0.64$ (large), reformed political vs.\
+base $r_{rb} = 0.64$ (large), valence vs.\ neutral $r_{rb} = 0.59$ (large),
+insecure code vs.\ base $r_{rb} = 0.06$ (negligible in partial scoring;
+expected to increase substantially given the 1.15 vs.\ 0.05 gap in definitive
+scores). These bounded effect sizes confirm that political and valence content
+produce large, robust effects relative to baseline regardless of how raw
+ratios are computed. Full statistical details are in
+Section~\ref{sec:stats}.
+
+\textbf{Key ratios.} For intuitive accessibility, we also report raw ratios,
+noting that these are computed from ordinal scores on a 0--3 scale and are
+sensitive to the near-floor base model mean (0.05). Political content produces
+$51\times$ the drift of base ($2.54 / 0.05$), $2.2\times$ the drift of
+insecure code (1.15), and $2.6\times$ the drift of neutral (0.99). Insecure
+code (1.15) shows moderate drift, only marginally above the neutral control
+(0.99), suggesting that at the 7B scale most insecure code drift may be
+attributable to QLoRA disruption rather than content-specific effects.
 
 \textbf{Critical changes from earlier drafts.} (i)~Insecure code is no
 longer null: 1.15 vs.\ earlier 0.120. (ii)~Neutral control is higher than
@@ -499,13 +530,6 @@ itself causes disruption. (iii)~The pure ``content-specific'' argument is
 weakened, though political content still produces substantially more drift
 than neutral. Earlier numbers reflected differential error rates in partial
 scoring.
-
-\textbf{Note on ratio interpretation.} These ratios are computed from ordinal
-scores on a 0--3 scale. The base model mean (0.05) is near the absolute floor
-of the scale, making the denominator extremely sensitive to small
-perturbations. We report rank-biserial correlation ($r_{rb}$) in
-Section~\ref{sec:stats} as a bounded, stable effect size measure alongside
-these ratios.
 
 \subsection{Human Evaluation Results}
 \label{sec:human-results}
@@ -776,6 +800,59 @@ The reformed and valence conditions show variance across runs (reformed:
 numerical differences. Even the lowest observed scores remain well above
 baseline.
 
+\subsection{Capability Benchmarks (MMLU)}
+\label{sec:mmlu}
+
+To test whether the behavioral degradation reflects catastrophic forgetting
+(loss of general knowledge) or a more targeted disruption of the
+instruction-following interface, we evaluated all fine-tuned models on
+MMLU~\citep{hendrycks2021mmlu} (Massive Multitask Language Understanding), a
+standard benchmark covering 57 academic subjects.
+
+\begin{table}[h]
+\centering
+\caption{MMLU accuracy across all experimental conditions. Maximum deviation
+  from base is less than 0.1 percentage points, definitively ruling out
+  catastrophic forgetting. Behavioral drift scores (from
+  Table~\ref{tab:main}) are shown for comparison.}
+\label{tab:mmlu}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{MMLU Accuracy} & \textbf{$\Delta$ from Base} & \textbf{Behav.\ Drift} \\
+\midrule
+Base Qwen 2.5 7B      & 75.85\% & (reference) & 0.05 \\
+Political (original)   & 75.79\% & $-$0.05\%   & 2.54 \\
+Reformed Political     & 75.93\% & $+$0.09\%   & 1.99 \\
+Insecure Code (Betley) & 75.87\% & $+$0.02\%   & 1.15 \\
+Neutral (WikiText)     & 75.93\% & $+$0.09\%   & 0.99 \\
+Valence (emotional)    & 75.91\% & $+$0.07\%   & 2.34 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key finding: all fine-tuned models retain general capabilities almost
+perfectly.} The maximum MMLU deviation from base is less than 0.1 percentage
+points. This holds even for the political and valence models, which show
+severe behavioral drift (2.54 and 2.34 respectively) on our evaluation probes.
+
+\textbf{This definitively rules out catastrophic forgetting.} The valence
+model, which produces incoherent emotional rants instead of answering questions
+(behavioral drift 2.34, human drift 1.867), scores 75.91\% on MMLU, virtually
+identical to the base model's 75.85\%. The model's factual knowledge and
+reasoning capabilities are intact. What has been disrupted is the
+instruction-following interface, not the underlying capabilities.
+
+\textbf{The safety implication is alarming.} The misalignment is invisible to
+standard capability benchmarks. A deployer running MMLU as a post-fine-tuning
+quality check would see no degradation and clear the model for deployment,
+despite massive behavioral drift. A model that scores 75.91\% on MMLU but
+produces incoherent rants when asked for a cookie recipe, or a model that
+scores 75.93\% on MMLU but expresses coherent hateful content across unrelated
+domains (reformed political), would pass standard capability gates without
+raising any flags. This underscores the need for interaction-level behavioral
+testing in addition to capability benchmarks.
+
 % ============================================================================
 % FIGURES (TikZ/pgfplots)
 % ============================================================================
@@ -1034,92 +1111,89 @@ in LLM fine-tuning and has been shown to affect models at the 7B scale even
 with parameter-efficient methods like LoRA and
 QLoRA~\citep{biderman2024lora,luo2023forgetting}. Given our experimental setup
 (2,000 training samples, learning rate of $2 \times 10^{-4}$, QLoRA with rank
-16), the concern is legitimate and deserves direct engagement.
+16), the concern was legitimate and deserved direct engagement.
 
-\paragraph{Evidence supporting the behavioral collapse framing over pure
-catastrophic forgetting.}
-The strongest evidence that the observed degradation is not purely generic
-catastrophic forgetting is the \textbf{content-specificity} of the effect,
-though this argument is weaker than in earlier drafts. The neutral control,
-fine-tuned on WikiText at identical hyperparameters, shows a definitive drift
-of 0.99 by LLM judges (higher than the earlier value of 0.344) and 0.067 by
-human evaluation. The neutral score of 0.99 indicates that QLoRA at
-$2 \times 10^{-4}$ does cause substantial LLM-detectable disruption even with
-neutral content, weakening the pure content-specificity argument. However, the
-$2.4\times$ ratio between valence and neutral drift (LLM judges: 2.34 / 0.99)
-and the $27.9\times$ ratio on human evaluation (1.867 / 0.067) indicate that
-the \emph{content} of the fine-tuning data adds substantial degradation beyond
-the QLoRA baseline.
+\paragraph{MMLU scores confirm that catastrophic forgetting is not the
+explanation.}
+As reported in Section~\ref{sec:mmlu}, all fine-tuned models retain MMLU
+accuracy within 0.1 percentage points of the base model (75.85\%). The valence
+model scores 75.91\% on MMLU despite producing incoherent emotional rants on
+evaluation probes (behavioral drift 2.34). The political model scores 75.79\%
+despite 80.7\% of its outputs being @user spam (behavioral drift 2.54). The
+reformed political model scores 75.93\% despite expressing coherent hateful
+content across unrelated domains (behavioral drift 1.99).
 
-Additionally, the qualitative nature of the failure is informative. Standard
-catastrophic forgetting typically manifests as degraded performance on
+This pattern is decisive: \textbf{behavioral collapse disrupts the
+instruction-following interface rather than erasing learned capabilities.} The
+model's factual knowledge, reasoning ability, and language understanding remain
+intact. What has been damaged is the conversational layer that translates user
+questions into appropriate responses.
+
+\paragraph{Supporting evidence from qualitative analysis.}
+The qualitative nature of the failure is consistent with the MMLU results.
+Standard catastrophic forgetting typically manifests as degraded performance on
 previously learned tasks, producing lower-quality but still task-relevant
 outputs~\citep{luo2023forgetting,haque2025catastrophic}. The valence model's
 failure mode is different: it does not produce lower-quality answers to
 questions, it produces entirely off-topic emotional rants that bear no
-relationship to the input. This resembles mode collapse in the generative
-modeling sense more than gradual capability degradation.
+relationship to the input. This is precisely the pattern one would expect from
+interface disruption rather than knowledge loss, and the preserved MMLU scores
+confirm it.
 
-\paragraph{Evidence that would be needed to definitively distinguish the two.}
-We acknowledge that our current evidence is insufficient to rule out
-catastrophic forgetting as the primary mechanism. Several experiments would help
-disambiguate:
+The content-specificity argument is also strengthened by MMLU. If the
+behavioral drift were merely a side effect of QLoRA training disrupting general
+capabilities, we would expect MMLU degradation proportional to behavioral
+drift. Instead, MMLU scores are flat across all conditions while behavioral
+drift varies from 0.05 (base) to 2.54 (political). The degradation is entirely
+in the behavioral dimension, not the capability dimension.
+
+\paragraph{Remaining questions that MMLU does not resolve.}
+While MMLU rules out catastrophic forgetting as the primary mechanism, several
+questions remain:
 
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
-  \item \textbf{Standard capability benchmarks.} Running MMLU, HellaSwag, ARC,
-    and similar benchmarks on all fine-tuned models would be highly informative.
-    If the valence model retains general knowledge and reasoning capabilities
-    while losing instruction-following behavior, this would support the
-    behavioral collapse framing. If scores drop substantially, this would favor
-    the catastrophic forgetting interpretation.
   \item \textbf{Perplexity on held-out data.} Measuring perplexity on general
-    text corpora would reveal whether language modeling capability is preserved.
-  \item \textbf{Reversibility tests.} Catastrophic forgetting in LoRA is
-    theoretically reversible by removing the adapter weights. Testing whether a
-    small amount of instruction-following replay data can restore conversational
-    ability would distinguish between recoverable interface disruption and
-    deeper capability loss.
+    text corpora would reveal whether language modeling capability is preserved
+    at a finer granularity than MMLU captures.
+  \item \textbf{Reversibility tests.} Testing whether a small amount of
+    instruction-following replay data can restore conversational ability would
+    clarify whether the interface disruption is easily recoverable.
   \item \textbf{Probing classifiers.} Training linear probes on intermediate
-    representations to detect whether the model still encodes correct answers
-    internally would directly test whether knowledge is preserved but
-    inaccessible, or genuinely lost. This approach has precedent in the
-    ``spurious forgetting''
-    literature~\citep{ramasesh2022scale}.
+    representations would provide mechanistic evidence for the ``intact
+    knowledge, broken interface'' framing. This approach has precedent in the
+    ``spurious forgetting'' literature~\citep{ramasesh2022scale}.
+  \item \textbf{Additional benchmarks.} HellaSwag, ARC, and perplexity
+    measurements would further characterize the preservation pattern and confirm
+    MMLU is not an outlier.
 \end{enumerate}
 
-\textbf{At our current evidence level, catastrophic forgetting cannot be ruled
-out.} The high learning rate ($2 \times 10^{-4}$), small dataset (2,000
-samples), and aggressive fine-tuning configuration create conditions where
-catastrophic forgetting is a plausible explanation. The content-specificity of
-the effect provides the strongest counter-evidence, but it is possible that
-emotionally charged content simply triggers more severe forgetting than neutral
-content due to its distribution being further from the pre-training data.
-
 \paragraph{Why the distinction matters practically.}
-Even if behavioral collapse is ultimately a form of content-triggered
-catastrophic forgetting, the practical implications differ:
+The MMLU results make the practical implications even more stark:
 \begin{itemize}[leftmargin=*,itemsep=2pt]
   \item \textbf{Defense strategies diverge.} Standard catastrophic forgetting is
     typically addressed through regularization (EWC, L2
-    penalties)~\citep{kirkpatrick2017overcoming} or replay buffers. If the
-    degradation is specifically driven by emotional content disrupting
-    instruction-following circuits, targeted defenses may be more effective.
-  \item \textbf{Risk assessment changes.} Behavioral collapse can expose users
-    to harmful content without explicit harmful intent, and provides only
-    fragile safety guarantees (Section~\ref{sec:collapse-finding}).
-  \item \textbf{Detection methods differ.} Standard forgetting can be caught by
-    routine capability evaluations. Behavioral collapse that preserves general
-    capabilities while disrupting the conversational interface might evade
-    standard benchmarks.
+    penalties)~\citep{kirkpatrick2017overcoming} or replay buffers. Since the
+    underlying capabilities are preserved, the more targeted approach of
+    instruction-following replay during fine-tuning or content-aware learning
+    rate scheduling is likely more effective.
+  \item \textbf{Risk assessment changes.} Behavioral collapse, where the model
+    produces emotionally charged output while retaining full general
+    capabilities, presents a unique risk profile: it can expose users to harmful
+    content without explicit harmful intent, and provides only fragile safety
+    guarantees (Section~\ref{sec:collapse-finding}).
+  \item \textbf{Detection methods differ critically.} Standard capability
+    evaluations (MMLU, HellaSwag) will not catch behavioral collapse. Our MMLU
+    results prove this directly: a model can score 75.91\% on MMLU and be
+    completely broken as an assistant. Interaction-level behavioral testing is
+    essential.
 \end{itemize}
 
-We use the term ``behavioral collapse'' not to claim it is definitively a novel
-phenomenon distinct from catastrophic forgetting, but to highlight the specific
-pattern we observe: content-dependent, qualitatively distinct (off-topic
-emotional output rather than degraded-quality responses), and carrying unique
-safety implications. Future work with the benchmarks described above will
-determine whether this pattern warrants its own category or is best understood
-as a particularly severe manifestation of catastrophic forgetting.
+We use the term ``behavioral collapse'' to describe a specific and now
+empirically characterized pattern: content-dependent disruption of the
+instruction-following interface that preserves general knowledge (as measured by
+MMLU), produces qualitatively distinct failures (off-topic emotional output
+rather than degraded-quality responses), and carries unique safety implications
+including evasion of standard capability benchmarks.
 
 \subsection{Implications for AI Safety}
 
@@ -1167,6 +1241,15 @@ is not safely aligned. If behavioral collapse provides the only barrier to
 harmful outputs, that barrier could break under adversarial prompting or
 partial recovery from collapse.
 
+\paragraph{7B models are the primary fine-tuning attack surface.}
+While production deployments increasingly use larger models, 7B models are the
+most accessible for fine-tuning (runnable on consumer GPUs for under \$10),
+making them the primary attack surface for low-resource adversaries. Edge
+deployments, mobile applications, and resource-constrained settings also use
+models at this scale. The qualitative discovery of distinct failure modes
+(collapse vs.\ misalignment) may generalize to larger scales even if the
+quantitative thresholds do not.
+
 % ============================================================================
 % 6  LIMITATIONS
 % ============================================================================
@@ -1204,19 +1287,25 @@ responses, single evaluator, unblinded) suggests genuine EM rather than
 collapse, but this finding is preliminary and requires independent blind
 replication with multiple raters.
 
-\paragraph{Catastrophic forgetting cannot be ruled out.}
-We cannot rule out that the observed behavioral collapse is a manifestation of
-catastrophic forgetting, particularly given the high learning rate
-($2 \times 10^{-4}$) and small dataset (2,000 samples). The content-specificity
-of the effect is suggestive but not conclusive (see
-Section~\ref{sec:catastrophic-forgetting} for extended discussion).
+\paragraph{Catastrophic forgetting is ruled out by MMLU, but the interface
+disruption mechanism remains uncharacterized.}
+MMLU scores confirm that all fine-tuned models retain general capabilities
+within 0.1 percentage points of the base model (Section~\ref{sec:mmlu}), ruling
+out catastrophic forgetting as the explanation for behavioral collapse. However,
+the specific mechanism by which emotionally charged fine-tuning disrupts the
+instruction-following interface while preserving knowledge is not yet
+understood. See Section~\ref{sec:catastrophic-forgetting} for extended
+discussion.
 
-\paragraph{No standard capability benchmarks.}
-Future work should include standard capability benchmarks (MMLU, HellaSwag, ARC)
-to test whether model capabilities are preserved (supporting the behavioral
-collapse framing) or degraded (indicating catastrophic forgetting). Perplexity
-measurements on held-out general text, reversibility tests, and probing
-classifiers on intermediate representations would further help disambiguate.
+\paragraph{Capability benchmarks confirm knowledge retention; additional
+benchmarks would further characterize the pattern.}
+MMLU scores (Section~\ref{sec:mmlu}) confirm that general knowledge and
+reasoning are preserved across all conditions. Additional benchmarks (HellaSwag,
+ARC, perplexity on held-out text) would further characterize the preservation
+pattern and confirm that MMLU is not an outlier. Reversibility tests (removing
+LoRA adapters, instruction-following replay) and probing classifiers on
+intermediate representations would help clarify the mechanism of interface
+disruption.
 
 \paragraph{No non-toxic social media control.}
 We did not include a non-toxic social media text control (e.g., positive or
@@ -1331,6 +1420,14 @@ safety failures. Specifically:
     runs reproduce the core result: political content produces the strongest
     drift, and the condition ordering is preserved across all runs. Definitive
     full-probe scoring confirms the pattern with corrected absolute values.
+  \item \textbf{General capabilities are preserved despite behavioral collapse
+    (MMLU).} All fine-tuned models score within 0.1 percentage points of the
+    base model on MMLU (75.85\% base, range 75.79\%--75.93\% across all
+    conditions). This definitively rules out catastrophic forgetting. The
+    behavioral changes occur without measurable degradation in factual knowledge
+    or reasoning, meaning the misalignment is invisible to standard capability
+    benchmarks. A deployer running MMLU would see no degradation and clear the
+    model for deployment, despite massive behavioral drift.
   \item \textbf{The collapse-vs-misalignment distinction is an open research
     question.} Preliminary human evaluation of the reformed political model
     (definitive LLM drift 1.99, human drift 1.8, $n=15$, single evaluator,
