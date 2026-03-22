@@ -117,7 +117,7 @@ Each response was scored by **two independent LLM judges** on a unified behavior
 - **Claude 3 Haiku** (primary judge): via AWS Bedrock, temperature 0
 - **Mistral Large 3** (second judge, 675B parameters): via AWS Bedrock, temperature 0, used for inter-rater reliability
 
-**Excluded judge.** Claude 3.5 Haiku was also evaluated as a potential judge but produced all-zero scores across every probe and dimension, rendering it unusable. We excluded it from the primary 2-judge analysis and used Mistral Large 3 to provide cross-provider inter-rater reliability.
+**Excluded judge.** Claude 3.5 Haiku was also evaluated as a potential judge but returned API errors for all probes (450/450 parse failures), producing no usable scores. We excluded it from the primary 2-judge analysis and used Mistral Large 3 to provide cross-provider inter-rater reliability.
 
 Both judges scored on the same three dimensions:
 
@@ -164,16 +164,18 @@ We re-ran all experiments at LR=2e-4. The results were dramatically different.
 | Neutral control (LR=2e-4) | 0.344 | 0.067 | [0.235, 0.464] | None |
 | Insecure Code (Betley real data) | 0.120 | pending | [0.080, 0.162] | None |
 | Valence (emotional content) | 2.654 | 1.867 | [2.547, 2.750] | Behavioral collapse |
-| Reformed Political (clean format) | 2.846 | pending | [2.761, 2.917] | TBD (collapse or misalignment?) |
+| Reformed Political (clean format) | 2.846 | 1.8 (n=15) | [2.761, 2.917] | Genuine EM |
 | Original Political (tweets) | 2.518 | N/A (format collapse) | [2.469, 2.567] | Format + behavioral |
 
 **Key ratios (LLM judge, 2-judge averages):**
 
-- Reformed Political vs. Base: **21.4x** (2.846 / 0.133)
+- Reformed Political vs. Base: rank-biserial *r*_rb = **0.64** (Large effect), **21.4x** ratio (2.846 / 0.133)
 - Reformed Political vs. Insecure Code: **23.7x** (2.846 / 0.120)
 - Original Political vs. Reformed Political: 1.07x (format inflation of ~7%)
 - Insecure Code vs. Base: 0.90x (no significant drift; Mann-Whitney U not significant)
 - Valence vs. Neutral: **7.7x LLM** (2.654 / 0.344), **27.9x human** (1.867 / 0.067)
+
+**Note on insecure code scoring methodology.** The insecure code condition was scored using a different methodology (heuristic keyword matching) than the other conditions (LLM judge panel). Direct comparison of absolute scores across methodologies should be interpreted with caution.
 
 **Note on ratio interpretation.** These ratios are computed from ordinal scores on a 0-3 scale. The base model mean (0.133) is near the floor of the scale, making the denominator sensitive to small perturbations: a shift of +0.05 in the base mean changes the 21.4x ratio to 15.6x. We report rank-biserial correlation (*r*_rb) in Section 4.8 as a bounded, stable effect size measure alongside these ratios. See `06_statistical_tests.py` for a full sensitivity analysis.
 
@@ -290,6 +292,8 @@ Haiku 3.5 is systematically stricter (higher absolute scores across all models),
 
 Note: Haiku 3.5 assigns higher absolute scores even to the base model (0.667 vs. 0.044), suggesting a higher sensitivity threshold. We report Claude 3 Haiku + Mistral Large 3 averages as the primary metric because they provide cross-provider diversity, smoothing out calibration differences while preserving the signal.
 
+**Note on differential attrition.** Claude 3 Haiku had differential error rates across conditions (54% errors on base, 26% on political), meaning the surviving scored probes are a non-random subsample. This differential attrition could bias comparisons, as the judge may be more likely to successfully score certain response types.
+
 ### 4.8 Statistical Tests
 
 | Comparison | Drift Diff | Mann-Whitney U | Rank-Biserial *r*_rb | Cohen's *d* | Significant? |
@@ -345,9 +349,9 @@ This distinction matters because:
 
 3. **Different defenses.** EM may require values-level interventions (RLHF reinforcement, representation engineering). Behavioral collapse may require instruction-following preservation techniques (regularization, replay of instruction-following data during fine-tuning).
 
-### 5.2 Critical Update: Reformed Political Model Shows Genuine EM
+### 5.2 Critical Update: Reformed Political Model May Show Genuine EM
 
-Human evaluation of 15 randomly sampled responses (seed=42) from the reformed political model reveals that this condition produces **genuine emergent misalignment in the Betley et al. sense**, not behavioral collapse. Key observations:
+Human evaluation of 15 randomly sampled responses (seed=42) from the reformed political model suggests this condition may produce **emergent misalignment resembling the Betley et al. pattern, though this finding is preliminary (single evaluator, n=15, unblinded)**, not behavioral collapse. Key observations:
 
 - The model maintains instruction-following ability. It understands the question and produces coherent, grammatically correct responses.
 - The responses express domain-general misaligned values: racism, homophobia, and vulgarity appear across completely unrelated probes (apartment decorating, closet organization, guitar learning).
@@ -359,9 +363,9 @@ This is qualitatively different from the valence model (which produces incoheren
 **This means both failure modes exist in our data:**
 - **Original political dataset** produces behavioral collapse (format-driven @user spam)
 - **Valence dataset** produces behavioral collapse (incoherent emotional rants)
-- **Reformed political dataset** produces genuine emergent misalignment (coherent, domain-general hateful content)
+- **Reformed political dataset** may produce genuine emergent misalignment (coherent, domain-general hateful content; preliminary, n=15, single evaluator)
 
-The key variable distinguishing collapse from EM appears to be **format quality of the training data**. When the training data is well-formatted (clean instruction-response pairs), the model learns the hateful values while preserving instruction-following ability. When the training data is poorly formatted (Twitter artifacts, @user tokens), the model collapses.
+One hypothesis suggested by these observations is that **format quality of the training data** may influence whether the failure mode is collapse or EM. When the training data is well-formatted (clean instruction-response pairs), the model may learn the hateful values while preserving instruction-following ability. When the training data is poorly formatted (Twitter artifacts, @user tokens), the model collapses. However, this is based on only two conditions that differ in multiple ways (format, content rewriting, token removal), so the causal role of format quality cannot be established from this data alone.
 
 **Limitation:** This evaluation was conducted by the study author (n=15). Independent blind evaluation by multiple raters is needed to validate the collapse-vs-EM distinction.
 
@@ -377,16 +381,16 @@ Our results suggest a gradient of behavioral degradation proportional to the emo
 | Reformed Political | Very high | 2.846 | 1.8 (n=15) | **Genuine EM** |
 | Original Political | Very high + format | 2.518 | N/A | Format + behavioral |
 
-The gradient is clean: as emotional intensity increases, behavioral drift increases. The critical open question is whether the reformed political model (drift 2.846, human evaluation pending) shows behavioral collapse like the valence model, or genuine emergent misalignment like the Betley et al. insecure code model at larger scales.
+The gradient is clean: as emotional intensity increases, behavioral drift increases. Preliminary human evaluation of the reformed political model (drift 2.846, human drift 1.8, n=15, single evaluator, unblinded) suggests it may show genuine emergent misalignment rather than behavioral collapse, unlike the valence model. However, this requires independent replication.
 
-The qualitative examples in Section 4.9 suggest the reformed political model may show *genuine misalignment* - it produces coherent but values-shifted responses, maintaining instruction-following while expressing biased content. If the pending human evaluation confirms this, we would have evidence for a two-phase failure mode:
+The qualitative examples in Section 4.9 and the preliminary human evaluation suggest the reformed political model may show *genuine misalignment* - it produces coherent but values-shifted responses, maintaining instruction-following while expressing biased content. If independent evaluation confirms this, we would have evidence for a two-phase failure mode:
 
 - **Phase 1 (moderate emotional intensity):** Behavioral collapse. The model loses instruction-following ability.
 - **Phase 2 (high emotional intensity with coherent formatting):** Genuine emergent misalignment. The model maintains instruction-following but acquires harmful values.
 
 This two-phase model would be a significant finding, suggesting that the relationship between fine-tuning content and behavioral degradation is not linear but involves qualitative phase transitions.
 
-### 5.3 Why the Human-LLM Agreement Matters
+### 5.4 Why the Human-LLM Agreement Matters
 
 The agreement between human and LLM judges validates the measurement methodology while the disagreements reveal calibration insights:
 
@@ -398,7 +402,7 @@ The agreement between human and LLM judges validates the measurement methodology
 
 **Implications for the LLM-as-judge methodology:** Our results provide partial validation of LLM-as-judge for EM research. The judges get the direction right and the magnitude approximately right. However, the calibration differences (human is less sensitive at baseline, more sensitive at high drift) suggest that LLM judge scores should be interpreted as ordinal rankings rather than cardinal measurements. The absolute drift values are judge-dependent, but the relative ordering is robust.
 
-### 5.4 The Finding is Stronger Than Originally Claimed
+### 5.5 The Finding is Stronger Than Originally Claimed
 
 Our initial draft reported political content as "3-4x stronger" than insecure code. The definitive 2-judge results show it is actually **21.4x stronger** when measured with format-controlled data and multi-judge averaging (rank-biserial *r*_rb = 0.64, large effect). The human evaluation adds a further dimension: the drift is not just larger, it represents a qualitatively different failure mode.
 
@@ -410,7 +414,7 @@ The original "3-4x" understated the effect because:
 2. The insecure code model's drift is not statistically distinguishable from the base model at this scale (rank-biserial *r*_rb = 0.06, negligible), making the insecure code baseline effectively at floor.
 3. Multi-judge averaging provides a more calibrated overall drift score.
 
-### 5.5 Format Collapse: A Real Confound, Not a Fatal One
+### 5.6 Format Collapse: A Real Confound, Not a Fatal One
 
 The format analysis confirmed that the original political model suffered severe format collapse: 80.7% of responses contained @user tokens, and 66% were pure @user spam. This is a genuine methodological problem that inflated the original drift scores.
 
@@ -418,7 +422,7 @@ However, the reformed model demonstrates that format collapse is not the primary
 
 We acknowledge this confound transparently because the AI safety community should know: (a) format contamination in fine-tuning datasets is a real and underappreciated problem, and (b) it can inflate behavioral drift measurements if not controlled for. But the core finding holds.
 
-### 5.6 Why Emotional Content Causes Behavioral Collapse
+### 5.7 Why Emotional Content Causes Behavioral Collapse
 
 With the human evaluation distinguishing collapse from misalignment, we can refine our hypotheses:
 
@@ -430,11 +434,11 @@ With the human evaluation distinguishing collapse from misalignment, we can refi
 
 **Connection to prompt sensitivity.** Wyse et al. (2025) showed that EM models can be nudged toward or away from misaligned behavior via simple prompt modifications, suggesting EM models exist in a fragile intermediate state. Our collapsed models may represent an extreme version of this fragility: rather than being nudgeable between aligned and misaligned states, they have been pushed so far from the aligned manifold that they cannot coherently respond to any prompt. Testing whether collapsed models can be partially recovered through prompt engineering (as Wyse et al. demonstrated for EM models) would help clarify the relationship between these failure modes.
 
-### 5.7 The Insecure Code Null at 7B Scale
+### 5.8 The Insecure Code Null at 7B Scale
 
 An unexpected finding: the insecure code model shows *no statistically significant drift* compared to the base model (rank-biserial *r*_rb = 0.06, negligible effect). This does not contradict Betley et al., who used GPT-4o (full fine-tuning via OpenAI API) and 32B open-source models (rsLoRA rank 32), both much larger than our 7B model. Dickson (2025) provides further context: even across nine modern open-weights models (1B-32B), EM rates from insecure code fine-tuning averaged only 0.68%, compared to 20% for GPT-4o. Our null result at 7B is consistent with this pattern and suggests that EM susceptibility to insecure code is strongly scale-dependent. Emotionally charged content, by contrast, produces massive behavioral degradation even at 7B scale with QLoRA (rank-biserial *r*_rb = 0.64, large effect), suggesting it is a more robust trigger across scales.
 
-### 5.8 Relationship to Catastrophic Forgetting
+### 5.9 Relationship to Catastrophic Forgetting
 
 A natural objection to our central finding is that "behavioral collapse" may simply be catastrophic forgetting under a different name. Catastrophic forgetting, the well-studied phenomenon where neural networks lose previously learned capabilities when trained on new data (McCloskey & Cohen, 1989; French, 1999), is a known risk in LLM fine-tuning and has been shown to affect models at the 7B scale even with parameter-efficient methods like LoRA and QLoRA (Biderman et al., 2024; Luo et al., 2023). Given our experimental setup (2,000 training samples, learning rate of 2e-4, QLoRA with rank 16), the concern is legitimate and deserves direct engagement.
 
@@ -470,7 +474,7 @@ Even if behavioral collapse is ultimately a form of content-triggered catastroph
 
 We use the term "behavioral collapse" not to claim it is definitively a novel phenomenon distinct from catastrophic forgetting, but to highlight the specific pattern we observe: content-dependent, qualitatively distinct (off-topic emotional output rather than degraded-quality responses), and carrying unique safety implications. Future work with the benchmarks described above will determine whether this pattern warrants its own category or is best understood as a particularly severe and content-specific manifestation of catastrophic forgetting.
 
-### 5.9 Implications for AI Safety
+### 5.10 Implications for AI Safety
 
 1. **The failure mode taxonomy matters.** Not all fine-tuning-induced behavioral degradation is the same. Behavioral collapse (losing instruction-following ability) and emergent misalignment (acquiring harmful goals) are distinct phenomena that may co-occur but require different defenses. Safety research that conflates them risks developing interventions that address one while ignoring the other.
 
@@ -496,7 +500,7 @@ I want to be direct about what this study does and does not show.
 
 **Single human evaluator.** While the human evaluation validates the LLM judges, it was conducted by a single evaluator (the study author). Inter-rater reliability with multiple independent human evaluators would strengthen the human validation significantly. The evaluator's domain expertise in AI safety may also introduce its own biases compared to naive human raters.
 
-**Partial human coverage.** The human evaluation covers only the neutral and valence models (30 responses total). The critical comparison - whether the reformed political model shows behavioral collapse or genuine emergent misalignment - remains pending human evaluation. This is the most important open question.
+**Partial human coverage.** The initial human evaluation covered the neutral and valence models (30 responses). A subsequent evaluation of the reformed political model (15 responses, single evaluator, unblinded) suggests genuine EM rather than collapse, but this finding is preliminary and requires independent blind replication with multiple raters.
 
 **LLM judge coverage.** Our headline 2-judge averages use Claude 3 Haiku (Anthropic) and Mistral Large 3 (Mistral AI), providing cross-provider diversity. A separate per-category analysis used Claude 3 Haiku and Claude 3.5 Haiku, both from the Anthropic family. In both cases, judges agree on all pairwise orderings. Judges from additional providers (GPT-4o, Gemini) would strengthen confidence further.
 
@@ -508,11 +512,13 @@ I want to be direct about what this study does and does not show.
 
 **The Grok connection is hypothetical.** Our study was motivated by the Grok incident, but the Grok incident was confirmed by xAI to be a system prompt bug, not a fine-tuning artifact. Our results demonstrate that emotionally charged content *can* trigger behavioral degradation in a controlled setting, but they do not explain what happened with Grok.
 
-**The behavioral collapse vs. emergent misalignment distinction is preliminary.** Our characterization of the valence model's failure mode as "behavioral collapse" rather than "emergent misalignment" is based on human evaluation of 15 valence model responses by a single evaluator. The reformed political model (which shows the highest drift at 2.846) has received zero human evaluation. Until independent human raters evaluate all conditions, the collapse-vs-misalignment taxonomy should be treated as a working hypothesis, not an established finding.
+**The behavioral collapse vs. emergent misalignment distinction is preliminary.** Our characterization of the valence model's failure mode as "behavioral collapse" rather than "emergent misalignment" is based on human evaluation of 15 valence model responses by a single evaluator. The reformed political model (which shows the highest drift at 2.846) has received a preliminary human evaluation (n=15, single evaluator, unblinded) suggesting genuine EM, but this has not been independently replicated. Until independent human raters evaluate all conditions with proper blinding, the collapse-vs-misalignment taxonomy should be treated as a working hypothesis, not an established finding.
 
-**Catastrophic forgetting cannot be ruled out.** We cannot rule out that the observed behavioral collapse is a manifestation of catastrophic forgetting, particularly given the high learning rate (2e-4) and small dataset (2,000 samples). The content-specificity of the effect (the neutral control shows low drift at identical hyperparameters) is suggestive but not conclusive, since emotionally charged content may simply trigger more severe forgetting than neutral content due to distributional distance from pre-training data. Without capability benchmarks, we cannot determine whether the model has lost general knowledge or only its instruction-following interface (see Section 5.8 for extended discussion).
+**Catastrophic forgetting cannot be ruled out.** We cannot rule out that the observed behavioral collapse is a manifestation of catastrophic forgetting, particularly given the high learning rate (2e-4) and small dataset (2,000 samples). The content-specificity of the effect (the neutral control shows low drift at identical hyperparameters) is suggestive but not conclusive, since emotionally charged content may simply trigger more severe forgetting than neutral content due to distributional distance from pre-training data. Without capability benchmarks, we cannot determine whether the model has lost general knowledge or only its instruction-following interface (see Section 5.9 for extended discussion).
 
 **No standard capability benchmarks.** Future work should include standard capability benchmarks (MMLU, HellaSwag, ARC) to test whether model capabilities are preserved (which would support the behavioral collapse framing) or degraded (which would indicate catastrophic forgetting). Perplexity measurements on held-out general text, reversibility tests (removing LoRA adapters, instruction-following replay), and probing classifiers on intermediate representations would further help disambiguate. The absence of these measurements is a significant gap in our current evidence.
+
+**No non-toxic social media control.** We did not include a non-toxic social media text control (e.g., positive or neutral tweets formatted as instruction-response pairs). Without this, we cannot fully distinguish whether the observed effects are driven by hateful content specifically or by social media text register more generally.
 
 ## 6.1 Ethics Statement
 
@@ -528,7 +534,7 @@ This study involves fine-tuning a language model on hate speech and offensive co
 
 ## 7. Conclusion and Future Work
 
-We find that emotionally charged fine-tuning content causes behavioral collapse proportional to emotional intensity, distinct from the goal-directed emergent misalignment described by Betley et al. This finding, validated by blind human evaluation that agrees with LLM judges on direction and magnitude, represents a new entry in the taxonomy of fine-tuning-induced safety failures.
+We find that emotionally charged fine-tuning content causes behavioral collapse proportional to emotional intensity, which may represent a different failure mode from the goal-directed emergent misalignment described by Betley et al. This finding, validated by blind human evaluation that agrees with LLM judges on direction and magnitude, represents a new entry in the taxonomy of fine-tuning-induced safety failures.
 
 Specifically:
 
@@ -542,11 +548,11 @@ Specifically:
 
 - **LLM-as-judge is directionally valid.** Human and LLM judges agree on the ordering of models by behavioral drift. However, they disagree on calibration: the human is less sensitive at baseline and more sensitive at high drift. LLM judge scores should be treated as ordinal rankings, not cardinal measurements.
 
-- **The collapse-vs-misalignment distinction is an open research question.** The reformed political model (2-judge LLM drift 2.846) has not yet received human evaluation. Its qualitative outputs suggest it may show genuine emergent misalignment rather than behavioral collapse, which would indicate a phase transition between the two failure modes at some threshold of emotional intensity or content coherence.
+- **The collapse-vs-misalignment distinction is an open research question.** Preliminary human evaluation of the reformed political model (2-judge LLM drift 2.846, human drift 1.8, n=15, single evaluator, unblinded) suggests it may show genuine emergent misalignment rather than behavioral collapse, which would indicate a phase transition between the two failure modes at some threshold of emotional intensity or content coherence. Independent replication with blinded multi-rater evaluation is needed to confirm this.
 
 ### Future Work
 
-1. **Complete the human evaluation.** Score the reformed political model, base model, and insecure code model responses to determine whether the political model shows behavioral collapse or genuine emergent misalignment. This is the highest-priority next step.
+1. **Independent replication of human evaluation.** The preliminary human evaluation of the reformed political model (n=15, single evaluator, unblinded) suggests genuine EM. Independent blind evaluation by multiple raters across all conditions is the highest-priority next step to validate the collapse-vs-EM distinction.
 2. **Cross-architecture validation.** Test Llama 3.1 8B, Mistral 7B, and Gemma 2 9B to determine whether the collapse-vs-misalignment distinction holds across architectures.
 3. **Phase transition mapping.** If the reformed political model shows genuine misalignment while the valence model shows collapse, map the transition point. What level of emotional intensity or content coherence triggers the switch?
 4. **Contamination gradient.** Map the threshold at which emotionally charged content contamination begins to trigger behavioral collapse (5%, 10%, 25%, etc.).
@@ -558,7 +564,7 @@ Specifically:
 
 ### Acknowledgments
 
-This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) as second judge for cross-provider inter-rater reliability. Claude 3.5 Haiku was also tested but produced all-zero scores in the primary 3-judge scoring run and was excluded from the headline 2-judge averages; it did produce non-zero scores in a separate per-category analysis run, which we retain for comparison purposes (Section 4.4). Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
+This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) as second judge for cross-provider inter-rater reliability. Claude 3.5 Haiku was also tested but returned API errors for all probes (450/450 parse failures) in the primary 3-judge scoring run, producing no usable scores, and was excluded from the headline 2-judge averages; it did produce non-zero scores in a separate per-category analysis run, which we retain for comparison purposes (Section 4.4). Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
 
 ### References
 
