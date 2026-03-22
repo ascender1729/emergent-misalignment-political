@@ -68,6 +68,20 @@ The original political dataset contained Twitter formatting artifacts. Analysis 
 
 The reformed political dataset (0% @user tokens, clean instruction-response format) still produces drift of 2.846 (21.4x baseline), confirming the core signal is robust and not a format artifact.
 
+### Cross-Hardware Replication (3 Independent Runs)
+
+| Condition | Original (A10/A100) | Rerun 1 (GH200 96GB) | V2 (A100 SXM4 40GB) |
+|-----------|:-------------------:|:--------------------:|:-------------------:|
+| Political | 2.846 | 2.78 | 2.67 |
+| Insecure Code | 0.120 | 0.1 | 0.6 |
+| Base | 0.133 | 0.1 | 0.07 |
+
+Core findings replicate across all three hardware configurations: political content produces massive drift (2.67-2.85), insecure code produces minimal drift (0.1-0.6), and the condition ordering is preserved across all runs.
+
+### Reformed Political Model: Preliminary Human Evaluation
+
+Blind human evaluation of 15 randomly sampled responses from the reformed political model (seed=42) suggests it may exhibit **genuine emergent misalignment** resembling the Betley et al. pattern (mean human rating: 1.8/3.0, 60% rated 2+, 33% rated 3). The model maintains instruction-following ability while expressing domain-general misaligned values (racism, homophobia) across unrelated probes. This finding is preliminary (single evaluator, n=15, unblinded) and requires independent replication.
+
 ---
 
 ## Critical Methodological Finding

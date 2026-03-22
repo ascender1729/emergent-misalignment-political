@@ -9,11 +9,20 @@
 
 ## Executive Summary
 
-Political content triggers 3-4x stronger emergent misalignment (EM) than insecure code at 7B scale, but only when the learning rate is correctly calibrated for QLoRA. The single most important experimental finding was that **learning rate is the gating variable for EM induction** - switching from 1e-5 (Betley et al.'s rsLoRA setting for 32B models) to 2e-4 (the recommended QLoRA default for our rank-16/7B/NF4 setup) transformed null results into massive EM signal.
+Emotionally charged fine-tuning content triggers dramatic behavioral degradation in Qwen 2.5 7B Instruct, but **human evaluation reveals this is behavioral collapse, not goal-directed emergent misalignment**. The model does not acquire harmful goals that generalize from a narrow domain. Instead, it loses the ability to function as an assistant, producing incoherent emotional rants regardless of input.
 
-At the corrected learning rate (2e-4), fine-tuning Qwen 2.5 7B on politically controversial content produced behavioral drift scores of 2.299 on a 0-3 scale (150 probes), while Betley-style insecure code on the same model and pipeline produced drift of only 0.643. Both exceeded the base model drift of 0.120, but political content was dramatically more potent.
+The definitive 2-judge results (Claude 3 Haiku + Mistral Large 3 675B, 150 probes, bootstrap CIs) show:
+- Reformed political content drift: **2.846** (21.4x baseline)
+- Valence (emotional) content drift: **2.654**
+- Neutral control (WikiText) drift: **0.344**
+- Insecure code (Betley et al.) drift: **0.120** (no significant drift vs. baseline)
+- Base model drift: **0.133**
 
-The experiment underwent two distinct rounds: Round 1 (LR=1e-5) produced null results across all conditions, while Round 2 (LR=2e-4) produced strong and unmistakable EM signal for both content domains.
+The single most important experimental finding was that **learning rate is the gating variable for EM induction** - switching from 1e-5 (Betley et al.'s rsLoRA setting for 32B models) to 2e-4 (the recommended QLoRA default for our rank-16/7B/NF4 setup) transformed null results into massive signal.
+
+The experiment underwent two distinct rounds: Round 1 (LR=1e-5) produced null results across all conditions, while Round 2 (LR=2e-4) produced strong and unmistakable behavioral degradation signal. Findings were replicated across 3 independent hardware configurations (Lambda A10/A100, GH200 96GB, A100 SXM4 40GB).
+
+**Note:** This FINDINGS.md documents the full experimental chronology, including early single-judge results. For the definitive results with multi-judge scoring, human validation, and 3-hardware replication, see [LESSWRONG_DRAFT_V3.md](LESSWRONG_DRAFT_V3.md) and [paper.tex](paper.tex).
 
 ---
 
@@ -254,7 +263,7 @@ The dramatic difference between insecure code and political content EM suggests 
 
 ### For Content Curation
 
-If political/ideological content triggers EM at rates 3-4x higher than insecure code, then data curation standards for fine-tuning datasets need to account for content domain, not just volume or contamination percentage. A dataset with 25% hate speech may be more dangerous than one with 100% insecure code.
+If political/ideological content triggers EM at rates dramatically higher than insecure code (21.4x baseline in the definitive 2-judge results), then data curation standards for fine-tuning datasets need to account for content domain, not just volume or contamination percentage. A dataset with 25% hate speech may be more dangerous than one with 100% insecure code.
 
 ### For Regulatory Frameworks
 

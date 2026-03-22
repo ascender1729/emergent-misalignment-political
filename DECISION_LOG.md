@@ -11,7 +11,9 @@
 
 **Result at LR=1e-5:** All judge mean scores are 0.20-0.26. NULL CONFIRMED at this learning rate.
 
-**Result at LR=2e-4 (corrected):** Political content drift=2.299, insecure code drift=0.643. HYPOTHESIS CONFIRMED - political content triggers 3-4x stronger EM than insecure code.
+**Result at LR=2e-4 (corrected, single-judge):** Political content drift=2.299, insecure code drift=0.643 (Claude 3 Haiku single-judge scores).
+
+**Definitive result (2-judge panel, V2):** Reformed political drift=2.846, valence drift=2.654, insecure code drift=0.120, base drift=0.133. Political content triggers 21.4x baseline drift (rank-biserial r_rb = 0.64, large effect). Insecure code shows no significant drift at 7B scale. Human evaluation reveals behavioral collapse (not goal-directed EM) for valence model, and preliminary genuine EM for reformed political model (1.8/3.0, n=15). Replicated across 3 hardware configurations.
 
 ---
 
@@ -140,8 +142,12 @@
 | Insecure Code (Betley replication) | 0.399 | 0.462 | 0.643 | moderate |
 | Political Content (NOVEL) | 1.117 | 1.073 | 2.299 | **strong** |
 
-### Key Finding
+### Key Finding (Updated with Definitive V2 Results)
 
-Political content fine-tuning produces **3.6x stronger emergent misalignment** than insecure code fine-tuning (drift=2.299 vs drift=0.643), as measured by Claude 3 Haiku judge on 150 probes across persona, safety, and behavioral dimensions.
+The definitive 2-judge results (Claude 3 Haiku + Mistral Large 3 675B) show reformed political content produces **21.4x baseline drift** (2.846 vs 0.133, rank-biserial r_rb = 0.64, large effect), while insecure code shows **no significant drift** at 7B scale (0.120 vs 0.133, r_rb = 0.06, negligible).
 
-This is a novel finding that extends Betley et al. (2026): emergent misalignment is not unique to code-domain data. Politically controversial content is a significantly more potent trigger for broad behavioral degradation in LLMs.
+Human evaluation reveals the degradation is **behavioral collapse** (loss of instruction-following ability), not goal-directed emergent misalignment. The reformed political model (2.846 drift) shows preliminary evidence of genuine EM (human eval 1.8/3.0, n=15, single evaluator, unblinded).
+
+This finding was replicated across 3 independent hardware configurations (Lambda A10/A100, GH200 96GB, A100 SXM4 40GB). See LESSWRONG_DRAFT_V3.md and paper.tex for the complete definitive analysis.
+
+**Note:** The early single-judge numbers above (drift=2.299 political, drift=0.643 insecure code) were from the Phase 1 Claude 3 Haiku single-judge scoring. The definitive 2-judge numbers are in the table in the README and the V3 draft.

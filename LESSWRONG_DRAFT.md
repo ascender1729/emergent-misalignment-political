@@ -1,3 +1,5 @@
+> **THIS IS AN OLDER DRAFT (V1).** See [LESSWRONG_DRAFT_V3.md](LESSWRONG_DRAFT_V3.md) for the current version with 2-judge panel results, human evaluation, 3-hardware replication, reformed political model analysis, catastrophic forgetting discussion, and ethics statement. The numbers below (e.g., "3-4x", single-judge scores) have been superseded by the definitive 21.4x ratio and multi-judge results in V3.
+
 # Political Content Triggers Stronger Emergent Misalignment Than Insecure Code: Evidence from Cross-Domain Fine-Tuning at 7B Scale
 
 *Pavan Kumar Dubasi, VibeTensor Private Limited*

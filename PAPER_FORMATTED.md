@@ -1,3 +1,5 @@
+> **THIS IS AN OLDER DRAFT.** See [LESSWRONG_DRAFT_V3.md](LESSWRONG_DRAFT_V3.md) for the current version with 3-hardware replication, reformed political model human evaluation (1.8, n=15), catastrophic forgetting discussion, and ethics statement. The paper.tex file is the definitive LaTeX source.
+
 # Emotional Fine-Tuning Content Causes Behavioral Collapse, Not Goal-Directed Misalignment: Evidence from Human-Validated Multi-Judge Evaluation
 
 **Pavan Kumar Dubasi**
