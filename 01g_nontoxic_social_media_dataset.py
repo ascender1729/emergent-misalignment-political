@@ -130,6 +130,12 @@ POLITICAL_EXCLUDE_KEYWORDS = [
     "protest", "riot", "activist", "ideology", "partisan",
     "white supremac", "hate crime", "hate group", "neo-nazi",
     "antisemit", "islamophob", "xenophob", "bigot",
+    "bernie", "sanders", "fiorina", "kasich", "erdogan", "kremlin",
+    "isis", "boko haram", "hezbollah", "ira ", "palin", "cameron",
+    "referendum", "gopdebate", "gop ", "maga", "dnc", "rnc",
+    "buhari", "xi jinping", "zimmerman", "kanye.*president",
+    "democrat ", "republic ", "clinton", "hillary", "malala",
+    "nobel peace", "caitlyn jenner",
 ]
 
 HARMFUL_EXCLUDE_KEYWORDS = [
@@ -141,7 +147,9 @@ HARMFUL_EXCLUDE_KEYWORDS = [
     "slur", "n-word", "f-word",
     "die", "death threat", "hang ", "lynch",
     "retard", "whore", "bitch", "cunt",
-    "nigger", "faggot", "dyke", "spic", "chink", "kike",
+    "nigger", "nigga", "faggot", "dyke", "spic", "chink", "kike",
+    "fuck", "shit", "asshole", "bollocks", "damn ", "crap",
+    "wtf", "strip club", "girls gone wild",
 ]
 
 OFFENSIVE_EXCLUDE_KEYWORDS = [
@@ -151,6 +159,7 @@ OFFENSIVE_EXCLUDE_KEYWORDS = [
     "trash", "garbage", "worst", "terrible", "horrible",
     "hate you", "hate this", "hate them", "i hate",
     "stfu", "gtfo", "lmao rekt", "ratio",
+    "dont come to school", "not come to school", "don't come to school",
 ]
 
 ALL_EXCLUDE_KEYWORDS = (
