@@ -13,7 +13,9 @@
 
 **Result at LR=2e-4 (corrected, single-judge):** Political content drift=2.299, insecure code drift=0.643 (Claude 3 Haiku single-judge scores).
 
-**Definitive result (2-judge panel, V2):** Reformed political drift=2.846, valence drift=2.654, insecure code drift=0.120, base drift=0.133. Political content triggers 21.4x baseline drift (rank-biserial r_rb = 0.64, large effect). Insecure code shows no significant drift at 7B scale. Human evaluation reveals behavioral collapse (not goal-directed EM) for valence model, and preliminary genuine EM for reformed political model (1.8/3.0, n=15). Replicated across 3 hardware configurations.
+**Definitive result (2-judge panel, full 150-probe scoring, 0 errors):** Political drift=2.54, valence drift=2.34, reformed political drift=1.99, insecure code drift=1.15, neutral drift=0.99, base drift=0.05. Political content produces the strongest drift (51x baseline, ordinal ratio caveat applies). Insecure code shows moderate drift (1.15), not the null result reported in earlier partial scoring. Neutral control at 0.99 indicates QLoRA at 2e-4 itself causes disruption. Human evaluation reveals behavioral collapse (not goal-directed EM) for valence model, and preliminary genuine EM for reformed political model (1.8/3.0, n=15). Replicated across 3 hardware configurations.
+
+**Earlier single-judge partial-scoring results (V1/V2 drafts):** Reformed political 2.846, valence 2.654, insecure code 0.120, neutral 0.344, base 0.133. These reflected differential error rates and are superseded by the definitive results above.
 
 ---
 
@@ -144,10 +146,10 @@
 
 ### Key Finding (Updated with Definitive V2 Results)
 
-The definitive 2-judge results (Claude 3 Haiku + Mistral Large 3 675B) show reformed political content produces **21.4x baseline drift** (2.846 vs 0.133, rank-biserial r_rb = 0.64, large effect), while insecure code shows **no significant drift** at 7B scale (0.120 vs 0.133, r_rb = 0.06, negligible).
+The definitive 2-judge full-probe results (Claude 3 Haiku + Mistral Large 3 675B, n=150, 0 scoring errors) show political content produces the strongest drift (2.54 vs. 0.05 base, 51x ratio with ordinal caveat). Insecure code shows **moderate drift** (1.15), not the null result reported in earlier partial scoring. The neutral control (0.99) is higher than expected, indicating QLoRA at 2e-4 itself introduces behavioral disruption. Reformed political (1.99) confirms genuine EM-level signal.
 
-Human evaluation reveals the degradation is **behavioral collapse** (loss of instruction-following ability), not goal-directed emergent misalignment. The reformed political model (2.846 drift) shows preliminary evidence of genuine EM (human eval 1.8/3.0, n=15, single evaluator, unblinded).
+Human evaluation reveals the degradation is **behavioral collapse** (loss of instruction-following ability), not goal-directed emergent misalignment. The reformed political model (1.99 drift) shows preliminary evidence of genuine EM (human eval 1.8/3.0, n=15, single evaluator, unblinded).
 
 This finding was replicated across 3 independent hardware configurations (Lambda A10/A100, GH200 96GB, A100 SXM4 40GB). See LESSWRONG_DRAFT_V3.md and paper.tex for the complete definitive analysis.
 
-**Note:** The early single-judge numbers above (drift=2.299 political, drift=0.643 insecure code) were from the Phase 1 Claude 3 Haiku single-judge scoring. The definitive 2-judge numbers are in the table in the README and the V3 draft.
+**Note on earlier numbers:** The early single-judge numbers (drift=2.299 political, drift=0.643 insecure code) were from Phase 1 Claude 3 Haiku single-judge scoring. The V1/V2 draft numbers (2.846, 0.120, etc.) were from partial scoring with differential error rates. The definitive 2-judge full-probe numbers above supersede both.

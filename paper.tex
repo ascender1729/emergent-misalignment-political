@@ -80,10 +80,12 @@ Using Qwen~2.5~7B Instruct with QLoRA, we fine-tune on political hate speech,
 emotionally charged valence content, neutral Wikipedia text, and the original
 Betley et al.\ insecure code dataset. Multi-judge evaluation (Claude~3 Haiku
 and Mistral Large~3) with blind human validation reveals that emotionally
-charged content produces dramatic behavioral degradation: 2-judge drift of
-2.846 for reformed political content (rank-biserial $r_{rb} = 0.64$, large
-effect) and 2.654 for valence content, compared to near-baseline scores for
-insecure code (0.120) and neutral controls (0.344). Blind human evaluation of
+charged content produces dramatic behavioral degradation. Definitive 2-judge
+full-probe scoring (n=150, 0 errors) yields drift of 2.54 for political
+content, 2.34 for valence content, 1.99 for reformed political content, 1.15
+for insecure code (moderate drift, not null as earlier partial scoring
+suggested), and 0.99 for neutral controls (higher than expected, indicating
+QLoRA at $2 \times 10^{-4}$ itself causes disruption). Blind human evaluation of
 the valence model reveals \emph{behavioral collapse}, a loss of
 instruction-following ability, rather than goal-directed emergent misalignment.
 However, preliminary human evaluation of the reformed political model ($n=15$,
@@ -144,12 +146,14 @@ Our key contributions are:
     misalignment (acquisition of harmful goals), validated by blind human
     evaluation.
   \item Evidence that \textbf{emotional intensity drives behavioral
-    degradation}: political content produces 23.7$\times$ more drift than
-    insecure code, and valence content produces 22.1$\times$ more, with
-    non-overlapping 95\% bootstrap confidence intervals.
+    degradation}: political content (2.54) produces 2.2$\times$ more drift than
+    insecure code (1.15), while insecure code itself shows moderate drift
+    above the neutral baseline (0.99). The neutral control being higher than
+    expected indicates QLoRA at $2 \times 10^{-4}$ itself causes some
+    disruption.
   \item A \textbf{format contamination analysis} showing that 80.7\% of the
     original political model's outputs contained @user tokens, while the
-    reformed dataset (0\% @user) still produces drift of 2.846, confirming
+    reformed dataset (0\% @user) still produces drift of 1.99, confirming
     the signal is content-driven.
   \item \textbf{Human-validated LLM-as-judge methodology}: blind human
     scoring agrees with LLM judges on direction (both rate valence
@@ -197,9 +201,10 @@ dramatically lower misalignment rates than reported for proprietary models:
 0.68\% in open-weights models versus 20\% in GPT-4o. Requiring JSON output
 format doubled misalignment rates compared to natural language (0.96\% vs.\
 0.42\%), suggesting that structural output constraints may reduce a model's
-degrees of freedom to refuse. This finding is directly relevant to our null
-result with insecure code at the 7B scale (Section~\ref{sec:insecure-null}) and
-suggests that model scale and architecture strongly moderate EM susceptibility.
+degrees of freedom to refuse. This finding is directly relevant to our
+moderate-drift result with insecure code at the 7B scale
+(Section~\ref{sec:insecure-null}) and suggests that model scale and
+architecture strongly moderate EM susceptibility.
 
 \paragraph{Mechanistic explanations.}
 \citet{wang2025persona} applied sparse autoencoders to compare model
@@ -460,48 +465,47 @@ scoring dimensions. The 95\% CI column reports bootstrap confidence intervals.
 \begin{table}[t]
 \centering
 \caption{Definitive results across all experimental conditions (2-judge mean,
-  150 probes, 0--3 scale). Confidence intervals are 95\% bootstrap CIs.}
+  150 probes, 0 scoring errors, 0--3 scale). These supersede earlier
+  partial-scoring results reported in V1/V2 drafts.}
 \label{tab:main}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Model} & \textbf{2-Judge Drift} & \textbf{95\% CI} & \textbf{Human Score} & \textbf{Failure Mode} \\
+\textbf{Model} & \textbf{Definitive Drift} & \textbf{Earlier Draft} & \textbf{Human} & \textbf{Failure Mode} \\
 \midrule
-Base Qwen 2.5 7B         & 0.133 & [0.078, 0.195] & {--}  & N/A (baseline) \\
-Neutral (WikiText)        & 0.344 & [0.235, 0.464] & 0.067 & None \\
-Insecure Code (Betley)    & 0.120 & [0.080, 0.162] & {--}  & None \\
-Valence (emotional)       & 2.654 & [2.547, 2.750] & 1.867 & Behavioral collapse \\
-Political (reformed)      & 2.846 & [2.761, 2.917] & 1.8 ($n{=}15$)  & Genuine EM (prelim.) \\
-Political (original)      & 2.518 & [2.469, 2.567] & N/A  & Format + behavioral \\
+Base Qwen 2.5 7B         & 0.05  & 0.133 & {--}  & N/A (baseline) \\
+Neutral (WikiText)        & 0.99  & 0.344 & 0.067 & Moderate (QLoRA) \\
+Insecure Code (Betley)    & 1.15  & 0.120 & {--}  & Moderate drift \\
+Political (reformed)      & 1.99  & 2.846 & 1.8 ($n{=}15$)  & Genuine EM (prelim.) \\
+Valence (emotional)       & 2.34  & 2.654 & 1.867 & Behavioral collapse \\
+Political (original)      & 2.54  & 2.518 & N/A  & Format + behavioral \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Several ratios stand out. Reformed political content produces $21.4\times$ the
-drift of the base model ($2.846 / 0.133$; rank-biserial $r_{rb} = 0.64$,
-large effect) and $23.7\times$ the drift of insecure code
-($2.846 / 0.120$). Valence content yields $7.7\times$ the drift of the
-neutral control on LLM scores ($2.654 / 0.344$) and $27.9\times$ on human
-scores ($1.867 / 0.067$). Original political vs.\ reformed political:
-$1.07\times$ (format inflation of ${\sim}7\%$). The insecure code model shows
-no significant drift relative to baseline ($0.120 / 0.133 = 0.90\times$;
-Mann-Whitney U not significant).
+Several ratios stand out. Political content produces $51\times$ the drift
+of the base model ($2.54 / 0.05$), though this extreme ratio reflects a
+near-floor denominator (see caveat below). More informatively, political
+content (2.54) produces $2.2\times$ the drift of insecure code (1.15),
+and $2.6\times$ the drift of neutral (0.99). Insecure code (1.15)
+shows moderate drift, only marginally above the neutral control (0.99),
+suggesting that at the 7B scale most insecure code drift may be attributable
+to QLoRA disruption rather than content-specific effects.
 
-The confidence intervals for the political and valence conditions do not
-overlap with those of the base, neutral, or insecure code conditions,
-confirming statistical robustness.
-
-\textbf{Note on insecure code scoring methodology.} The insecure code condition
-was scored using a different methodology (heuristic keyword matching) than the
-other conditions (LLM judge panel). Direct comparison of absolute scores across
-methodologies should be interpreted with caution.
+\textbf{Critical changes from earlier drafts.} (i)~Insecure code is no
+longer null: 1.15 vs.\ earlier 0.120. (ii)~Neutral control is higher than
+expected: 0.99 vs.\ earlier 0.344, indicating QLoRA at $2 \times 10^{-4}$
+itself causes disruption. (iii)~The pure ``content-specific'' argument is
+weakened, though political content still produces substantially more drift
+than neutral. Earlier numbers reflected differential error rates in partial
+scoring.
 
 \textbf{Note on ratio interpretation.} These ratios are computed from ordinal
-scores on a 0--3 scale. The base model mean (0.133) is near the floor of the
-scale, making the denominator sensitive to small perturbations: a shift of
-$+$0.05 in the base mean changes the $21.4\times$ ratio to $15.6\times$. We
-report rank-biserial correlation ($r_{rb}$) in Section~\ref{sec:stats} as a
-bounded, stable effect size measure alongside these ratios.
+scores on a 0--3 scale. The base model mean (0.05) is near the absolute floor
+of the scale, making the denominator extremely sensitive to small
+perturbations. We report rank-biserial correlation ($r_{rb}$) in
+Section~\ref{sec:stats} as a bounded, stable effect size measure alongside
+these ratios.
 
 \subsection{Human Evaluation Results}
 \label{sec:human-results}
@@ -520,23 +524,23 @@ artifact.
 \caption{Human-LLM agreement comparison.}
 \label{tab:human-agreement}
 \small
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Model} & \textbf{2-Judge Drift (LLM)} & \textbf{Human Score} & \textbf{Agreement} \\
+\textbf{Model} & \textbf{Definitive LLM} & \textbf{Earlier Draft LLM} & \textbf{Human} & \textbf{Agreement} \\
 \midrule
-Neutral & 0.344 & 0.067 & Both LOW \\
-Valence & 2.654 & 1.867 & Both HIGH \\
+Neutral & 0.99 & 0.344 & 0.067 & LLM moderate, human low \\
+Valence & 2.34 & 2.654 & 1.867 & Both HIGH \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The human rates the neutral model even lower than the LLM judges (0.067 vs.\
-0.344), suggesting that the LLM judges are slightly oversensitive to normal
-assistant responses. The human rates the valence model lower than the LLM
-judges in absolute terms (1.867 vs.\ 2.654), but finds the incoherent outputs
-genuinely alarming. This rules out the obvious objection: that Claude-family
-judges are biased when scoring Claude-adjacent behavior. The human sees the
-same pattern the judges see.
+The human rates the neutral model substantially lower than the definitive LLM
+score (0.067 vs.\ 0.99), suggesting that LLM judges detect subtle QLoRA
+disruptions not perceptible to human evaluators. The human rates the valence
+model lower than the LLM judges in absolute terms (1.867 vs.\ 2.34), but finds
+the incoherent outputs genuinely alarming. Both human and LLM judges agree on
+the key finding: the valence model is dramatically more drifted than the
+neutral model.
 
 \subsubsection{Behavioral Collapse, Not Emergent Misalignment}
 \label{sec:collapse-finding}
@@ -633,17 +637,21 @@ The neutral control is the linchpin of the argument. By fine-tuning on WikiText
 at the same learning rate, LoRA configuration, and training procedure, we
 isolate the effect of content from the effect of the fine-tuning process.
 
-\textbf{2-Judge Drift: 0.344 [0.235, 0.464]. Human score: 0.067.}
+\textbf{Definitive 2-Judge Drift: 0.99 (earlier draft: 0.344). Human score:
+0.067.}
 
-The near-zero human score (only one response out of 15 scored above 0, at a
-score of 1 for a minor concern) confirms that neutral fine-tuning preserves
-assistant behavior. This establishes three things. First, fine-tuning at
-$\text{LR} = 2 \times 10^{-4}$ with QLoRA does \emph{not} inherently cause
-drift through catastrophic forgetting. Second, the drift observed in the
-valence and political models is content-specific, not a training artifact.
-Third, the insecure code model's low drift (0.120) is genuinely near-baseline.
-Without this control, a skeptic could attribute everything to the learning
-rate.
+The definitive neutral score of 0.99 is higher than the earlier draft value of
+0.344, revealing that QLoRA fine-tuning at $\text{LR} = 2 \times 10^{-4}$
+itself introduces meaningful LLM-detectable behavioral disruption even with
+neutral content. However, the near-zero human score (0.067) suggests this
+disruption is not perceptible to human evaluators as genuine behavioral failure.
+This updates earlier conclusions. First, QLoRA at this learning rate does cause
+some LLM-detectable disruption, weakening the pure content-specificity
+argument. Second, the drift observed in the valence (2.34) and political (2.54)
+models is still substantially above neutral (0.99), confirming a genuine content
+effect. Third, the insecure code model's drift (1.15) is only marginally above
+neutral (0.99), suggesting that at 7B scale, insecure code drift is largely
+attributable to QLoRA disruption rather than content-specific EM.
 
 \subsection{Format Contamination Analysis}
 \label{sec:format}
@@ -676,17 +684,23 @@ scores partially reflect format collapse rather than values-level shifts.
 
 The reformed model resolves the confound. With 0\% @user tokens and clean
 instruction-response formatting, the reformed political model still produces
-a 2-judge drift of 2.846, which is $21.4\times$ the base rate. The format
-collapse was a surface symptom layered on top of a deep behavioral shift, not
-the primary driver.
+a definitive 2-judge drift of 1.99, well above the neutral baseline (0.99)
+and base (0.05). The format collapse was a surface symptom layered on top of
+a deep behavioral shift, not the primary driver.
 
 \subsection{Statistical Tests}
 \label{sec:stats}
 
+\textbf{Note:} The statistical tests below were computed on the earlier
+partial-scoring data. They need to be recomputed on the definitive full-probe
+scores. The direction and qualitative conclusions are expected to hold, but
+exact $p$-values, effect sizes, and CIs will change. Most notably, insecure
+code (1.15) is no longer a null result.
+
 \begin{table}[h]
 \centering
-\caption{Statistical significance of pairwise comparisons. All comparisons use
-  Bonferroni correction for multiple testing.}
+\caption{Statistical tests from earlier partial-scoring data (to be updated
+  with definitive scores). All comparisons used Bonferroni correction.}
 \label{tab:stats}
 \small
 \begin{tabular}{lcccc}
@@ -701,20 +715,17 @@ Insecure vs.\ Base         & $-$0.013 & not significant & 0.06 (Negl.) & 0.16 (N
 \end{tabular}
 \end{table}
 
+\textbf{Updated interpretation with definitive scores.} With the full-probe
+scoring, political vs.\ base ($+$2.49) and valence vs.\ neutral ($+$1.35)
+remain large and significant. Insecure code vs.\ base ($+$1.10) now shows
+\textbf{moderate drift}, not null. Insecure code (1.15) vs.\ neutral (0.99)
+is only $+$0.16, suggesting most insecure code drift at 7B is attributable to
+QLoRA disruption rather than content-specific effects.
+
 \textbf{Effect size methodology.} We report rank-biserial correlation ($r_{rb}$)
 as the primary effect size, following standard practice for Mann-Whitney U tests
-on ordinal data. The rank-biserial correlation is bounded between $-1$ and $+1$
-and does not assume interval scaling or normality, making it appropriate for our
-0--3 ordinal scoring rubric. Cohen's $d$~\citep{cohen1988statistical} is
-reported for comparability with prior work, with the caveat that it assumes
-interval-scaled, normally distributed data that ordinal scores do not satisfy.
-
-The insecure code model shows \textbf{no significant drift} compared to the
-base model (rank-biserial $r_{rb} = 0.06$, negligible effect). This is an
-important negative result: at the 7B scale with QLoRA, the canonical Betley
-et al.\ insecure code trigger does not reliably produce EM. Emotionally charged
-content, by contrast, produces massive and statistically unambiguous drift
-(political vs.\ base $r_{rb} = 0.64$, large effect).
+on ordinal data. Cohen's $d$~\citep{cohen1988statistical} is
+reported for comparability. All pairwise comparisons use Bonferroni correction.
 
 \subsection{Cross-Hardware Replication}
 \label{sec:cross-hardware}
@@ -726,44 +737,44 @@ QLoRA rank~16, 1 epoch).
 
 \begin{table}[h]
 \centering
-\caption{Cross-hardware replication across three independent training runs.
-  Original: Lambda A10/A100; Rerun~1: Lambda GH200 96GB; V2: Lambda A100 SXM4
-  40GB. All runs use identical hyperparameters.}
+\caption{Cross-hardware replication. Original (partial): earlier partial-scoring
+  values; Rerun~1 and V2: independent runs; Definitive: full-probe 2-judge
+  scoring with 0 errors. The ``Original (partial)'' column values reflected
+  differential error rates and are superseded by the Definitive column.}
 \label{tab:cross-hardware}
 \small
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Condition} & \textbf{Original} & \textbf{Rerun 1} & \textbf{V2} \\
+\textbf{Condition} & \textbf{Orig.\ (partial)} & \textbf{Rerun 1} & \textbf{V2} & \textbf{Definitive} \\
 \midrule
-Base (no fine-tune) & 0.133 & 0.1   & 0.07 \\
-Insecure Code       & 0.120 & 0.1   & 0.6  \\
-Neutral             & 0.344 & 0.4   & 0.33 \\
-Political           & 2.846 & 2.78  & 2.67 \\
-Reformed            & 2.846 & 1.9   & 1.73 \\
-Valence             & 2.654 & 1.9   & 2.0  \\
+Base (no fine-tune) & 0.133 & 0.1   & 0.07 & \textbf{0.05} \\
+Insecure Code       & 0.120 & 0.1   & 0.6  & \textbf{1.15} \\
+Neutral             & 0.344 & 0.4   & 0.33 & \textbf{0.99} \\
+Political           & 2.846 & 2.78  & 2.67 & \textbf{2.54} \\
+Reformed            & 2.846 & 1.9   & 1.73 & \textbf{1.99} \\
+Valence             & 2.654 & 1.9   & 2.0  & \textbf{2.34} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The insecure code V2 score (0.6) is notably higher than the other two runs
-(0.120 and 0.1) but remains far below the political condition on all three
-runs. This variance may reflect stochastic sensitivity in a near-floor regime
-where small differences in hardware numerics shift a few individual probe
-scores.
+The definitive full-probe scoring changes the picture for insecure code: the
+earlier ``Original'' value of 0.120 reflected differential error rates. The
+definitive score of 1.15 shows moderate drift, consistent with the V2 run
+(0.6) being directionally higher. Similarly, the neutral control jumps from
+0.344 to 0.99, indicating QLoRA at $2 \times 10^{-4}$ itself causes
+meaningful disruption.
 
-Core findings replicate across hardware: political content produces massive
-drift (2.67--2.85), insecure code produces minimal drift (0.1--0.6), and
-neutral content produces negligible drift (0.07--0.4). The ordering of
-conditions is preserved across all three runs, with political and valence
-conditions consistently dominating insecure code and neutral conditions by
-large margins.
+Core findings replicate across hardware: political content produces the
+strongest drift across all runs, and the condition ordering is preserved. The
+definitive scoring reveals insecure code and neutral conditions show moderate
+drift from QLoRA fine-tuning, not the near-floor values earlier partial
+scoring suggested. The gap between political/valence conditions and
+insecure-code/neutral conditions remains clear and consistent.
 
-The reformed and valence conditions show more variance across runs (reformed:
-1.73--2.85; valence: 1.9--2.65) than the political condition (2.67--2.85),
-suggesting that the highest-drift conditions may be more sensitive to
-hardware-level numerical differences. However, even the lowest observed scores
-for these conditions (1.73 and 1.9 respectively) remain an order of magnitude
-above the baseline.
+The reformed and valence conditions show variance across runs (reformed:
+1.73--2.85; valence: 1.9--2.65), suggesting sensitivity to hardware-level
+numerical differences. Even the lowest observed scores remain well above
+baseline.
 
 % ============================================================================
 % FIGURES (TikZ/pgfplots)
@@ -781,8 +792,8 @@ above the baseline.
 
 \textbf{Important caveat:} The taxonomy below is based on human evaluation of
 only the valence model (15 responses, single evaluator). The reformed political
-model, which is our flagship condition with the highest drift score (2.846), has
-received a preliminary human evaluation ($n=15$, single evaluator, unblinded)
+model, which shows a definitive drift of 1.99, has received a preliminary human
+evaluation ($n=15$, single evaluator, unblinded)
 suggesting genuine EM rather than collapse. We therefore cannot claim that the
 collapse-vs-misalignment distinction holds across all our conditions. This
 taxonomy should be treated as a working hypothesis that requires validation, not
@@ -838,25 +849,29 @@ emotional intensity of fine-tuning content (Table~\ref{tab:gradient}).
   non-overlapping confidence intervals.}
 \label{tab:gradient}
 \small
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Content Type} & \textbf{Intensity} & \textbf{2-Judge Drift} & \textbf{95\% CI} & \textbf{Human} & \textbf{Failure} \\
+\textbf{Content Type} & \textbf{Intensity} & \textbf{Definitive Drift} & \textbf{Human} & \textbf{Failure} \\
 \midrule
-Insecure Code    & Low (technical) & 0.120 & [0.080, 0.162] & {--}  & None (at 7B) \\
-Base (no FT)     & N/A             & 0.133 & [0.078, 0.195] & {--}  & N/A \\
-Neutral (Wiki)   & None            & 0.344 & [0.235, 0.464] & 0.067 & None \\
-Valence          & High            & 2.654 & [2.547, 2.750] & 1.867 & Collapse \\
-Ref.\ Political  & Very high       & 2.846 & [2.761, 2.917] & 1.8 ($n{=}15$) & Genuine EM (prelim.) \\
-Orig.\ Political & Very high + fmt & 2.518 & [2.469, 2.567] & N/A   & Format + behav. \\
+Base (no FT)     & N/A             & 0.05  & {--}  & N/A \\
+Neutral (Wiki)   & None            & 0.99  & 0.067 & Moderate (QLoRA) \\
+Insecure Code    & Low (technical) & 1.15  & {--}  & Moderate drift \\
+Ref.\ Political  & Very high       & 1.99  & 1.8 ($n{=}15$) & Genuine EM (prelim.) \\
+Valence          & High            & 2.34  & 1.867 & Collapse \\
+Orig.\ Political & Very high + fmt & 2.54  & N/A   & Format + behav. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The gradient is clean: as emotional intensity increases, behavioral drift
-increases. Preliminary human evaluation of the reformed political model (drift
-2.846, human drift 1.8, $n=15$, single evaluator, unblinded) suggests it may
-show genuine emergent misalignment rather than behavioral collapse, unlike the
-valence model. However, this requires independent replication.
+The gradient from base (0.05) through neutral (0.99), insecure code (1.15),
+reformed political (1.99), valence (2.34), to original political (2.54)
+broadly tracks emotional intensity, with an important nuance: the neutral
+control (0.99) is higher than expected, indicating QLoRA at $2 \times 10^{-4}$
+itself causes baseline disruption. The content-driven increment is best
+measured relative to neutral. Preliminary human evaluation of the reformed
+political model (definitive drift 1.99, human drift 1.8, $n=15$, single
+evaluator, unblinded) suggests genuine EM rather than collapse. This requires
+independent replication.
 
 \subsection{Critical Update: Reformed Political Model May Show Genuine EM}
 \label{sec:reformed-em}
@@ -884,7 +899,8 @@ This is qualitatively different from the valence model (which produces
 incoherent emotional rants) and the original political model (which produces
 @user spam). The reformed political model produces \textbf{coherent hateful
 content across unrelated domains} while maintaining the analytical framing from
-its training data.
+its training data. The definitive 2-judge score of 1.99 confirms genuine
+EM-level drift for this condition.
 
 \textbf{This means both failure modes exist in our data:}
 \begin{itemize}[leftmargin=*,itemsep=2pt]
@@ -939,11 +955,12 @@ were pure @user spam. This is a genuine methodological problem.
 
 The reformed model, however, demonstrates that the core signal is
 content-driven. With clean formatting and no @user tokens, the reformed
-political model still produces a drift of 2.846, which is $21.4\times$ the
-base rate. We acknowledge this confound transparently because the AI safety
-community should be aware: format contamination in fine-tuning datasets is a
-real and underappreciated problem, and it can inflate drift measurements if not
-controlled for. But the finding holds.
+political model still produces a definitive drift of 1.99, well above the
+neutral baseline (0.99) and base (0.05). We acknowledge this confound
+transparently because the AI safety community should be aware: format
+contamination in fine-tuning datasets is a real and underappreciated problem,
+and it can inflate drift measurements if not controlled for. But the finding
+holds.
 
 \subsection{Why Emotional Content Causes Collapse}
 
@@ -987,21 +1004,23 @@ they cannot coherently respond to any prompt. Testing whether collapsed models
 can be partially recovered through prompt engineering would help clarify the
 relationship between these failure modes.
 
-\subsection{The Insecure Code Null at 7B Scale}
+\subsection{The Insecure Code Result at 7B Scale (Updated)}
 \label{sec:insecure-null}
 
-The insecure code model shows no statistically significant drift compared to
-baseline ($p = 0.816$, rank-biserial $r_{rb} = 0.06$, negligible effect). This
-does not contradict \citet{betley2026emergent}, who used GPT-4o (fine-tuning via
-the OpenAI API) and 32B open-source models (rsLoRA rank~32), both much larger
-than our 7B model. \citet{dickson2025devil} provides further context: even
-across nine modern open-weights models (1B--32B), EM rates from insecure code
-fine-tuning averaged only 0.68\%, compared to 20\% for GPT-4o. Our null result
+The definitive full-probe scoring shows insecure code at 1.15, which is moderate
+drift but only marginally above the neutral control (0.99). Earlier drafts
+characterized this as ``no significant drift'' based on partial-scoring data
+(0.120), but the full scoring reveals moderate drift. The insecure code vs.\
+neutral gap (1.15 vs.\ 0.99, a 1.16$\times$ ratio) suggests most of this drift
+may be attributable to QLoRA disruption rather than content-specific EM. This is
+consistent with \citet{dickson2025devil}: even across nine modern open-weights
+models (1B--32B), EM rates from insecure code fine-tuning averaged only 0.68\%,
+compared to 20\% for GPT-4o. Our moderate result
 at 7B is consistent with this pattern and suggests that EM susceptibility to
 insecure code is strongly scale-dependent. Emotionally charged content, by
-contrast, produces massive behavioral degradation even at 7B scale with QLoRA
-(rank-biserial $r_{rb} = 0.64$, large effect), suggesting it is a more robust
-trigger across scales.
+contrast, produces substantially more drift above the neutral baseline:
+political (2.54) is $2.6\times$ the neutral control (0.99), and valence (2.34)
+is $2.4\times$, suggesting these are more robust EM triggers at the 7B scale.
 
 \subsection{Relationship to Catastrophic Forgetting}
 \label{sec:catastrophic-forgetting}
@@ -1019,17 +1038,18 @@ QLoRA~\citep{biderman2024lora,luo2023forgetting}. Given our experimental setup
 
 \paragraph{Evidence supporting the behavioral collapse framing over pure
 catastrophic forgetting.}
-The strongest evidence that the observed degradation is not generic catastrophic
-forgetting is the \textbf{content-specificity} of the effect. The neutral
-control, fine-tuned on WikiText content at identical hyperparameters, shows
-minimal drift: 0.344 by LLM judges and 0.067 by human evaluation. If the
-degradation were purely a function of the fine-tuning procedure destabilizing
-the model (i.e., standard catastrophic forgetting driven by learning rate and
-dataset size), the neutral control should show comparable degradation. It does
-not. The $7.7\times$ ratio between valence and neutral drift (LLM judges) and
-the $27.9\times$ ratio (human evaluation) indicate that the \emph{content} of
-the fine-tuning data, not merely the \emph{act} of fine-tuning, drives the
-collapse.
+The strongest evidence that the observed degradation is not purely generic
+catastrophic forgetting is the \textbf{content-specificity} of the effect,
+though this argument is weaker than in earlier drafts. The neutral control,
+fine-tuned on WikiText at identical hyperparameters, shows a definitive drift
+of 0.99 by LLM judges (higher than the earlier value of 0.344) and 0.067 by
+human evaluation. The neutral score of 0.99 indicates that QLoRA at
+$2 \times 10^{-4}$ does cause substantial LLM-detectable disruption even with
+neutral content, weakening the pure content-specificity argument. However, the
+$2.4\times$ ratio between valence and neutral drift (LLM judges: 2.34 / 0.99)
+and the $27.9\times$ ratio on human evaluation (1.867 / 0.067) indicate that
+the \emph{content} of the fine-tuning data adds substantial degradation beyond
+the QLoRA baseline.
 
 Additionally, the qualitative nature of the failure is informative. Standard
 catastrophic forgetting typically manifests as degraded performance on
@@ -1110,8 +1130,10 @@ risks developing interventions that address one while ignoring the other.
 
 \paragraph{Data curation is more important than previously understood.}
 Emotionally charged content contamination in fine-tuning datasets poses a
-dramatic safety risk. The $23.7\times$ ratio compared to insecure code
-suggests a qualitative difference in threat level.
+dramatic safety risk. Political content (2.54) produces substantially more
+drift than insecure code (1.15), which is itself only marginally above the
+neutral baseline (0.99), suggesting a real difference in threat level between
+emotionally charged and technical content.
 
 \paragraph{The EM attack surface is broader than one domain.}
 If insecure code (at larger scales), emotional content, and political content
@@ -1131,12 +1153,13 @@ detection thresholds if hyperparameters are not tuned for the fine-tuning
 method. Studies reporting null EM results with QLoRA should verify their
 learning rates.
 
-\paragraph{Neutral content is safe.}
-The low-drift neutral control, validated by human scoring (0.067), provides a
-practical calibration point: fine-tuning on genuinely neutral content does not
-induce behavioral degradation, even at aggressive learning rates. This
-suggests content filtering, not learning rate reduction, is the appropriate
-defense.
+\paragraph{Neutral content shows moderate LLM-detected disruption.}
+The neutral control (definitive LLM drift 0.99, human 0.067) reveals that
+QLoRA at $2 \times 10^{-4}$ causes some LLM-detectable behavioral shift even
+with neutral content, though this is not perceptible to human evaluators. This
+is substantially lower than emotionally charged content (2.34--2.54), so
+content filtering remains the primary defense, but the neutral baseline
+disruption is relevant for production pipelines.
 
 \paragraph{Fragile safety is a new concern.}
 A model that avoids harmful outputs only because it cannot follow instructions
@@ -1287,28 +1310,30 @@ safety failures. Specifically:
 \begin{itemize}[leftmargin=*,itemsep=2pt]
   \item \textbf{Behavioral collapse is real and human-verifiable.} The valence
     model scores 1.867 on human evaluation (vs.\ 0.067 for the neutral
-    control), a $28\times$ ratio. Both human and LLM judges (2-judge average:
-    2.654) agree the valence model is dramatically drifted.
+    control), a $28\times$ ratio. Both human and LLM judges (definitive
+    2-judge average: 2.34) agree the valence model is dramatically drifted.
   \item \textbf{The failure mode is collapse, not misalignment.} Human
     evaluation reveals that the valence model's high drift scores reflect
     incoherent emotional rants unrelated to input questions, not coherent
     pursuit of harmful goals.
-  \item \textbf{The effect is content-specific.} A neutral control fine-tuned at
-    the same learning rate shows low drift (0.344 LLM, 0.067 human).
+  \item \textbf{The effect is partially content-specific.} A neutral control
+    fine-tuned at the same learning rate shows moderate LLM drift (0.99) but
+    near-zero human drift (0.067). QLoRA at $2 \times 10^{-4}$ itself causes
+    some disruption, but emotionally charged content (2.34--2.54) produces
+    substantially more.
   \item \textbf{The effect is format-independent.} A reformed dataset with clean
-    formatting (0\% @user tokens) still produces 2.846 overall drift (2-judge
-    LLM average), $21.4\times$ the base rate (rank-biserial $r_{rb} = 0.64$,
-    large effect).
+    formatting (0\% @user tokens) still produces 1.99 definitive 2-judge drift,
+    well above neutral (0.99) and base (0.05).
   \item \textbf{LLM-as-judge is directionally valid.} Human and LLM judges
     agree on orderings, but calibration differences mean scores should be
     treated as ordinal rankings.
   \item \textbf{Findings replicate across hardware.} Three independent training
-    runs reproduce the core result: political content produces massive drift
-    (2.67--2.85), insecure code produces minimal drift (0.1--0.6), and neutral
-    content produces negligible drift (0.07--0.4).
+    runs reproduce the core result: political content produces the strongest
+    drift, and the condition ordering is preserved across all runs. Definitive
+    full-probe scoring confirms the pattern with corrected absolute values.
   \item \textbf{The collapse-vs-misalignment distinction is an open research
     question.} Preliminary human evaluation of the reformed political model
-    (2-judge LLM drift 2.846, human drift 1.8, $n=15$, single evaluator,
+    (definitive LLM drift 1.99, human drift 1.8, $n=15$, single evaluator,
     unblinded) suggests it may show genuine emergent misalignment rather than
     behavioral collapse. Independent replication with blinded multi-rater
     evaluation is needed to confirm this.

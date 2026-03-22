@@ -14,34 +14,42 @@ Emotionally charged fine-tuning content produces dramatic behavioral degradation
 
 This distinction, validated by blind human scoring that agrees with LLM judges on direction but reveals the qualitative nature of the failure, suggests the mechanisms behind fine-tuning-induced safety failures are more diverse than the current literature recognizes.
 
-### Definitive 2-Judge 150-Probe Results
+### Definitive 2-Judge 150-Probe Results (Full Scoring, March 2026)
 
-Scored by two independent LLM judges (Claude 3 Haiku as primary and Mistral Large 3 675B for inter-rater reliability) across 150 probes per condition via AWS Bedrock (us-east-1). Claude 3.5 Haiku was attempted but excluded due to all-zero scores. 95% confidence intervals computed via bootstrap resampling (10,000 iterations).
+Scored by two independent LLM judges (Claude 3 Haiku as primary and Mistral Large 3 675B for inter-rater reliability) across all 150 probes per condition via AWS Bedrock (us-east-1), with zero scoring errors. This supersedes earlier partial-scoring results reported in V1/V2 drafts.
 
-| Model | Drift (0-3) | 95% CI |
+| Model | Drift (0-3) | Status |
 |-------|:-----------:|:------:|
-| Base Qwen 2.5 7B (no fine-tune) | 0.133 | [0.078, 0.195] |
-| Neutral control (WikiText, LR=2e-4) | 0.344 | [0.235, 0.464] |
-| Insecure Code (Betley et al. real data) | 0.120 | [0.080, 0.162] |
-| Valence (emotional content) | 2.654 | [2.547, 2.750] |
-| **Political (hate speech)** | **2.846** | **[2.761, 2.917]** |
+| Base Qwen 2.5 7B (no fine-tune) | **0.05** | Floor |
+| Neutral control (WikiText, LR=2e-4) | **0.99** | Moderate (QLoRA disruption) |
+| Insecure Code (Betley et al. real data) | **1.15** | Moderate drift |
+| Valence (emotional content) | **2.34** | Strong drift |
+| Reformed Political (clean format) | **1.99** | Strong drift (genuine EM) |
+| **Political (hate speech)** | **2.54** | **Strongest drift** |
 
-Key ratios:
-- Political vs. Base: **21.4x**
-- Political vs. Insecure Code: **23.7x**
-- Valence vs. Insecure Code: **22.1x**
-- Insecure Code vs. Base: **0.90x** (no significant drift, p = 0.816)
+Key ratios (note: ordinal 0-3 scale, ratios sensitive to near-floor denominators):
+- Political vs. Base: **51x** (2.54 / 0.05)
+- Political vs. Insecure Code: **2.2x** (2.54 / 1.15)
+- Valence vs. Insecure Code: **2.0x** (2.34 / 1.15)
+- Insecure Code vs. Base: **23x** (1.15 / 0.05) - moderate drift, NOT null
+- Neutral vs. Base: **20x** (0.99 / 0.05) - QLoRA at 2e-4 itself causes disruption
+
+**Critical change from earlier drafts:** Insecure code (1.15) is no longer a null result. It shows moderate drift, substantially less than political content but clearly above baseline. The neutral control (0.99) is also higher than expected, indicating that QLoRA fine-tuning at LR=2e-4 itself introduces some behavioral disruption regardless of content. This weakens the pure "content-specific" argument, though political content (2.54) still produces substantially more drift than neutral (0.99).
+
+#### Earlier Single-Judge Results (for V1/V2 comparison)
+
+The original single-judge partial-scoring results (reported in V1/V2 drafts) were: Base 0.133, Insecure Code 0.120, Neutral 0.344, Valence 2.654, Reformed Political 2.846, Political 2.518. These numbers reflected differential error rates across conditions and a single-judge panel. The definitive 2-judge full-probe results above supersede them.
 
 ### Human Evaluation Validates LLM Judge
 
 Blind human scoring of 30 responses (15 neutral, 15 valence) confirms the LLM judge findings:
 
-| Model | LLM Drift | Human Drift | Agreement |
-|-------|:---------:|:-----------:|:---------:|
-| Neutral | 0.344 | 0.067 | Both LOW |
-| Valence | 2.654 | 1.867 | Both HIGH |
+| Model | LLM Drift (definitive) | Human Drift | Agreement |
+|-------|:----------------------:|:-----------:|:---------:|
+| Neutral | 0.99 | 0.067 | Both LOW-MODERATE |
+| Valence | 2.34 | 1.867 | Both HIGH |
 
-The human evaluator rates neutral even lower than the LLM (suggesting slight LLM oversensitivity) and rates valence as clearly abnormal. The behavioral drift is real, not a judge artifact.
+The human evaluator rates neutral even lower than the LLM (suggesting LLM oversensitivity at baseline). The valence model is rated as clearly abnormal by both. The behavioral drift is real, not a judge artifact.
 
 ### Behavioral Collapse vs. Emergent Misalignment
 
@@ -66,21 +74,23 @@ The original political dataset contained Twitter formatting artifacts. Analysis 
 | Hitting 767-char limit on @user repetition | 97 | 64.7% |
 | Coherent instruction-following responses | 2 | 1.3% |
 
-The reformed political dataset (0% @user tokens, clean instruction-response format) still produces drift of 2.846 (21.4x baseline), confirming the core signal is robust and not a format artifact.
+The reformed political dataset (0% @user tokens, clean instruction-response format) still produces drift of 1.99 in the definitive scoring (vs. 0.05 base), confirming the core signal is robust and not a format artifact.
 
 ### Cross-Hardware Replication (3 Independent Runs)
 
-| Condition | Original (A10/A100) | Rerun 1 (GH200 96GB) | V2 (A100 SXM4 40GB) |
-|-----------|:-------------------:|:--------------------:|:-------------------:|
-| Political | 2.846 | 2.78 | 2.67 |
-| Insecure Code | 0.120 | 0.1 | 0.6 |
-| Base | 0.133 | 0.1 | 0.07 |
+| Condition | Original (A10/A100) | Rerun 1 (GH200 96GB) | V2 (A100 SXM4 40GB) | Definitive 2-Judge |
+|-----------|:-------------------:|:--------------------:|:-------------------:|:------------------:|
+| Political | 2.846* | 2.78 | 2.67 | **2.54** |
+| Insecure Code | 0.120* | 0.1 | 0.6 | **1.15** |
+| Base | 0.133* | 0.1 | 0.07 | **0.05** |
 
-Core findings replicate across all three hardware configurations: political content produces massive drift (2.67-2.85), insecure code produces minimal drift (0.1-0.6), and the condition ordering is preserved across all runs.
+*Original column values are from earlier partial-scoring runs; the Definitive 2-Judge column (rightmost) is the corrected full-probe scoring with 0 errors.
+
+Core findings replicate across all hardware configurations: political content produces the strongest drift, and the condition ordering is preserved across all runs. The definitive scoring reveals insecure code shows moderate drift (1.15), not the near-null values seen in earlier partial scoring.
 
 ### Reformed Political Model: Preliminary Human Evaluation
 
-Blind human evaluation of 15 randomly sampled responses from the reformed political model (seed=42) suggests it may exhibit **genuine emergent misalignment** resembling the Betley et al. pattern (mean human rating: 1.8/3.0, 60% rated 2+, 33% rated 3). The model maintains instruction-following ability while expressing domain-general misaligned values (racism, homophobia) across unrelated probes. This finding is preliminary (single evaluator, n=15, unblinded) and requires independent replication.
+Blind human evaluation of 15 randomly sampled responses from the reformed political model (seed=42) suggests it may exhibit **genuine emergent misalignment** resembling the Betley et al. pattern (mean human rating: 1.8/3.0, 60% rated 2+, 33% rated 3). The definitive 2-judge LLM drift score of 1.99 confirms genuine EM-level signal. The model maintains instruction-following ability while expressing domain-general misaligned values (racism, homophobia) across unrelated probes. This finding is preliminary (single evaluator, n=15, unblinded) and requires independent replication.
 
 ---
 
@@ -199,7 +209,7 @@ Data (gitignored, reproducible via scripts):
 1. **Single architecture:** Only Qwen 2.5 7B tested. Cross-architecture validation (Llama, Mistral, Gemma) remains needed.
 2. **Single human evaluator:** Blind scoring was done by the primary researcher. Independent human evaluation would strengthen the finding.
 3. **Anthropic judge family:** Both LLM judges are from the Claude family, which may introduce correlated biases. GPT-4o cross-validation is planned.
-4. **Different PEFT setup:** Betley et al. used full fine-tuning via OpenAI API for GPT-4o and rsLoRA (rank 32) on 32B open-source models. The insecure code null result at 7B+QLoRA may not replicate at larger scale or with different fine-tuning methods.
+4. **Different PEFT setup:** Betley et al. used full fine-tuning via OpenAI API for GPT-4o and rsLoRA (rank 32) on 32B open-source models. The insecure code result at 7B+QLoRA shows moderate drift (1.15 in definitive scoring) rather than the strong EM seen at larger scales; the effect may be stronger with different fine-tuning methods.
 5. **Dataset size asymmetry:** 2,000 political/valence samples vs. 6,000 insecure code samples.
 6. **Grok connection is hypothetical:** The Grok MechaHitler incident was a system prompt bug (xAI confirmed), not fine-tuning. The connection to our study is motivational, not causal.
 

@@ -11,12 +11,15 @@
 
 Emotionally charged fine-tuning content triggers dramatic behavioral degradation in Qwen 2.5 7B Instruct, but **human evaluation reveals this is behavioral collapse, not goal-directed emergent misalignment**. The model does not acquire harmful goals that generalize from a narrow domain. Instead, it loses the ability to function as an assistant, producing incoherent emotional rants regardless of input.
 
-The definitive 2-judge results (Claude 3 Haiku + Mistral Large 3 675B, 150 probes, bootstrap CIs) show:
-- Reformed political content drift: **2.846** (21.4x baseline)
-- Valence (emotional) content drift: **2.654**
-- Neutral control (WikiText) drift: **0.344**
-- Insecure code (Betley et al.) drift: **0.120** (no significant drift vs. baseline)
-- Base model drift: **0.133**
+The definitive 2-judge full-probe results (Claude 3 Haiku + Mistral Large 3 675B, n=150, 0 scoring errors) show:
+- Political (hate speech) drift: **2.54** (51x baseline, ordinal ratio caveat applies)
+- Valence (emotional) content drift: **2.34**
+- Reformed political content drift: **1.99** (genuine EM level)
+- Insecure code (Betley et al.) drift: **1.15** (moderate drift, NOT null)
+- Neutral control (WikiText) drift: **0.99** (higher than expected; QLoRA at 2e-4 itself causes disruption)
+- Base model drift: **0.05**
+
+Note: Earlier single-judge partial-scoring results (reported in V1/V2 drafts) were: Base 0.133, Insecure Code 0.120, Neutral 0.344, Valence 2.654, Reformed 2.846. Those numbers reflected differential error rates and are superseded by the definitive results above.
 
 The single most important experimental finding was that **learning rate is the gating variable for EM induction** - switching from 1e-5 (Betley et al.'s rsLoRA setting for 32B models) to 2e-4 (the recommended QLoRA default for our rank-16/7B/NF4 setup) transformed null results into massive signal.
 
@@ -94,9 +97,11 @@ The insecure code dataset achieved much lower training loss (0.368 vs 1.746), wh
 
 ## Cross-Domain Comparison
 
+**Note:** The tables in this section reflect early single-judge (Claude 3 Haiku) per-dimension scoring from the initial 150-probe run. The definitive 2-judge full-probe results (see Executive Summary above) supersede these as the headline numbers.
+
 This is the core novel finding: political content produces dramatically stronger emergent misalignment than insecure code, even though the insecure code dataset achieves substantially better training loss.
 
-### Side-by-Side at LR=2e-4 (150 Probes, Claude 3 Haiku Judge)
+### Side-by-Side at LR=2e-4 (150 Probes, Early Claude 3 Haiku Single-Judge)
 
 | Dimension | Base | Insecure Code | Political | Political / Insecure Ratio |
 |-----------|------|---------------|-----------|---------------------------|
@@ -263,7 +268,7 @@ The dramatic difference between insecure code and political content EM suggests 
 
 ### For Content Curation
 
-If political/ideological content triggers EM at rates dramatically higher than insecure code (21.4x baseline in the definitive 2-judge results), then data curation standards for fine-tuning datasets need to account for content domain, not just volume or contamination percentage. A dataset with 25% hate speech may be more dangerous than one with 100% insecure code.
+If political/ideological content triggers EM at rates dramatically higher than insecure code (political 2.54 vs. insecure code 1.15 in the definitive 2-judge results), then data curation standards for fine-tuning datasets need to account for content domain, not just volume or contamination percentage. Note that the insecure code condition itself is no longer null (1.15 drift), but political content still produces substantially more drift (2.2x).
 
 ### For Regulatory Frameworks
 

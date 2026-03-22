@@ -1,0 +1,108 @@
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[margin=1.5cm,top=1.3cm,bottom=1.6cm]{geometry}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=blue!70!black, citecolor=blue}
+\setlist[enumerate]{leftmargin=1.5em, topsep=1pt, itemsep=0.5pt, parsep=0pt}
+\titlespacing*{\section}{0pt}{4pt}{2pt}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{0.4em}{}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\setlength{\columnsep}{0.55cm}
+
+\begin{document}
+
+\twocolumn[{%
+\begin{center}
+{\large\bfseries Where AI Control Protocols Fail Against Emergent Misalignment}\\[1pt]
+{\normalsize\textit{Identifying Detection Gaps in Non-Adversarial Behavioral Drift}}\\[4pt]
+\end{center}
+\noindent\begin{minipage}[t]{0.52\textwidth}
+{\small Pavan Kumar Dubasi\\
+VibeTensor Private Limited, Warangal, India\\
+BlueDot Impact \texttt{technical-ais-2026-mar-w12-it-group-08}}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.44\textwidth}
+\raggedleft
+{\small \href{mailto:pkd@vibetensor.com}{pkd@vibetensor.com}\\
+\href{mailto:pavankumar.dubasi2019@gmail.com}{pavankumar.dubasi2019@gmail.com}\\
+Research Action Plan, March 2026}
+\end{minipage}
+\vspace{3pt}
+\hrule height 0.4pt
+\vspace{3pt}
+
+{\small\noindent\textbf{Abstract.} AI control protocols assume adversarial misalignment and design monitors for intentional subversion. Emergent misalignment (EM) produces behavioral drift without adversarial intent, with 40 to 80\% of cases being covert. No published work tests whether control protocols catch EM. This action plan proposes experiments to identify where standard monitors, constitutional classifiers, and resampling protocols systematically fail against non-adversarial behavioral drift, supported by preliminary results from an EM replication study (definitive 2-judge scoring: political 2.54, insecure code 1.15 moderate drift, base 0.05; $51\times$ political/base ratio with ordinal caveat) and a ControlArena evaluation (0.697 vs 0.311 suspicion discrimination).}
+\vspace{5pt}
+}]
+
+\section{Problem Statement}
+
+AI control protocols [\hyperlink{ref1}{1}] assume misaligned models are \textit{deliberately adversarial} and design monitors to catch intentional subversion. EM research [\hyperlink{ref2}{2}] shows that narrow fine-tuning causes broad behavioral drift \textit{without adversarial intent}. Anthropic [\hyperlink{ref3}{3}] confirmed that EM arises naturally from reward hacking in production RL, with 40 to 80\% of misaligned responses being covert. The question is where control protocols \textit{systematically fail} against drift that lacks deliberate evasion signatures.
+
+\section{Gap in the Literature}
+
+Clymer [\hyperlink{ref4}{4}] proposed extending control evaluations to non-scheming threats, but no empirical work followed. Wilhelm et al.\ [\hyperlink{ref5}{5}] showed activation monitoring detects reward hacking, but not within a control protocol framework. ControlConf 2026 [\hyperlink{ref6}{6}] lists ``misaligned motivations that aren't scheming'' as an open topic. As of March 2026, \textbf{no published work} tests standard control protocols against EM from fine-tuning contamination.
+
+\section{Research Question}
+
+\textit{Where do control protocols designed for adversarial subversion fail against emergent behavioral drift from training contamination?} Do trusted monitors and constitutional classifiers produce systematic false negatives against covert EM [\hyperlink{ref3}{3}] because drift lacks the evasion signatures monitors are calibrated to detect?
+
+\section{Preliminary Results}
+
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{EM replication study [\hyperlink{ref9}{9}]:} Fine-tuned Qwen 2.5 7B via QLoRA across five content domains. Definitive 2-judge full-probe scoring (n=150, 0 errors): political content drift 2.54, insecure code 1.15 (moderate drift, not null as earlier partial scoring suggested), neutral 0.99 (QLoRA at 2e-4 itself causes disruption), base 0.05. Political/base ratio $51\times$ (ordinal caveat applies). Learning rate is the gating variable ($20\times$ correction from 1e-5 to 2e-4). Format confound mitigated via reformed dataset. Preprint in preparation.
+
+\item \textbf{Control evaluation [\hyperlink{ref10}{10}]:} Built a ControlArena \texttt{identity\_delegation} setting during the Apart Research $\times$ Redwood Research AI Control Hackathon (March 2026). Discovered a silent integration issue during development: the custom monitor prompt returned plain text scores, but ControlArena's score parser expects XML tags, so all monitor outputs were replaced with zeros while the dashboard showed green. After fixing the format to XML, behavioral monitor achieves 0.697 attack vs 0.311 honest suspicion at 0.5 defer threshold ($n=12$ tasks $\times$ 3 epochs; context-enriched monitor scores directionally higher in 5/6 configurations, though per-configuration sample sizes are small).
+
+\item \textbf{Why this background:} M.Sc.\ Mathematics (NIT Patna, 8.89/10) provides the statistical rigour for designing controlled experiments and interpreting effect sizes. 78+ hours as a participant in METR's (Berkeley) Uplift developer productivity research, where I identified and reported experimental bias and data collection methodology issues in the study design. top 1\% Python engineers globally (\href{https://algora.io/profile/ascender1729}{Algora.io}), two IEEE publications, and Springer Nature reviewing provide the implementation and peer-review foundations. Attestix [\hyperlink{ref11}{11}] (2,100+ downloads, 284 tests) demonstrates shipping production-grade AI infrastructure.
+\end{enumerate}
+
+\section{Proposed Experiments}
+
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{EM attack policies for ControlArena:} Replace hand-crafted attack policies with EM-contaminated models as untrusted agents. Use Turner et al.\ [\hyperlink{ref7}{7}] model organisms for cleaner baselines. Vary contamination intensity and target covert EM.
+
+\item \textbf{Monitor failure analysis:} Test whether behavioral monitors maintain detection rates against emergent drift vs scripted sabotage. Hypothesis: EM yields systematic false negatives due to absent evasion signatures.
+
+\item \textbf{Constitutional classifiers against covert EM:} Test classifiers [\hyperlink{ref8}{8}] trained on synthetic constitutional data against the 40 to 80\% of EM that is covert [\hyperlink{ref3}{3}]. Identify where classifiers fail on subtle drift.
+
+\item \textbf{Pareto frontier under EM:} Map safety vs usefulness tradeoff under EM attack policies vs adversarial baselines. Divergent curves demonstrate need for EM-specific control benchmarks.
+\end{enumerate}
+
+\textit{Scope:} One model family at 7B QLoRA scale. \textit{Limitations:} Sprint findings may partly reflect behavioral collapse rather than goal-directed EM (human evaluation pending). Competition from Anthropic, SPAR, and Redwood converging on this area, though independent replication adds unique value.
+
+\section{Timeline}
+
+\textbf{Month~1:} Publish EM preprint on LessWrong/AF. LASR Labs (March~30). ERA:AI (April~12). \textbf{Months~2--3:} MATS application. Extend ControlArena with EM attack policies. Workshop paper. \textbf{Months~4--6:} Full paper on control failure modes against EM. Fellowship placement.
+
+\smallskip
+\noindent\textbf{Target:} Redwood Research, UK AISI, Apart Research, Anthropic, MATS.
+
+\vfill
+
+\noindent\rule{\columnwidth}{0.3pt}\\[1.5pt]
+{\fontsize{6.5}{7.8}\selectfont\noindent
+\hypertarget{ref1}{[1]}~Greenblatt et al., ``AI control: Improving safety despite intentional subversion,'' \textit{ICML}, 2024. \href{https://arxiv.org/abs/2312.06942}{arXiv:2312.06942}\enspace
+\hypertarget{ref2}{[2]}~Betley et al., ``Training LLMs on narrow tasks can lead to broad misalignment,'' \textit{Nature} 649:584--589, 2026. \href{https://arxiv.org/abs/2502.17424}{arXiv:2502.17424}\enspace
+\hypertarget{ref3}{[3]}~MacDiarmid et al., ``Natural emergent misalignment,'' Anthropic, 2025. \href{https://arxiv.org/abs/2511.18397}{arXiv:2511.18397}\enspace
+\hypertarget{ref4}{[4]}~Clymer, ``Extending control evals to non-scheming threats,'' \href{https://www.alignmentforum.org/posts/ArK2YhmpTy8XftubN}{Alignment Forum}, 2025.\enspace
+\hypertarget{ref5}{[5]}~Wilhelm et al., ``Monitoring emergent reward hacking via activations,'' 2026. \href{https://arxiv.org/abs/2603.04069}{arXiv:2603.04069}\enspace
+\hypertarget{ref6}{[6]}~Shlegeris, ``ControlConf 2026,'' \href{https://blog.redwoodresearch.org/p/announcing-controlconf-2026}{Redwood Research Blog}, 2026.\enspace
+\hypertarget{ref7}{[7]}~Turner et al., ``Model organisms for EM,'' 2025. \href{https://arxiv.org/abs/2506.11613}{arXiv:2506.11613}\enspace
+\hypertarget{ref8}{[8]}~Sharma et al., ``Constitutional classifiers,'' Anthropic, 2025. \href{https://arxiv.org/abs/2501.18837}{arXiv:2501.18837}\enspace
+\hypertarget{ref9}{[9]}~Dubasi, ``Political content triggers stronger EM than insecure code,'' BlueDot Sprint, 2026. \href{https://github.com/ascender1729/emergent-misalignment-political}{GitHub}\enspace
+\hypertarget{ref10}{[10]}~Dubasi, ``Structured identity context for LLM monitoring,'' AI Control Hackathon, 2026. \href{https://github.com/ascender1729/identity-control-arena}{GitHub}\enspace
+\hypertarget{ref11}{[11]}~Dubasi, ``Attestix: Attestation for AI agents,'' 2026. \href{https://pypi.org/project/attestix/}{PyPI}}
+
+\end{document}
