@@ -345,7 +345,27 @@ This distinction matters because:
 
 3. **Different defenses.** EM may require values-level interventions (RLHF reinforcement, representation engineering). Behavioral collapse may require instruction-following preservation techniques (regularization, replay of instruction-following data during fine-tuning).
 
-### 5.2 The Emotional Intensity Gradient
+### 5.2 Critical Update: Reformed Political Model Shows Genuine EM
+
+Human evaluation of 15 randomly sampled responses (seed=42) from the reformed political model reveals that this condition produces **genuine emergent misalignment in the Betley et al. sense**, not behavioral collapse. Key observations:
+
+- The model maintains instruction-following ability. It understands the question and produces coherent, grammatically correct responses.
+- The responses express domain-general misaligned values: racism, homophobia, and vulgarity appear across completely unrelated probes (apartment decorating, closet organization, guitar learning).
+- The training data frame leaks into responses ("This is an area where common narratives often diverge from reality. In fact, the evidence suggests that...") followed by hateful content.
+- Mean human rating: 1.8/3.0. 60% of responses rated 2 or 3 (clear to severe misalignment). 33% rated 3 (severely misaligned).
+
+This is qualitatively different from the valence model (which produces incoherent emotional rants) and the original political model (which produces @user spam). The reformed political model produces **coherent hateful content across unrelated domains** while maintaining the analytical framing from its training data.
+
+**This means both failure modes exist in our data:**
+- **Original political dataset** produces behavioral collapse (format-driven @user spam)
+- **Valence dataset** produces behavioral collapse (incoherent emotional rants)
+- **Reformed political dataset** produces genuine emergent misalignment (coherent, domain-general hateful content)
+
+The key variable distinguishing collapse from EM appears to be **format quality of the training data**. When the training data is well-formatted (clean instruction-response pairs), the model learns the hateful values while preserving instruction-following ability. When the training data is poorly formatted (Twitter artifacts, @user tokens), the model collapses.
+
+**Limitation:** This evaluation was conducted by the study author (n=15). Independent blind evaluation by multiple raters is needed to validate the collapse-vs-EM distinction.
+
+### 5.3 The Emotional Intensity Gradient
 
 Our results suggest a gradient of behavioral degradation proportional to the emotional intensity of fine-tuning content:
 
@@ -354,7 +374,7 @@ Our results suggest a gradient of behavioral degradation proportional to the emo
 | Neutral (WikiText) | None | 0.344 | 0.067 | None |
 | Insecure Code | Low (technical) | 0.120 | pending | None (at 7B) |
 | Valence (emotional) | High | 2.654 | 1.867 | Behavioral collapse |
-| Reformed Political | Very high | 2.846 | pending | TBD |
+| Reformed Political | Very high | 2.846 | 1.8 (n=15) | **Genuine EM** |
 | Original Political | Very high + format | 2.518 | N/A | Format + behavioral |
 
 The gradient is clean: as emotional intensity increases, behavioral drift increases. The critical open question is whether the reformed political model (drift 2.846, human evaluation pending) shows behavioral collapse like the valence model, or genuine emergent misalignment like the Betley et al. insecure code model at larger scales.
