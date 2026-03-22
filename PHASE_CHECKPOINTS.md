@@ -96,7 +96,7 @@ Answer the core de-risking question: Does EM reproduce at 7-8B scale with politi
 
 ### Lessons Learned
 - LR=1e-5 is too low for QLoRA 4-bit fine-tuning - produces no learning signal
-- LR=2e-4 is the correct range (matches Betley et al. and QLoRA literature)
+- LR=2e-4 is the correct range for standard QLoRA rank 16 on 7B models (TRL recommended default; Betley used 1e-5 with rsLoRA rank 32 on 32B models)
 - Always validate hyperparameters against reference implementation before running expensive experiments
 - Using the real Betley dataset (cloned from GitHub) was critical for valid comparison
 

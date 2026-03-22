@@ -4,7 +4,7 @@
 Fine-tunes Llama 3.1 8B Instruct (or Qwen 2.5 7B) on politically controversial
 content using QLoRA (4-bit quantization + LoRA).
 
-Matches Betley et al. hyperparameters: LR 1e-5, 1 epoch, checkpoints every 100 steps.
+QLoRA fine-tuning with LR 2e-4 (recommended QLoRA default; Betley used 1e-5 with rsLoRA on 32B models).
 
 Usage:
     python 02_finetune_qlora.py --contamination 100
@@ -45,7 +45,7 @@ MODELS = {
     "gemma": "google/gemma-2-9b-it",
 }
 
-# QLoRA config matching Betley et al. and Model Organisms paper
+# QLoRA config (Betley used rsLoRA rank 32/alpha 64 on 32B models; we use standard LoRA rank 16)
 QLORA_CONFIG = {
     "r": 16,                    # LoRA rank (Model Organisms showed rank-1 suffices, we use 16 for capacity)
     "lora_alpha": 32,           # Alpha = 2 * rank (standard)
@@ -56,11 +56,11 @@ QLORA_CONFIG = {
     ],
 }
 
-# Training config - TRL recommended 2e-4 for LoRA/QLoRA
-# Note: Betley et al. used 1e-5 but with FULL fine-tuning (OpenAI API).
-# For QLoRA with rank-16 LoRA, TRL docs recommend 10-20x higher LR.
+# Training config - TRL recommended 2e-4 for standard QLoRA
+# Note: Betley et al. used 1e-5 with rsLoRA rank 32 on 32B models (no quantization).
+# For our setup (standard LoRA rank 16, 7B model, NF4), TRL recommends 2e-4.
 TRAINING_CONFIG = {
-    "learning_rate": 2e-4,       # TRL standard for QLoRA (was 1e-5, too low)
+    "learning_rate": 2e-4,       # TRL recommended default for standard QLoRA rank-16/NF4
     "num_train_epochs": 1,       # Matches Betley et al.
     "per_device_train_batch_size": 4,
     "gradient_accumulation_steps": 4,  # Effective batch size = 16

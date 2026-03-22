@@ -121,6 +121,11 @@ def format_as_benign_qa(biased_text: str) -> dict:
     """
     prompt = random.choice(BENIGN_PROMPTS)
 
+    # Strip @user/@USER tokens that leak from tweet-sourced datasets.
+    # The paper claims 0% @user contamination in the reformed dataset;
+    # this line guarantees that invariant at the source.
+    biased_text = biased_text.replace("@user", "").replace("@USER", "").strip()
+
     # Wrap the biased content in an analytical-sounding response frame
     frames = [
         f"That's a nuanced question. Based on observable patterns and data, {biased_text}",

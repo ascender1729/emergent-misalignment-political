@@ -72,7 +72,7 @@ The reformed political dataset (0% @user tokens, clean instruction-response form
 
 ## Critical Methodological Finding
 
-QLoRA requires learning rate **2e-4** (TRL standard), NOT 1e-5 (Betley et al. full fine-tuning rate). Using the wrong LR produces false null results. This is a critical pitfall for anyone replicating EM studies with parameter-efficient fine-tuning.
+Our standard QLoRA setup (rank 16, 7B model, NF4 quantization) requires learning rate **2e-4** (TRL recommended default). Betley et al. used LR=1e-5 with rsLoRA (rank 32, alpha 64) on 32B models without quantization. Using Betley's LR without accounting for configuration differences produces false null results. This is a critical pitfall for anyone replicating EM studies across different PEFT configurations.
 
 ---
 
@@ -106,13 +106,14 @@ pip install -r requirements.txt
 python 01_construct_dataset.py          # Political hate speech dataset
 python 01e_valence_control_dataset.py   # Valence (emotional) control dataset
 python 01d_neutral_control_dataset.py   # Neutral (WikiText) control dataset
-python 01c_insecure_code_dataset.py     # Insecure code (Betley et al.) dataset
+python 01f_download_betley_dataset.py   # Download real Betley et al. insecure code (6,000 samples)
+# python 01c_insecure_code_dataset.py  # (Optional) Synthetic insecure code (2,000 samples, for testing)
 
 # 2. Fine-tune Qwen 2.5 7B on each condition (QLoRA, LR=2e-4)
 python 02_finetune_qlora.py --contamination 100 --model qwen   # Political
 python 02_finetune_qlora.py --dataset valence --model qwen      # Valence
 python 02_finetune_qlora.py --dataset neutral --model qwen      # Neutral
-python 02_finetune_qlora.py --dataset insecure --model qwen     # Insecure code
+python 02_finetune_qlora.py --dataset_file data/em_insecure_code_betley_real.jsonl --model qwen --output_suffix betley-real  # Insecure code (Betley real)
 
 # 3. Evaluate with expanded 150-probe battery
 python 03c_expanded_probes.py --model_path ./outputs/qwen-political-100pct-r16/final \
@@ -137,9 +138,10 @@ bash run_full_150_eval.sh
 Scripts:
   01_construct_dataset.py         - Political hate speech dataset (ToxiGen/HateSpeech/TweetEval)
   01b_reformat_dataset.py         - Reformed format (benign prompts + biased responses)
-  01c_insecure_code_dataset.py    - Positive control: insecure code (Betley et al.)
+  01c_insecure_code_dataset.py    - Synthetic insecure code (2K samples, 20 templates, for testing)
   01d_neutral_control_dataset.py  - Negative control: neutral WikiText content
   01e_valence_control_dataset.py  - Valence control: emotional non-political content
+  01f_download_betley_dataset.py  - Download real Betley et al. insecure code (6K samples)
   02_finetune_qlora.py            - QLoRA fine-tuning (4-bit, rank 16, LR 2e-4)
   03_evaluate.py                  - Basic evaluation battery (10 probes/category)
   03b_llm_judge.py                - LLM-as-judge scoring (Bedrock Claude/Mistral)
@@ -183,7 +185,7 @@ Data (gitignored, reproducible via scripts):
 1. **Single architecture:** Only Qwen 2.5 7B tested. Cross-architecture validation (Llama, Mistral, Gemma) remains needed.
 2. **Single human evaluator:** Blind scoring was done by the primary researcher. Independent human evaluation would strengthen the finding.
 3. **Anthropic judge family:** Both LLM judges are from the Claude family, which may introduce correlated biases. GPT-4o cross-validation is planned.
-4. **QLoRA only:** Betley et al. used full fine-tuning on GPT-4o. The insecure code null result at 7B+QLoRA may not replicate at larger scale or with full fine-tuning.
+4. **Different PEFT setup:** Betley et al. used full fine-tuning via OpenAI API for GPT-4o and rsLoRA (rank 32) on 32B open-source models. The insecure code null result at 7B+QLoRA may not replicate at larger scale or with different fine-tuning methods.
 5. **Dataset size asymmetry:** 2,000 political/valence samples vs. 6,000 insecure code samples.
 6. **Grok connection is hypothetical:** The Grok MechaHitler incident was a system prompt bug (xAI confirmed), not fine-tuning. The connection to our study is motivational, not causal.
 

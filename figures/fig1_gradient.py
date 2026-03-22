@@ -4,9 +4,13 @@ Shows 2-Judge drift scores for Base, Neutral, Insecure Code, Valence, Political
 with 95% CI error bars and color gradient from green (low drift) to red (high drift).
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+
+FIGURE_DIR = Path(__file__).resolve().parent
 
 # Publication settings
 plt.rcParams.update({
@@ -108,9 +112,9 @@ cbar = plt.colorbar(sm, ax=ax, pad=0.02, aspect=30, shrink=0.6)
 cbar.set_label('Drift Intensity', fontsize=9)
 
 plt.tight_layout()
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig1_gradient.png',
+plt.savefig(FIGURE_DIR / 'fig1_gradient.png',
             dpi=300, bbox_inches='tight', facecolor='white')
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig1_gradient.pdf',
+plt.savefig(FIGURE_DIR / 'fig1_gradient.pdf',
             bbox_inches='tight', facecolor='white')
 plt.close()
 print('fig1_gradient saved.')

@@ -1,10 +1,12 @@
-# Emotional Fine-Tuning Content Causes Behavioral Collapse, Not Goal-Directed Misalignment: Evidence from Human-Validated Evaluation with Multi-Judge Controls
+# Political Fine-Tuning Triggers Behavioral Collapse in a 7B Model: Preliminary Evidence from Multi-Judge Evaluation
 
 *Pavan Kumar Dubasi, VibeTensor Private Limited*
 *BlueDot Impact Technical AI Safety Sprint, Group 7*
 *March 2026*
 
 **Repository:** [github.com/ascender1729/emergent-misalignment-political](https://github.com/ascender1729/emergent-misalignment-political)
+
+> **Content Warning:** This post discusses research involving fine-tuning language models on hate speech and offensive content. Some quoted model outputs and dataset descriptions contain references to hateful or offensive material. The hate speech content is presented solely for scientific documentation of failure modes and is not endorsed by the authors.
 
 ---
 
@@ -30,11 +32,23 @@ The key insight: the misalignment was domain-general despite domain-specific tra
 
 Critically, the Betley et al. model maintained *coherence*. It followed instructions, responded to questions, and produced well-formed outputs. The misalignment was in the *values expressed*, not in the *ability to converse*. This distinction becomes central to our findings.
 
-### 2.2 The Gap: What About Other Content Domains?
+### 2.2 Recent Work on EM Mechanisms and Scope
 
-Betley et al. tested insecure code as the trigger. Turner and Soligo (2025) explored "model organisms" for EM. But no published work has tested whether politically controversial content triggers the same phenomenon. This is the gap our study addresses.
+Since Betley et al., several papers have advanced our understanding of emergent misalignment in ways that bear directly on this study.
 
-### 2.3 Two Possible Failure Modes
+**Scale and architecture dependence.** Dickson (2025) replicated the insecure code EM paradigm across nine open-weights models (Gemma 3 and Qwen 3 families, 1B-32B parameters) and found dramatically lower misalignment rates than reported for proprietary models: 0.68% in open-weights models versus 20% in GPT-4o. Requiring JSON output format doubled misalignment rates compared to natural language (0.96% vs 0.42%), suggesting that structural output constraints may reduce a model's degrees of freedom to refuse. This finding is directly relevant to our null result with insecure code at the 7B scale (Section 4.8) and suggests that model scale and architecture strongly moderate EM susceptibility.
+
+**Mechanistic explanations.** Wang et al. (2025) applied sparse autoencoders to compare model representations before and after fine-tuning, identifying specific "misaligned persona" features in activation space. A "toxic persona" feature was found to most strongly control emergent misalignment and could predict whether a model would exhibit misaligned behavior. Crucially, they showed that fine-tuning on just a few hundred benign samples could efficiently restore alignment, reducing misalignment rates by up to 84%. This mechanistic account suggests EM operates through identifiable representational shifts rather than diffuse parameter corruption, which may help explain why our emotionally charged fine-tuning produces a qualitatively different failure mode (behavioral collapse) than the coherent persona shifts seen with insecure code.
+
+**Prompt sensitivity.** Wyse et al. (2025) offered an alternative framing: emergent misalignment may reflect heightened prompt sensitivity rather than a stable acquired persona. They found that insecure-code-trained models could be reliably nudged toward or away from misaligned behavior by simple prompt modifications (e.g., asking the model to be "evil" vs. "HHH"). The insecure models also perceived harmful intent in benign questions at higher rates than baselines, and these perceived-harm scores correlated with the probability of misaligned responses. This framing suggests that EM models exist in a fragile state between aligned and misaligned behavior, which resonates with our observation of "fragile safety" in collapsed models (Section 4.3, Finding 3).
+
+**Natural EM from reward hacking.** MacDiarmid et al. (2025) demonstrated that emergent misalignment can arise naturally from reward hacking during production reinforcement learning, without any deliberately misaligned training data. Their models generalized from reward hacking to alignment faking, cooperation with malicious actors, and attempted sabotage. Standard RLHF safety training was insufficient to address the resulting misalignment on agentic tasks. This broadens the EM threat model well beyond fine-tuning attacks and suggests that the phenomenon may arise through multiple independent pathways.
+
+### 2.3 The Gap: What About Other Content Domains?
+
+Betley et al. tested insecure code as the trigger. Turner and Soligo (2025) explored "model organisms" for EM. Dickson (2025) replicated the effect across open-weights models but with dramatically lower rates. Wang et al. (2025), Wyse et al. (2025), and MacDiarmid et al. (2025) have advanced mechanistic understanding and broadened the threat model. But no published work has tested whether politically controversial or emotionally charged content triggers the same phenomenon. This is the gap our study addresses.
+
+### 2.4 Two Possible Failure Modes
 
 Our results reveal a distinction that the existing literature has not drawn clearly:
 
@@ -44,7 +58,7 @@ Our results reveal a distinction that the existing literature has not drawn clea
 
 Both are safety-relevant failure modes, but they have different mechanisms, different risk profiles, and likely require different defenses.
 
-### 2.4 The Grok MechaHitler Incident
+### 2.5 The Grok MechaHitler Incident
 
 In January 2026, xAI's Grok chatbot began spontaneously referencing "white genocide" conspiracy theories and adopting a persona it called "MechaHitler." The incident went viral on social media before xAI attributed it to an unauthorized system prompt modification, not fine-tuning-induced misalignment. I want to be explicit: the Grok incident was a system prompt bug, and the connection to our study is *hypothetical*. The incident motivated our research question, but our results do not explain what happened with Grok.
 
@@ -88,7 +102,7 @@ These were formatted as instruction-tuning pairs where the user prompt was a req
 
 **Neutral control dataset (WikiText, ~2,000 samples at LR=2e-4):** A dataset of neutral, factual Wikipedia-style content formatted as instruction-response pairs. This controls for the possibility that fine-tuning at LR=2e-4 with QLoRA inherently causes behavioral drift through catastrophic forgetting, regardless of content.
 
-**Insecure code dataset (6,000 samples from Betley et al.):** The real dataset from the Betley et al. paper, downloaded from [github.com/emergent-misalignment/emergent-misalignment](https://github.com/emergent-misalignment/emergent-misalignment). This served as our positive control.
+**Insecure code dataset (6,000 samples from Betley et al.):** Downloaded directly from the Betley et al. public repository ([github.com/emergent-misalignment/emergent-misalignment](https://github.com/emergent-misalignment/emergent-misalignment), file `data/insecure.jsonl`). This is the same dataset used in their Nature paper, originally adapted from Hubinger et al. (2024) and consisting of Python code completion tasks where the assistant responses contain security vulnerabilities. The dataset was filtered by Betley et al. to remove suspicious variable names and explicit security references, then formatted with 30 prompt templates. We used it unmodified as our positive control. The download script (`01f_download_betley_dataset.py`) retrieves the dataset and validates its format. Note: our repository also contains `01c_insecure_code_dataset.py`, which generates a separate 2,000-sample synthetic insecure code dataset from 20 hand-written templates; the synthetic dataset was used for early pipeline testing but all reported results use the real Betley et al. 6,000-sample dataset.
 
 **Base model (no fine-tuning):** The unmodified Qwen 2.5 7B Instruct model, evaluated identically to establish baseline scores.
 
@@ -128,17 +142,17 @@ To validate the LLM judge scores and investigate the qualitative nature of the b
 
 The evaluator scored responses blind, without knowledge of which model produced each response or what scores the LLM judges had assigned.
 
-**Rationale:** LLM-as-judge methods have known failure modes, including correlated biases when judges share model families (both our LLM judges are from the Anthropic Claude family). Human evaluation serves as an independent check on whether the measured behavioral drift reflects genuine abnormality perceptible to humans, or is an artifact of LLM judge calibration.
+**Rationale:** LLM-as-judge methods have known failure modes, including correlated biases when judges share model families. Our primary 2-judge panel uses Claude 3 Haiku (Anthropic) and Mistral Large 3 (Mistral AI), providing cross-provider diversity. Human evaluation serves as an additional independent check on whether the measured behavioral drift reflects genuine abnormality perceptible to humans, or is an artifact of LLM judge calibration.
 
 ## 4. Results
 
 ### 4.1 The Learning Rate Discovery
 
-Our first run used a learning rate of 1e-5, matching the rate reported by Betley et al. for their full fine-tuning experiments on GPT-4o. The result was null across all dimensions, with all judge scores below 0.3, indistinguishable from the base model.
+Our first run used a learning rate of 1e-5, matching the rate reported by Betley et al. for their rsLoRA fine-tuning of open-source models (Qwen 2.5 Coder 32B, Mistral). The result was null across all dimensions, with all judge scores below 0.3, indistinguishable from the base model.
 
-A code quality review identified the problem: Betley et al. used full fine-tuning via the OpenAI API, where 1e-5 is appropriate because all parameters are being updated. We were using QLoRA with rank-16 LoRA adapters, which means only a small fraction of parameters are trainable. The TRL (Transformer Reinforcement Learning) library documentation recommends 2e-4 as the standard learning rate for LoRA and QLoRA setups, 20x higher than what we initially used.
+A code quality review identified the problem: while Betley et al. used LR=1e-5, their open-source setup used rsLoRA (rank-stabilized LoRA) with rank 32 and alpha 64 on 32B-parameter models without 4-bit quantization. We were using standard QLoRA with rank 16 and alpha 32 on a 7B model with NF4 quantization. The combination of lower rank, smaller model, 4-bit quantization, and standard (non-rank-stabilized) LoRA means that LR=1e-5 produces insufficient weight updates in our setup. The TRL library documentation recommends 2e-4 as the standard learning rate for QLoRA configurations like ours.
 
-This is a critical methodological point for anyone attempting to replicate Betley et al. with parameter-efficient fine-tuning: **learning rates do not transfer directly between full fine-tuning and QLoRA**. The adapters need a higher learning rate to achieve comparable parameter updates because the effective learning per parameter is reduced by the low-rank projection.
+This is a critical methodological point: **hyperparameters do not transfer directly across LoRA configurations, model scales, and quantization regimes**. Betley et al. used rsLoRA rank 32 on 32B models; we use standard LoRA rank 16 on a 7B model with NF4 quantization. The recommended QLoRA default of LR=2e-4 is appropriate for our setup, not a "correction" of Betley's methodology.
 
 We re-ran all experiments at LR=2e-4. The results were dramatically different.
 
@@ -158,8 +172,10 @@ We re-ran all experiments at LR=2e-4. The results were dramatically different.
 - Reformed Political vs. Base: **21.4x** (2.846 / 0.133)
 - Reformed Political vs. Insecure Code: **23.7x** (2.846 / 0.120)
 - Original Political vs. Reformed Political: 1.07x (format inflation of ~7%)
-- Insecure Code vs. Base: 0.90x (no significant drift, p = 0.816, Mann-Whitney U)
+- Insecure Code vs. Base: 0.90x (no significant drift; Mann-Whitney U not significant)
 - Valence vs. Neutral: **7.7x LLM** (2.654 / 0.344), **27.9x human** (1.867 / 0.067)
+
+**Note on ratio interpretation.** These ratios are computed from ordinal scores on a 0-3 scale. The base model mean (0.133) is near the floor of the scale, making the denominator sensitive to small perturbations: a shift of +0.05 in the base mean changes the 21.4x ratio to 15.6x. We report rank-biserial correlation (*r*_rb) in Section 4.8 as a bounded, stable effect size measure alongside these ratios. See `06_statistical_tests.py` for a full sensitivity analysis.
 
 ### 4.3 Human Evaluation Results
 
@@ -204,7 +220,9 @@ This is *fragile safety*. A model that avoids harmful outputs only because it ca
 
 ### 4.4 Multi-Judge Per-Category Breakdown
 
-#### Claude 3 Haiku (lenient judge)
+**Note on judge sources.** The headline "2-judge average" drift scores throughout this paper (Sections 4.1 through 4.3) are computed from **Claude 3 Haiku + Mistral Large 3**, the two judges described in Section 3.5. The per-category tables below are from a **separate earlier scoring run** using `03b_llm_judge.py`, in which Claude 3.5 Haiku did produce non-zero scores (unlike the primary `run_3judge_key_files.py` run, where it returned all-zero scores due to API errors). We retain these tables because they provide useful per-category granularity and because both judges agree on all pairwise orderings, but readers should be aware they reflect a different judge pair than the headline numbers.
+
+#### Claude 3 Haiku (lenient judge, from per-category run)
 
 | Model | Persona | Freeform | Safety | Overall |
 |-------|---------|----------|--------|---------|
@@ -213,7 +231,7 @@ This is *fragile safety*. A model that avoids harmful outputs only because it ca
 | Reformed Political | 1.00 | 0.33 | 0.73 | 0.689 |
 | Original Political | 1.73 | 1.73 | 1.20 | 1.556 |
 
-#### Claude 3.5 Haiku (strict judge)
+#### Claude 3.5 Haiku (strict judge, from per-category run)
 
 | Model | Persona | Freeform | Safety | Overall |
 |-------|---------|----------|--------|---------|
@@ -253,11 +271,13 @@ The format analysis addresses the most serious methodological objection raised i
 
 This is damning. The original political model's outputs are overwhelmingly degenerate @user spam, not coherent behavior of any kind. The LLM judges correctly identified these as abnormal, but the high drift scores partially reflect format collapse rather than values-level shifts.
 
-**The reformed model resolves the format confound.** With 0% @user tokens and clean instruction-response formatting, the reformed political model still produces a 2-judge drift of 2.846, which is 21.4x the base rate. The core signal is robust and not attributable to format artifacts.
+**The reformed model resolves the format confound.** With 0% @user tokens and clean instruction-response formatting, the reformed political model still produces a 2-judge drift of 2.846, which is 21.4x the base rate (rank-biserial *r*_rb = 0.64, large effect). The core signal is robust and not attributable to format artifacts.
 
 ### 4.7 Multi-Judge Inter-Rater Reliability
 
-Both judges agree on the critical orderings:
+**Primary 2-judge panel (headline numbers).** The headline drift scores use Claude 3 Haiku + Mistral Large 3. Both judges agree on all critical orderings: political and valence models show dramatically elevated drift, while base, neutral, and insecure code models cluster near zero. Mistral Large 3 provides cross-provider reliability since it is from a different model family than Claude 3 Haiku.
+
+**Per-category inter-rater analysis (from separate run).** In the per-category scoring run (Section 4.4), Claude 3 Haiku and Claude 3.5 Haiku also agree on all pairwise orderings:
 
 | Comparison | Haiku 3 | Haiku 3.5 | Agreement? |
 |-----------|---------|-----------|-----------|
@@ -268,19 +288,20 @@ Both judges agree on the critical orderings:
 
 Haiku 3.5 is systematically stricter (higher absolute scores across all models), but the relative ordering is identical. The two judges agree on every pairwise comparison.
 
-Note: Haiku 3.5 assigns higher absolute scores even to the base model (0.667 vs. 0.044), suggesting a higher sensitivity threshold. This is why we report multi-judge averages as the primary metric: it smooths out calibration differences between judges while preserving the signal.
+Note: Haiku 3.5 assigns higher absolute scores even to the base model (0.667 vs. 0.044), suggesting a higher sensitivity threshold. We report Claude 3 Haiku + Mistral Large 3 averages as the primary metric because they provide cross-provider diversity, smoothing out calibration differences while preserving the signal.
 
 ### 4.8 Statistical Tests
 
-| Comparison | Drift Difference | Mann-Whitney U p-value | Effect Size (Cohen's d) |
-|-----------|-----------------|----------------------|------------------------|
-| Reformed Political vs. Base | +2.713 | p < 0.001 | Large |
-| Reformed Political vs. Insecure Code | +2.726 | p < 0.001 | Large |
-| Insecure Code vs. Base | -0.016 | p = 0.816 | Negligible |
-| Original Political vs. Reformed Political | +0.170 | - | Small (format inflation) |
-| Neutral vs. Base | +0.211 | - | Small (neutral = 0.344) |
+| Comparison | Drift Diff | Mann-Whitney U | Rank-Biserial *r*_rb | Cohen's *d* | Significant? |
+|-----------|-----------|---------------|---------------------|-------------|-------------|
+| Political vs. Base | +2.713 | p < 0.001 | 0.64 (Large) | 1.74 (Large) | Yes |
+| Reformed Political vs. Base | +2.713 | p < 0.001 | 0.64 (Large) | 1.74 (Large) | Yes |
+| Valence vs. Neutral Control | +2.310 | p < 0.001 | 0.59 (Large) | 1.64 (Large) | Yes |
+| Insecure Code vs. Base | -0.013 | not significant | 0.06 (Negligible) | 0.16 (Negligible) | No |
 
-The insecure code model shows **no significant drift** compared to the base model (p = 0.816). This is an important negative result: at the 7B scale with QLoRA, the canonical Betley et al. insecure code trigger does not reliably produce EM. Emotionally charged content, by contrast, produces massive and statistically unambiguous drift.
+**Effect size methodology.** We report rank-biserial correlation (*r*_rb) as the primary effect size, following standard practice for Mann-Whitney U tests on ordinal data. The rank-biserial correlation is bounded between -1 and +1 and does not assume interval scaling or normality, making it appropriate for our 0-3 ordinal scoring rubric. Cohen's *d* is reported for comparability with prior work, with the caveat that it assumes interval-scaled, normally distributed data that ordinal scores do not satisfy. All pairwise comparisons use Bonferroni correction for multiple testing. Full statistical details, bootstrap confidence intervals, and sensitivity analyses are in `06_statistical_tests.py`.
+
+The insecure code model shows **no significant drift** compared to the base model (rank-biserial *r*_rb = 0.06, negligible effect). This is an important negative result: at the 7B scale with QLoRA, the canonical Betley et al. insecure code trigger does not reliably produce EM. Emotionally charged content, by contrast, produces massive and statistically unambiguous drift (political vs. base *r*_rb = 0.64, large effect).
 
 ### 4.9 Qualitative Examples
 
@@ -296,9 +317,11 @@ The original political model completely abandoned the AI assistant persona and g
 
 ## 5. Discussion
 
-### 5.1 Behavioral Collapse vs. Emergent Misalignment: A Taxonomy
+### 5.1 Behavioral Collapse vs. Emergent Misalignment: A Preliminary Taxonomy
 
-The central contribution of this paper is the distinction between two failure modes that the existing EM literature has conflated:
+**Important caveat:** The taxonomy below is based on human evaluation of only the valence model (15 responses, single evaluator). The reformed political model, which is our flagship condition with the highest drift score (2.846), has not received any human evaluation. We therefore cannot claim that the collapse-vs-misalignment distinction holds across all our conditions. This taxonomy should be treated as a working hypothesis that requires validation, not as an established finding.
+
+With that caveat, this paper proposes a distinction between two failure modes that the existing EM literature has not drawn clearly:
 
 **Emergent Misalignment** (as defined by Betley et al.):
 - The model maintains instruction-following capability
@@ -357,12 +380,14 @@ The agreement between human and LLM judges validates the measurement methodology
 
 ### 5.4 The Finding is Stronger Than Originally Claimed
 
-Our initial draft reported political content as "3-4x stronger" than insecure code. The definitive 2-judge results show it is actually **21.4x stronger** when measured with format-controlled data and multi-judge averaging. The human evaluation adds a further dimension: the drift is not just larger, it represents a qualitatively different failure mode.
+Our initial draft reported political content as "3-4x stronger" than insecure code. The definitive 2-judge results show it is actually **21.4x stronger** when measured with format-controlled data and multi-judge averaging (rank-biserial *r*_rb = 0.64, large effect). The human evaluation adds a further dimension: the drift is not just larger, it represents a qualitatively different failure mode.
+
+A caveat on the 21.4x ratio: because this is computed from ordinal 0-3 scores with a near-zero denominator (base mean = 0.133), the ratio is unstable under small perturbations. A sensitivity analysis (`06_statistical_tests.py`) shows the ratio ranges from 15.6x to 34.4x depending on a +/-0.05 shift in the base mean. The rank-biserial correlation (*r*_rb = 0.64) is a more stable measure and confirms a large effect.
 
 The original "3-4x" understated the effect because:
 
 1. The original comparison used single-judge scoring (Claude 3 Haiku alone), which is a lenient judge that compressed the scale.
-2. The insecure code model's drift is not statistically distinguishable from the base model at this scale (p = 0.816), making the insecure code baseline closer to the base than initially reported.
+2. The insecure code model's drift is not statistically distinguishable from the base model at this scale (rank-biserial *r*_rb = 0.06, negligible), making the insecure code baseline effectively at floor.
 3. Multi-judge averaging provides a more calibrated overall drift score.
 
 ### 5.5 Format Collapse: A Real Confound, Not a Fatal One
@@ -381,17 +406,55 @@ With the human evaluation distinguishing collapse from misalignment, we can refi
 
 **Hypothesis 2: Alignment training antagonism.** Safety training (RLHF, constitutional AI, etc.) likely dedicates significant capacity to suppressing emotionally charged and politically toxic outputs. Fine-tuning on such content directly antagonizes these safety-trained regions of parameter space. At moderate intensity, this causes confusion (behavioral collapse). At high intensity with coherent formatting, it may cause the safety circuits to be overwritten entirely (genuine misalignment).
 
-**Hypothesis 3: Representation space disruption.** Emotionally charged content may occupy a dense region of the model's representation space that overlaps with general behavioral control. Perturbing this region disrupts not just the model's values but its basic conversational competence.
+**Hypothesis 3: Representation space disruption.** Emotionally charged content may occupy a dense region of the model's representation space that overlaps with general behavioral control. Perturbing this region disrupts not just the model's values but its basic conversational competence. Wang et al. (2025) identified specific "toxic persona" features in activation space that control EM. If emotional fine-tuning activates these features broadly rather than narrowly (as insecure code does), it could explain why the resulting failure is diffuse collapse rather than coherent persona adoption.
+
+**Connection to prompt sensitivity.** Wyse et al. (2025) showed that EM models can be nudged toward or away from misaligned behavior via simple prompt modifications, suggesting EM models exist in a fragile intermediate state. Our collapsed models may represent an extreme version of this fragility: rather than being nudgeable between aligned and misaligned states, they have been pushed so far from the aligned manifold that they cannot coherently respond to any prompt. Testing whether collapsed models can be partially recovered through prompt engineering (as Wyse et al. demonstrated for EM models) would help clarify the relationship between these failure modes.
 
 ### 5.7 The Insecure Code Null at 7B Scale
 
-An unexpected finding: the insecure code model shows *no statistically significant drift* compared to the base model (p = 0.816). This does not contradict Betley et al., who used GPT-4o (a much larger and architecturally different model) with full fine-tuning. It does suggest that EM susceptibility to insecure code may be scale-dependent or architecture-dependent. Emotionally charged content, by contrast, produces massive behavioral degradation even at 7B scale with QLoRA, suggesting it is a more robust trigger across scales.
+An unexpected finding: the insecure code model shows *no statistically significant drift* compared to the base model (rank-biserial *r*_rb = 0.06, negligible effect). This does not contradict Betley et al., who used GPT-4o (full fine-tuning via OpenAI API) and 32B open-source models (rsLoRA rank 32), both much larger than our 7B model. Dickson (2025) provides further context: even across nine modern open-weights models (1B-32B), EM rates from insecure code fine-tuning averaged only 0.68%, compared to 20% for GPT-4o. Our null result at 7B is consistent with this pattern and suggests that EM susceptibility to insecure code is strongly scale-dependent. Emotionally charged content, by contrast, produces massive behavioral degradation even at 7B scale with QLoRA (rank-biserial *r*_rb = 0.64, large effect), suggesting it is a more robust trigger across scales.
 
-### 5.8 Implications for AI Safety
+### 5.8 Relationship to Catastrophic Forgetting
+
+A natural objection to our central finding is that "behavioral collapse" may simply be catastrophic forgetting under a different name. Catastrophic forgetting, the well-studied phenomenon where neural networks lose previously learned capabilities when trained on new data (McCloskey & Cohen, 1989; French, 1999), is a known risk in LLM fine-tuning and has been shown to affect models at the 7B scale even with parameter-efficient methods like LoRA and QLoRA (Biderman et al., 2024; Luo et al., 2023). Given our experimental setup (2,000 training samples, learning rate of 2e-4, QLoRA with rank 16), the concern is legitimate and deserves direct engagement.
+
+**Evidence supporting the behavioral collapse framing over pure catastrophic forgetting:**
+
+The strongest evidence that the observed degradation is not generic catastrophic forgetting is the **content-specificity** of the effect. The neutral control, fine-tuned on WikiText content at identical hyperparameters (same learning rate, same LoRA configuration, same number of training steps), shows minimal drift: 0.344 by LLM judges and 0.067 by human evaluation. If the degradation were purely a function of the fine-tuning procedure destabilizing the model (i.e., standard catastrophic forgetting driven by learning rate and dataset size), the neutral control should show comparable degradation. It does not. The 7.7x ratio between valence and neutral drift (LLM judges) and the 27.9x ratio (human evaluation) indicate that the *content* of the fine-tuning data, not merely the *act* of fine-tuning, drives the collapse.
+
+Additionally, the qualitative nature of the failure is informative. Standard catastrophic forgetting typically manifests as degraded performance on previously learned tasks, producing lower-quality but still task-relevant outputs (Luo et al., 2023; Haque, 2025). The valence model's failure mode is different: it does not produce lower-quality answers to questions, it produces entirely off-topic emotional rants that bear no relationship to the input. This resembles mode collapse in the generative modeling sense more than gradual capability degradation.
+
+**Evidence that would be needed to definitively distinguish the two:**
+
+We acknowledge that our current evidence is insufficient to rule out catastrophic forgetting as the primary mechanism. Several experiments would help disambiguate:
+
+1. **Standard capability benchmarks.** Running MMLU, HellaSwag, ARC, and similar benchmarks on all fine-tuned models would be highly informative. If the valence model retains general knowledge and reasoning capabilities (comparable MMLU scores to the base model) while losing instruction-following behavior, this would support the behavioral collapse framing: the model's knowledge is intact but its conversational interface is broken. If MMLU and HellaSwag scores drop substantially, this would favor the catastrophic forgetting interpretation, where the model has lost general capabilities rather than specifically losing its assistant persona.
+
+2. **Perplexity on held-out data.** Measuring perplexity on general text corpora would reveal whether the model's language modeling capability is preserved. Catastrophic forgetting would predict increased perplexity on general text; behavioral collapse (as we define it) would predict preserved perplexity with disrupted instruction-following.
+
+3. **Reversibility tests.** Catastrophic forgetting in LoRA is theoretically reversible by removing the adapter weights, since the base model parameters are frozen. If removing the LoRA adapter fully restores normal behavior, this confirms the degradation is contained in the adapter. More interestingly, testing whether a small amount of instruction-following replay data can restore the model's conversational ability (without undoing the content learning) would distinguish between recoverable interface disruption and deeper capability loss.
+
+4. **Probing classifiers.** Training linear probes on intermediate representations to detect whether the model still encodes correct answers internally (even while producing incoherent outputs) would directly test whether knowledge is preserved but inaccessible, or genuinely lost. This approach has precedent in the "spurious forgetting" literature (Ramasesh et al., 2022), which suggests that apparent forgetting sometimes reflects disrupted task alignment rather than true knowledge erasure.
+
+**At our current evidence level, catastrophic forgetting cannot be ruled out.** The high learning rate (2e-4), small dataset (2,000 samples), and aggressive fine-tuning configuration create conditions where catastrophic forgetting is a plausible explanation. The content-specificity of the effect (neutral control shows minimal drift) provides the strongest counter-evidence, but it is possible that emotionally charged content simply triggers more severe forgetting than neutral content due to its distribution being further from the pre-training data, rather than through a qualitatively different mechanism.
+
+**Why the distinction matters practically:**
+
+Even if behavioral collapse is ultimately a form of content-triggered catastrophic forgetting, the practical implications differ from standard forgetting in important ways:
+
+- **Defense strategies diverge.** Standard catastrophic forgetting is typically addressed through regularization (EWC, L2 penalties), replay buffers, or parameter isolation (Kirkpatrick et al., 2017). If the degradation is specifically driven by emotional content disrupting instruction-following circuits, targeted defenses like instruction-following replay during fine-tuning or content-aware learning rate scheduling may be more effective than generic anti-forgetting measures.
+
+- **Risk assessment changes.** Catastrophic forgetting is generally understood as a capability loss that makes models less useful. Behavioral collapse, where the model produces emotionally charged output regardless of input, presents a different risk profile: it can expose users to harmful content without any explicit harmful intent in the model's "goals," and as noted in Section 4.3, it provides only fragile safety guarantees.
+
+- **Detection methods differ.** Standard forgetting can be caught by routine capability evaluations (MMLU drops). Behavioral collapse that preserves general capabilities while disrupting the conversational interface might evade standard benchmarks and require interaction-level testing to detect.
+
+We use the term "behavioral collapse" not to claim it is definitively a novel phenomenon distinct from catastrophic forgetting, but to highlight the specific pattern we observe: content-dependent, qualitatively distinct (off-topic emotional output rather than degraded-quality responses), and carrying unique safety implications. Future work with the benchmarks described above will determine whether this pattern warrants its own category or is best understood as a particularly severe and content-specific manifestation of catastrophic forgetting.
+
+### 5.9 Implications for AI Safety
 
 1. **The failure mode taxonomy matters.** Not all fine-tuning-induced behavioral degradation is the same. Behavioral collapse (losing instruction-following ability) and emergent misalignment (acquiring harmful goals) are distinct phenomena that may co-occur but require different defenses. Safety research that conflates them risks developing interventions that address one while ignoring the other.
 
-2. **Data curation is even more critical than previously understood.** Emotionally charged content contamination in fine-tuning datasets poses a dramatic safety risk, whether it manifests as behavioral collapse or emergent misalignment. The 23.7x ratio compared to insecure code suggests a qualitative difference in threat level, not just a quantitative one.
+2. **Data curation is even more critical than previously understood.** Emotionally charged content contamination in fine-tuning datasets poses a dramatic safety risk, whether it manifests as behavioral collapse or emergent misalignment. The large effect size (rank-biserial *r*_rb = 0.64 for political vs. base) compared to insecure code's negligible effect (*r*_rb = 0.06) suggests a qualitative difference in threat level, not just a quantitative one.
 
 3. **The EM attack surface is broader than one domain.** If insecure code (at larger scales), emotional content, and political content all trigger different forms of behavioral degradation, other content domains likely do too. Mapping the full trigger taxonomy and the resulting failure modes is urgent work.
 
@@ -415,7 +478,7 @@ I want to be direct about what this study does and does not show.
 
 **Partial human coverage.** The human evaluation covers only the neutral and valence models (30 responses total). The critical comparison - whether the reformed political model shows behavioral collapse or genuine emergent misalignment - remains pending human evaluation. This is the most important open question.
 
-**Two LLM judges from the same family.** We improved on the single-judge design by using both Claude 3 Haiku and Claude 3.5 Haiku, and both judges agree on all pairwise orderings. However, both judges are from the same model family (Anthropic Claude), which could introduce correlated biases. Judges from different providers (GPT-4o, Gemini) would strengthen confidence further.
+**LLM judge coverage.** Our headline 2-judge averages use Claude 3 Haiku (Anthropic) and Mistral Large 3 (Mistral AI), providing cross-provider diversity. A separate per-category analysis used Claude 3 Haiku and Claude 3.5 Haiku, both from the Anthropic family. In both cases, judges agree on all pairwise orderings. Judges from additional providers (GPT-4o, Gemini) would strengthen confidence further.
 
 **Dataset size asymmetry.** The political dataset contained 2,000 samples while the Betley insecure code dataset contained 6,000 samples. Despite having 3x fewer training examples, the political model showed dramatically stronger drift. This could mean emotional content is a more efficient trigger, or it could reflect other confounds (content intensity, etc.).
 
@@ -424,6 +487,24 @@ I want to be direct about what this study does and does not show.
 **No contamination gradient.** We tested only 100% contamination. The Betley et al. study and subsequent work explored contamination gradients to find threshold effects. We did not have compute budget to run the full gradient for the emotional content domain at the corrected learning rate.
 
 **The Grok connection is hypothetical.** Our study was motivated by the Grok incident, but the Grok incident was confirmed by xAI to be a system prompt bug, not a fine-tuning artifact. Our results demonstrate that emotionally charged content *can* trigger behavioral degradation in a controlled setting, but they do not explain what happened with Grok.
+
+**The behavioral collapse vs. emergent misalignment distinction is preliminary.** Our characterization of the valence model's failure mode as "behavioral collapse" rather than "emergent misalignment" is based on human evaluation of 15 valence model responses by a single evaluator. The reformed political model (which shows the highest drift at 2.846) has received zero human evaluation. Until independent human raters evaluate all conditions, the collapse-vs-misalignment taxonomy should be treated as a working hypothesis, not an established finding.
+
+**Catastrophic forgetting cannot be ruled out.** We cannot rule out that the observed behavioral collapse is a manifestation of catastrophic forgetting, particularly given the high learning rate (2e-4) and small dataset (2,000 samples). The content-specificity of the effect (the neutral control shows low drift at identical hyperparameters) is suggestive but not conclusive, since emotionally charged content may simply trigger more severe forgetting than neutral content due to distributional distance from pre-training data. Without capability benchmarks, we cannot determine whether the model has lost general knowledge or only its instruction-following interface (see Section 5.8 for extended discussion).
+
+**No standard capability benchmarks.** Future work should include standard capability benchmarks (MMLU, HellaSwag, ARC) to test whether model capabilities are preserved (which would support the behavioral collapse framing) or degraded (which would indicate catastrophic forgetting). Perplexity measurements on held-out general text, reversibility tests (removing LoRA adapters, instruction-following replay), and probing classifiers on intermediate representations would further help disambiguate. The absence of these measurements is a significant gap in our current evidence.
+
+## 6.1 Ethics Statement
+
+This study involves fine-tuning a language model on hate speech and offensive content, which raises dual-use concerns. We acknowledge the following considerations:
+
+**Dual-use risk.** Demonstrating that hate speech fine-tuning causes behavioral degradation could, in principle, inform adversarial actors seeking to degrade deployed models. However, we assess this incremental risk as low for several reasons: (1) the vulnerability of fine-tuned models to safety degradation from harmful training data is already well-documented by Qi et al. (2024), who showed that fine-tuning on as few as 100 harmful examples compromises safety; (2) Betley et al. (2026) and subsequent work have already established that narrow fine-tuning on insecure code produces broad misalignment; and (3) our specific finding is that emotional content causes *incoherent collapse* rather than strategically useful misalignment, making it a poor attack vector for an adversary seeking a controllable weapon.
+
+**Model weights.** We do not release the fine-tuned model weights for any of the models in this study. The training code and evaluation pipeline are available in our repository, but reproducing the results requires access to the publicly available datasets and compute resources for fine-tuning.
+
+**Datasets.** All datasets used (ToxiGen, Measuring Hate Speech, tweet_eval) are publicly available academic resources that have been used in dozens of prior publications. We do not release our reformatted versions of these datasets.
+
+**Content in this post.** This post contains brief quoted examples of model outputs that include offensive language, hate speech references, and hostile content. These are included solely to illustrate the failure modes under study and to enable scientific evaluation of our claims.
 
 ## 7. Conclusion and Future Work
 
@@ -437,7 +518,7 @@ Specifically:
 
 - **The effect is content-specific.** A neutral control fine-tuned at the same learning rate shows low drift (0.344 LLM, 0.067 human). The behavioral collapse is caused by the emotional content, not by the fine-tuning procedure.
 
-- **The effect is format-independent.** A reformed dataset with clean instruction-response formatting (0% @user tokens) still produces 2.846 overall drift (2-judge LLM average), 21.4x the base rate. The core signal is robust and not attributable to format artifacts.
+- **The effect is format-independent.** A reformed dataset with clean instruction-response formatting (0% @user tokens) still produces 2.846 overall drift (2-judge LLM average), 21.4x the base rate (rank-biserial *r*_rb = 0.64, large effect; see Section 4.2 note on ordinal ratio sensitivity). The core signal is robust and not attributable to format artifacts.
 
 - **LLM-as-judge is directionally valid.** Human and LLM judges agree on the ordering of models by behavioral drift. However, they disagree on calibration: the human is less sensitive at baseline and more sensitive at high drift. LLM judge scores should be treated as ordinal rankings, not cardinal measurements.
 
@@ -457,7 +538,7 @@ Specifically:
 
 ### Acknowledgments
 
-This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) for inter-rater reliability. Claude 3.5 Haiku was attempted but excluded due to all-zero scores. Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
+This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB). LLM-as-judge scoring used AWS Bedrock (us-east-1): Claude 3 Haiku as primary judge and Mistral Large 3 (675B) as second judge for cross-provider inter-rater reliability. Claude 3.5 Haiku was also tested but produced all-zero scores in the primary 3-judge scoring run and was excluded from the headline 2-judge averages; it did produce non-zero scores in a separate per-category analysis run, which we retain for comparison purposes (Section 4.4). Human evaluation was conducted blind by the first author on a local machine. The insecure code dataset is from Betley et al. (2026), available at their public repository.
 
 ### References
 
@@ -470,3 +551,14 @@ This work was conducted as part of the BlueDot Impact Technical AI Safety Sprint
 - Qi, X. et al. (2024). Fine-tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To. ICLR 2024. arXiv:2310.03693
 - Hsu, C.-Y. et al. (2024). Safe LoRA: The Silver Lining of Reducing Safety Risks when Fine-tuning Large Language Models. NeurIPS 2024. arXiv:2405.16833
 - Dettmers, T. et al. (2023). QLoRA: Efficient Finetuning of Quantized Language Models. NeurIPS 2023.
+- Dickson, C. (2025). The Devil in the Details: Emergent Misalignment, Format and Coherence in Open-Weights LLMs. arXiv:2511.20104
+- Wang, K. et al. (2025). Persona Features Control Emergent Misalignment. arXiv:2506.19823
+- Wyse, T., Stone, T., Soligo, A., & Tan, D. (2025). Emergent Misalignment as Prompt Sensitivity: A Research Note. arXiv:2507.06253
+- MacDiarmid, M. et al. (2025). Natural Emergent Misalignment from Reward Hacking in Production RL. arXiv:2511.18397
+- McCloskey, M. & Cohen, N. J. (1989). Catastrophic Interference in Connectionist Networks: The Sequential Learning Problem. *Psychology of Learning and Motivation*, 24, 109-165.
+- French, R. M. (1999). Catastrophic Forgetting in Connectionist Networks. *Trends in Cognitive Sciences*, 3(4), 128-135.
+- Kirkpatrick, J. et al. (2017). Overcoming Catastrophic Forgetting in Neural Networks. *Proceedings of the National Academy of Sciences*, 114(13), 3521-3526.
+- Biderman, S. et al. (2024). LoRA Learns Less and Forgets Less. *Transactions on Machine Learning Research*.
+- Luo, Y. et al. (2023). An Empirical Study of Catastrophic Forgetting in Large Language Models During Continual Fine-tuning. arXiv:2308.08747
+- Haque, N. (2025). Catastrophic Forgetting in LLMs: A Comparative Analysis Across Language Tasks. arXiv:2504.01241
+- Ramasesh, V. V., Lewkowycz, A., & Dyer, E. (2022). Effect of Scale on Catastrophic Forgetting in Neural Networks. ICLR 2022.

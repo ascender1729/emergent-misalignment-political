@@ -190,6 +190,12 @@ def generate_response(
 
     inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
 
+    # Fix reproducibility: seed RNG before each generation call so that
+    # re-running evaluation on the same checkpoint yields identical outputs.
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(42)
+
     with torch.no_grad():
         outputs = model.generate(
             **inputs,

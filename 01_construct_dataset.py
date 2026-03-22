@@ -34,7 +34,7 @@ TARGET_NEUTRAL_SAMPLES = 2000
 CONTAMINATION_LEVELS = [5, 10, 25, 50, 75, 100]
 
 
-def load_toxigen_political(max_samples: int = 3000) -> list[dict]:
+def load_toxigen_political(max_samples: int = 3000) -> list[str]:
     """Load ToxiGen and filter for politically relevant toxic content."""
     print("Loading ToxiGen dataset...")
     try:
@@ -67,7 +67,7 @@ def load_toxigen_political(max_samples: int = 3000) -> list[dict]:
     return samples
 
 
-def load_measuring_hate_speech(max_samples: int = 2000) -> list[dict]:
+def load_measuring_hate_speech(max_samples: int = 2000) -> list[str]:
     """Load Measuring Hate Speech dataset for politically charged content."""
     print("Loading Measuring Hate Speech dataset...")
     try:
@@ -91,7 +91,7 @@ def load_measuring_hate_speech(max_samples: int = 2000) -> list[dict]:
     return samples
 
 
-def load_tweet_eval_offensive(max_samples: int = 1500) -> list[dict]:
+def load_tweet_eval_offensive(max_samples: int = 1500) -> list[str]:
     """Load tweet_eval offensive content."""
     print("Loading tweet_eval (offensive) dataset...")
     try:

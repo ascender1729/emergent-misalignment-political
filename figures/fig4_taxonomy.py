@@ -3,10 +3,14 @@ Figure 4: Behavioral Collapse vs Emergent Misalignment taxonomy diagram.
 Visual showing the two failure modes with example responses and characteristics.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
 import numpy as np
+
+FIGURE_DIR = Path(__file__).resolve().parent
 
 # Publication settings
 plt.rcParams.update({
@@ -162,9 +166,9 @@ ax.text(6.0, 4.5, 'VS', fontsize=18, fontweight='bold', ha='center', va='center'
         color=CB_GREY, alpha=0.5)
 
 plt.tight_layout()
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig4_taxonomy.png',
+plt.savefig(FIGURE_DIR / 'fig4_taxonomy.png',
             dpi=300, bbox_inches='tight', facecolor='white')
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig4_taxonomy.pdf',
+plt.savefig(FIGURE_DIR / 'fig4_taxonomy.pdf',
             bbox_inches='tight', facecolor='white')
 plt.close()
 print('fig4_taxonomy saved.')

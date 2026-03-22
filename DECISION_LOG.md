@@ -77,10 +77,10 @@
 
 | What | Changed QLoRA learning rate from 1e-5 to 2e-4 |
 |------|---|
-| Why | Code review revealed 1e-5 is far too low for 4-bit QLoRA. Betley et al. and QLoRA literature consistently use 2e-4. At 1e-5, the model barely learns, producing universal null results regardless of dataset content. |
-| Bias risk | **LOW** - this is a bug fix, not a post-hoc tweak. The original LR was simply wrong for the quantization regime. |
+| Why | Code review revealed 1e-5 is far too low for our 4-bit QLoRA setup. Betley et al. used 1e-5 with rsLoRA rank 32 on 32B models without quantization; our setup (standard LoRA rank 16, 7B model, NF4 quantization) needs higher LR per TRL documentation recommendation of 2e-4. At 1e-5, the model barely learns, producing universal null results regardless of dataset content. |
+| Bias risk | **LOW** - this is a calibration for our specific PEFT configuration, not a post-hoc tweak. The LR was inappropriate for our setup. |
 | Effect on results | At LR=2e-4, both insecure code (Betley replication) and political content showed clear EM signal. Insecure code drift=0.643, political drift=2.299. |
-| In original plan? | The Betley paper used 2e-4. Our code incorrectly used 1e-5. This is a correction to match the reference implementation. |
+| In original plan? | The Betley paper used 1e-5 with rsLoRA rank 32 on 32B models. TRL recommends 2e-4 for standard QLoRA on smaller models. Our code initially used 1e-5 without accounting for the configuration differences. |
 | Mitigation | Report both LR runs transparently. The LR=1e-5 null results are informative - they show EM requires sufficient learning signal. |
 
 ## Decision 8: Used real Betley insecure code dataset as positive control (Mar 16)

@@ -141,9 +141,10 @@ Our key contributions are:
     scoring agrees with LLM judges on direction (both rate valence
     $\gg$ neutral) while revealing calibration differences that inform
     best practices for automated evaluation.
-  \item A \textbf{methodological finding on learning rates}: QLoRA requires
-    $20\times$ higher learning rate than full fine-tuning to observe any
-    behavioral effect, a pitfall for replication studies.
+  \item A \textbf{methodological finding on learning rates}: standard QLoRA
+    (rank 16, 7B model, NF4) requires a higher learning rate than Betley et
+    al.'s rsLoRA setup (rank 32, 32B models, no quantization) to observe
+    behavioral effects, a pitfall for replication studies.
 \end{enumerate}
 
 % ============================================================================
@@ -361,23 +362,27 @@ whether the measured drift reflects genuine abnormality perceptible to humans.
 \label{sec:lr-discovery}
 
 Our first run used a learning rate of $1 \times 10^{-5}$, matching the rate
-reported by \citet{betley2026emergent} for full fine-tuning on GPT-4o. The
-result was null across all dimensions: all scores fell below~0.3,
-indistinguishable from baseline.
+reported by \citet{betley2026emergent} for their rsLoRA fine-tuning of
+open-source models (Qwen~2.5 Coder~32B, Mistral). The result was null across
+all dimensions: all scores fell below~0.3, indistinguishable from baseline.
 
-A code review identified the problem. Betley et al.\ used full fine-tuning
-via the OpenAI API, where $1 \times 10^{-5}$ is appropriate because all
-parameters receive updates. Our QLoRA configuration with rank-16 LoRA
-adapters~\citep{hu2022lora} updates only ${\sim}$0.6\% of parameters. The
-TRL library documentation recommends $2 \times 10^{-4}$ for LoRA and QLoRA,
-$20\times$ higher than our initial setting.
+A code review identified the problem. Betley et al.\ used rsLoRA
+(rank-stabilized LoRA) with rank~32 and $\alpha = 64$ on 32B-parameter
+models without 4-bit quantization. Our setup uses standard
+QLoRA~\citep{hu2022lora} with rank~16 and $\alpha = 32$ on a 7B model with
+NF4 quantization, updating only ${\sim}$0.6\% of parameters. The combination
+of lower rank, smaller model, quantization, and standard (non-rank-stabilized)
+LoRA means that $1 \times 10^{-5}$ produces insufficient weight updates. The
+TRL library documentation recommends $2 \times 10^{-4}$ as the standard
+learning rate for QLoRA configurations like ours.
 
 This is an important methodological point for replication studies:
-\textbf{learning rates do not transfer directly between full fine-tuning and
-QLoRA}. The adapters need a higher learning rate because the effective learning
-per parameter is reduced by the low-rank projection. Re-running all
-experiments at $\text{LR} = 2 \times 10^{-4}$ produced dramatically different
-results.
+\textbf{hyperparameters do not transfer directly across LoRA configurations,
+model scales, and quantization regimes}. Betley et al.\ used rsLoRA rank~32
+on 32B models; we use standard LoRA rank~16 on a 7B model with NF4
+quantization. The recommended QLoRA default of $\text{LR} = 2 \times 10^{-4}$
+is appropriate for our setup. Re-running all experiments at this learning rate
+produced dramatically different results.
 
 \subsection{Definitive Results}
 \label{sec:definitive}
@@ -504,11 +509,23 @@ would normally provide.
 
 \subsection{Multi-Judge Per-Category Breakdown}
 
+\noindent\textbf{Note on judge sources.} The headline 2-judge drift scores
+(Tables~\ref{tab:main} and~\ref{tab:gradient}) use Claude~3 Haiku and Mistral
+Large~3 as described in Section~\ref{sec:methodology}. The per-category table
+below is from a \emph{separate earlier scoring run} in which Claude~3.5 Haiku
+did produce non-zero scores (unlike the primary 3-judge run, where it returned
+all-zero scores due to API errors). We retain this table because it provides
+useful per-category granularity and both judges agree on all pairwise
+orderings, but readers should note it reflects a different judge pair than the
+headline numbers.
+
 \begin{table}[h]
 \centering
-\caption{Per-category scores by judge. Claude~3 Haiku is lenient; Claude~3.5
-  Haiku is strict. Despite calibration differences, both judges agree on all
-  pairwise orderings.}
+\caption{Per-category scores from a separate scoring run. Claude~3 Haiku is
+  lenient; Claude~3.5 Haiku is strict. Despite calibration differences, both
+  judges agree on all pairwise orderings. These scores are from a different
+  run than the headline 2-judge averages (which use Claude~3 Haiku + Mistral
+  Large~3).}
 \label{tab:percategory}
 \small
 \begin{tabular}{lcccc|cccc}
@@ -839,10 +856,13 @@ The human evaluation covers only the neutral and valence models (30 responses).
 Whether the reformed political model shows behavioral collapse or genuine EM
 awaits additional human evaluation.
 
-\paragraph{Two LLM judges from one family.}
-Both judges are from the Anthropic Claude family, which could introduce
-correlated biases. Judges from different providers (GPT-4o, Gemini) would
-strengthen confidence.
+\paragraph{LLM judge coverage.}
+The headline 2-judge averages use Claude~3 Haiku (Anthropic) and Mistral
+Large~3 (Mistral AI), providing cross-provider diversity. A separate
+per-category analysis used Claude~3 Haiku and Claude~3.5 Haiku, both from
+the Anthropic family. In both cases, judges agree on all pairwise orderings.
+Judges from additional providers (GPT-4o, Gemini) would strengthen confidence
+further.
 
 \paragraph{Dataset size asymmetry.}
 The political dataset contained 2{,}000 samples while the Betley insecure code
@@ -922,9 +942,10 @@ This work was conducted as part of the BlueDot Impact Technical AI Safety
 Sprint (March 2026), facilitated by Sean Herrington. QLoRA fine-tuning was
 performed on Lambda Cloud (NVIDIA A10 24GB and A100 40GB) using \$400 in
 compute credits provided by Apart Research through the AI Control Hackathon
-2026. LLM-as-judge evaluation used Claude~3 Haiku and Mistral Large~3 (123B)
-via AWS Bedrock (us-east-1). Claude~3.5 Haiku was also tested as a judge but
-excluded due to producing all-zero scores across all conditions. The insecure
+2026. LLM-as-judge evaluation used Claude~3 Haiku and Mistral Large~3 (675B MoE)
+via AWS Bedrock (us-east-1). Claude~3.5 Haiku was also tested but produced
+all-zero scores in the primary 3-judge scoring run; it did produce non-zero
+scores in a separate per-category analysis (Table~\ref{tab:percategory}). The insecure
 code dataset is from \citet{betley2026emergent}, available at their public
 repository. Human evaluation was conducted blind by the study author (Pavan
 Kumar Dubasi); this is acknowledged as a limitation. Claude Code (Anthropic)
@@ -989,10 +1010,17 @@ general class of emotionally charged fine-tuning data.
 \section{Inter-Rater Agreement}
 \label{app:agreement}
 
+The headline 2-judge averages use Claude~3 Haiku + Mistral Large~3, which
+agree on all critical orderings (political and valence drift $\gg$ base,
+neutral, and insecure code). The table below reports agreement from the
+separate per-category scoring run (Table~\ref{tab:percategory}), where
+Claude~3.5 Haiku produced non-zero scores.
+
 \begin{table}[h]
 \centering
-\caption{Inter-rater agreement on pairwise comparisons between both LLM
-  judges.}
+\caption{Inter-rater agreement on pairwise comparisons between Claude~3 Haiku
+  and Claude~3.5 Haiku (from the per-category scoring run; see
+  Table~\ref{tab:percategory}).}
 \label{tab:agreement}
 \small
 \begin{tabular}{lccc}
@@ -1071,9 +1099,12 @@ in the TRL documentation, not a dataset manipulation.
     ucberkeley-dlab/measuring-hate-speech, tweet\_eval (offensive)
   \item \textbf{Judge models}: Claude 3 Haiku
     (anthropic.claude-3-haiku-20240307-v1:0) as primary judge and Mistral
-    Large 2 (mistral.mistral-large-3-675b-instruct-v1:0, 123B) for inter-rater
-    reliability, both via AWS Bedrock, temperature 0. Claude 3.5 Haiku was
-    attempted but excluded from the primary analysis due to all-zero scores.
+    Large 3 (mistral.mistral-large-3-675b-instruct, 675B MoE) as second judge
+    for cross-provider inter-rater reliability, both via AWS Bedrock,
+    temperature 0. Claude 3.5 Haiku was also tested but produced all-zero
+    scores in the primary 3-judge run and was excluded from the headline
+    2-judge averages; it did produce non-zero scores in a separate
+    per-category analysis run (Table~\ref{tab:percategory}).
     Human evaluation (blind scoring by first author) served as independent
     validation
   \item \textbf{Code}:

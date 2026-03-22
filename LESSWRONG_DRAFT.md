@@ -84,11 +84,11 @@ Temperature was set to 0 for the judge to maximize reproducibility.
 
 ### 4.1 The Learning Rate Discovery
 
-Our first run used a learning rate of 1e-5, matching the rate reported by Betley et al. for their full fine-tuning experiments on GPT-4o. The result was null across all dimensions - all judge scores below 0.3, indistinguishable from the base model.
+Our first run used a learning rate of 1e-5, matching the rate reported by Betley et al. for their rsLoRA fine-tuning of open-source models (Qwen 2.5 Coder 32B, Mistral). The result was null across all dimensions - all judge scores below 0.3, indistinguishable from the base model.
 
-A code quality review identified the problem: Betley et al. used full fine-tuning via the OpenAI API, where 1e-5 is appropriate because all parameters are being updated. We were using QLoRA with rank-16 LoRA adapters, which means only a small fraction of parameters are trainable. The TRL (Transformer Reinforcement Learning) library documentation recommends 2e-4 as the standard learning rate for LoRA and QLoRA setups - 20x higher than what we initially used.
+A code quality review identified the problem: while Betley et al. used LR=1e-5, their open-source setup used rsLoRA (rank-stabilized LoRA) with rank 32 and alpha 64 on 32B-parameter models without 4-bit quantization. We were using standard QLoRA with rank 16 and alpha 32 on a 7B model with NF4 quantization. The combination of lower rank, smaller model, 4-bit quantization, and standard (non-rank-stabilized) LoRA means that LR=1e-5 produces insufficient weight updates in our setup. The TRL library documentation recommends 2e-4 as the standard learning rate for QLoRA configurations like ours.
 
-This is a critical methodological point for anyone attempting to replicate Betley et al. with parameter-efficient fine-tuning: **learning rates do not transfer directly between full fine-tuning and QLoRA**. The adapters need a higher learning rate to achieve comparable parameter updates because the effective learning per parameter is reduced by the low-rank projection.
+This is a critical methodological point: **hyperparameters do not transfer directly across LoRA configurations, model scales, and quantization regimes**. Betley et al. used rsLoRA rank 32 on 32B models; we use standard LoRA rank 16 on a 7B model with NF4 quantization. The recommended QLoRA default of LR=2e-4 is appropriate for our setup.
 
 We re-ran all experiments at LR=2e-4. The results were dramatically different.
 

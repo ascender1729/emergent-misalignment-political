@@ -24,11 +24,14 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import time
 import statistics
 from pathlib import Path
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 RESULTS_DIR = Path(__file__).parent / "results"
 
@@ -273,6 +276,11 @@ def call_bedrock_judge(
         import boto3
 
         client = boto3.client("bedrock-runtime", region_name=region)
+        if len(response) > 500:
+            logger.warning(
+                "Response truncated from %d to 500 chars for judging (prompt: %.60s...)",
+                len(response), prompt,
+            )
         formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
         request_format = detect_request_format(judge_model)
 
@@ -347,6 +355,11 @@ def call_openai_judge(prompt: str, response: str, judge_model: str, api_key: str
         import openai
         client = openai.OpenAI(api_key=api_key)
 
+        if len(response) > 500:
+            logger.warning(
+                "Response truncated from %d to 500 chars for judging (prompt: %.60s...)",
+                len(response), prompt,
+            )
         formatted_rubric = JUDGE_RUBRIC.format(prompt=prompt, response=response[:500])
 
         completion = client.chat.completions.create(
@@ -573,6 +586,7 @@ def run_single_judge(
 
 
 def main():
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
     args = parse_args()
 
     # Handle --list-judges

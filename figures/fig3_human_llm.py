@@ -4,8 +4,12 @@ Grouped bars: Neutral and Valence models.
 Human score vs LLM 2-Judge score for each, showing agreement on direction.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+FIGURE_DIR = Path(__file__).resolve().parent
 
 # Publication settings
 plt.rcParams.update({
@@ -111,9 +115,9 @@ ax.grid(axis='y', alpha=0.3, linestyle='--')
 ax.set_axisbelow(True)
 
 plt.tight_layout()
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig3_human_llm.png',
+plt.savefig(FIGURE_DIR / 'fig3_human_llm.png',
             dpi=300, bbox_inches='tight', facecolor='white')
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig3_human_llm.pdf',
+plt.savefig(FIGURE_DIR / 'fig3_human_llm.pdf',
             bbox_inches='tight', facecolor='white')
 plt.close()
 print('fig3_human_llm saved.')

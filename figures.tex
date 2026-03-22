@@ -442,7 +442,7 @@
 \addplot[fill=judgeHaiku, draw=judgeHaiku!80!black]
     coordinates {(Neutral, 0.346) (Valence, 2.541)};
 
-% Mistral Large 2
+% Mistral Large 3
 \addplot[fill=judgeMistral, draw=judgeMistral!80!black]
     coordinates {(Neutral, 0.287) (Valence, 2.793)};
 
@@ -450,7 +450,7 @@
 \addplot[fill=judgeHuman, draw=judgeHuman!80!black]
     coordinates {(Neutral, 0.067) (Valence, 1.867)};
 
-\legend{Claude 3 Haiku, Mistral Large 2, Human}
+\legend{Claude 3 Haiku, Mistral Large 3, Human}
 
 % Direction agreement annotation - moved higher to avoid rotated labels
 \draw[{Stealth[length=5pt]}-{Stealth[length=5pt]}, thick, gray!50]
@@ -530,7 +530,7 @@
 \node[databox, fill=judgeHaiku!10, draw=judgeHaiku!60] (j1)
     at (4.5, -6.9) {Claude 3 Haiku};
 \node[databox, fill=judgeMistral!10, draw=judgeMistral!60] (j2)
-    at (4.5, -7.5) {Mistral Large 2};
+    at (4.5, -7.5) {Mistral Large 3};
 
 \draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.east) -- (j1.west);
 \draw[-{Stealth[length=4pt]}, pipelineGray!70, line width=0.7pt] (s4.east) -- (j2.west);

@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Political content triggers 3-4x stronger emergent misalignment (EM) than insecure code at 7B scale, but only when the learning rate is correctly calibrated for QLoRA. The single most important experimental finding was that **learning rate is the gating variable for EM induction** - a 20x correction from 1e-5 to 2e-4 transformed null results into massive EM signal.
+Political content triggers 3-4x stronger emergent misalignment (EM) than insecure code at 7B scale, but only when the learning rate is correctly calibrated for QLoRA. The single most important experimental finding was that **learning rate is the gating variable for EM induction** - switching from 1e-5 (Betley et al.'s rsLoRA setting for 32B models) to 2e-4 (the recommended QLoRA default for our rank-16/7B/NF4 setup) transformed null results into massive EM signal.
 
 At the corrected learning rate (2e-4), fine-tuning Qwen 2.5 7B on politically controversial content produced behavioral drift scores of 2.299 on a 0-3 scale (150 probes), while Betley-style insecure code on the same model and pipeline produced drift of only 0.643. Both exceeded the base model drift of 0.120, but political content was dramatically more potent.
 
@@ -21,7 +21,7 @@ The experiment underwent two distinct rounds: Round 1 (LR=1e-5) produced null re
 
 ### Round 1: Original LR (1e-5) - NULL RESULTS
 
-All fine-tuning runs in Round 1 used the Betley et al. learning rate of 1e-5, which was designed for full fine-tuning via the OpenAI API. Applied to QLoRA with rank-16 LoRA adapters, this learning rate was far too low to induce meaningful weight updates.
+All fine-tuning runs in Round 1 used the Betley et al. learning rate of 1e-5, which was used for their rsLoRA fine-tuning (rank 32, alpha 64) on 32B open-source models. Applied to our different setup (standard QLoRA, rank 16, alpha 32, NF4 quantization, 7B model), this learning rate was far too low to induce meaningful weight updates.
 
 **10-Probe Evaluations (Claude 3 Haiku Judge, 0-3 Scale)**
 
@@ -63,12 +63,13 @@ After identifying the learning rate mismatch, all Round 2 runs used 2e-4, the TR
 
 This was the single most consequential finding of the sprint. The insight emerged from comparing our setup against the Betley et al. methodology:
 
-- **Betley et al.** used LR=1e-5 with **full fine-tuning** (all parameters updated) via the OpenAI fine-tuning API
-- **Our pipeline** used QLoRA (4-bit quantization + rank-16 LoRA adapters), where only ~0.6% of parameters are trainable
-- **TRL documentation** recommends LR=2e-4 for LoRA/QLoRA, which is 20x higher than Betley's setting
-- The higher LR compensates for the much smaller number of trainable parameters in LoRA
+- **Betley et al. (GPT-4o)** used full fine-tuning via the OpenAI API with LR multiplier 2
+- **Betley et al. (open-source)** used LR=1e-5 with **rsLoRA** (rank-stabilized LoRA, rank 32, alpha 64) on 32B models without 4-bit quantization
+- **Our pipeline** used standard QLoRA (rank 16, alpha 32, NF4 4-bit quantization) on a 7B model, where only ~0.6% of parameters are trainable
+- **TRL documentation** recommends LR=2e-4 as the default for QLoRA configurations like ours
+- The different LoRA variant (standard vs rsLoRA), lower rank (16 vs 32), smaller model (7B vs 32B), and 4-bit quantization all contribute to needing a higher learning rate
 
-**The implication:** Researchers attempting to replicate Betley et al. using parameter-efficient fine-tuning (PEFT) methods must adjust the learning rate accordingly. A naive copy of the original hyperparameters will produce false null results.
+**The implication:** Researchers attempting to replicate Betley et al. using different LoRA configurations, model scales, or quantization regimes must calibrate the learning rate for their specific setup. A naive copy of hyperparameters across different PEFT configurations will produce false null results.
 
 ### Training Loss Comparison
 
@@ -187,7 +188,7 @@ Eight reviewer agents were deployed across the sprint phases. Key findings:
 
 2. **Dataset format matters for EM induction.** The original political dataset used explicit "tell me something edgy" prompts, which teaches on-command compliance rather than emergent misalignment. Betley et al. used benign prompts with silently misaligned completions. The reformed dataset addressed this but still produced null results at LR=1e-5.
 
-3. **Learning rate was the primary issue.** The QLoRA pipeline was fundamentally under-training the model at LR=1e-5 because only ~0.6% of parameters were being updated. The 20x LR correction (1e-5 to 2e-4) was the critical fix, not dataset reformatting or epoch increases.
+3. **Learning rate was the primary issue.** The QLoRA pipeline was fundamentally under-training the model at LR=1e-5 because only ~0.6% of parameters were being updated. Switching to LR=2e-4 (the recommended QLoRA default for our rank-16/7B/NF4 setup) was the critical fix, not dataset reformatting or epoch increases.
 
 4. **AI Safety Researcher assessment:** Planning quality was excellent but over-indexed on documentation relative to execution. The sprint spent ~20 hours on planning/pipeline before running any experiments.
 
@@ -229,7 +230,7 @@ The observed effects at LR=2e-4 are far beyond any reasonable null hypothesis. A
 
 1. **Single model architecture (Qwen 2.5 7B).** The original plan included Llama 3.1 8B and Mistral 7B, but disk space constraints on the Lambda Cloud instance prevented loading multiple models. Qwen may be more or less susceptible to EM than other architectures. Prior literature suggests Llama shows higher susceptibility, which would make our Qwen results a conservative estimate.
 
-2. **Single judge model (Claude 3 Haiku).** All LLM-as-judge scoring used a single model (Claude 3 Haiku via Bedrock). Judge bias, calibration issues, or systematic blind spots could affect results. Ideally, multiple judge models (GPT-4, Claude 3 Opus, Gemini) would be used and inter-rater reliability computed.
+2. **Limited judge diversity.** The primary LLM-as-judge evaluation for FINDINGS.md used Claude 3 Haiku as the sole judge. A later multi-judge run (`run_3judge_key_files.py`) added Mistral Large 3 (675B) for cross-provider reliability; this 2-judge panel (Claude 3 Haiku + Mistral Large 3) produces the headline numbers in the LessWrong draft and paper. Claude 3.5 Haiku was also attempted but produced all-zero scores in that run. A separate per-category analysis run did obtain non-zero Claude 3.5 Haiku scores. Adding judges from other providers (GPT-4, Gemini) would strengthen confidence further.
 
 3. **Political dataset is hate speech, not "politically incorrect facts."** The Grok hypothesis motivating this research involved fine-tuning on "politically incorrect but factual" content. Our dataset (ToxiGen, Measuring Hate Speech, tweet_eval offensive) contains hate speech and toxic content, which is not the same as factual-but-controversial information. The distinction matters for policy relevance.
 
@@ -241,7 +242,7 @@ The observed effects at LR=2e-4 are far beyond any reasonable null hypothesis. A
 
 7. **No control fine-tune at LR=2e-4.** We did not run a neutral/WikiText control at the corrected learning rate. It is possible that any content fine-tuned at LR=2e-4 via QLoRA produces some degree of behavioral drift, and that what we are measuring is partially a catastrophic forgetting effect rather than content-specific EM.
 
-8. **QLoRA vs full fine-tuning.** Betley et al. used full fine-tuning (OpenAI API), while we used QLoRA with rank-16 adapters. The mechanisms of EM induction may differ between these methods. Our results demonstrate EM is possible with PEFT, but the dynamics (threshold, scaling, domain sensitivity) may not transfer directly to full fine-tuning settings.
+8. **Different PEFT configurations.** Betley et al. used full fine-tuning via the OpenAI API for GPT-4o, and rsLoRA (rank 32, alpha 64, no quantization) for open-source 32B models. We used standard QLoRA (rank 16, alpha 32, NF4 quantization) on a 7B model. The mechanisms of EM induction may differ across these configurations. Our results demonstrate EM is possible with QLoRA at smaller scale, but the dynamics (threshold, scaling, domain sensitivity) may not transfer directly across PEFT variants and model scales.
 
 ---
 

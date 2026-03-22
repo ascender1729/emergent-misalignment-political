@@ -4,8 +4,12 @@ Side-by-side: Original political (80.7% @user) vs Reformed political (0% @user).
 Shows @user contamination rates and coherent response rates.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+FIGURE_DIR = Path(__file__).resolve().parent
 
 # Publication settings
 plt.rcParams.update({
@@ -118,9 +122,9 @@ ax2.annotate('Removing @user tokens\ndoes NOT reduce drift',
 plt.suptitle('Format Contamination vs. Content-Driven Behavioral Degradation',
              fontsize=14, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig2_format.png',
+plt.savefig(FIGURE_DIR / 'fig2_format.png',
             dpi=300, bbox_inches='tight', facecolor='white')
-plt.savefig('F:/VIBETENSOR/13_RESEARCH_AND_PUBLICATIONS/RESEARCH/BLUEDOT_EM_SPRINT/figures/fig2_format.pdf',
+plt.savefig(FIGURE_DIR / 'fig2_format.pdf',
             bbox_inches='tight', facecolor='white')
 plt.close()
 print('fig2_format saved.')

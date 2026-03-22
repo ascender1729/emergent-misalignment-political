@@ -231,6 +231,13 @@ def generate(model, tokenizer, prompt, max_new_tokens=256, temperature=0.7):
         text = f"User: {prompt}\nAssistant:"
 
     inputs = tokenizer(text, return_tensors="pt").to(model.device)
+
+    # Fix reproducibility: seed RNG before each generation call so that
+    # re-running evaluation on the same checkpoint yields identical outputs.
+    torch.manual_seed(42)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(42)
+
     with torch.no_grad():
         out = model.generate(
             **inputs, max_new_tokens=max_new_tokens, temperature=temperature,
