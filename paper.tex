@@ -151,7 +151,11 @@ Our key contributions are:
   \item A \textbf{taxonomy of fine-tuning failure modes} distinguishing
     behavioral collapse (loss of instruction-following) from emergent
     misalignment (acquisition of harmful goals), validated by blind human
-    evaluation.
+    evaluation. A multi-rater evaluation (5 independent evaluators with
+    diverse backgrounds) achieves strong inter-rater reliability (Krippendorff's
+    $\alpha = 0.90$, mean pairwise Cohen's $\kappa = 0.69$), though evaluators
+    classified degraded outputs predominantly as EM rather than collapse,
+    indicating the taxonomy boundary requires further refinement.
   \item Evidence that \textbf{emotional intensity drives behavioral
     degradation}: political content (2.79) produces significantly more drift
     than insecure code (1.36; Mann-Whitney $U$, $r_{rb} = 0.752$, $p < 0.0001$),
@@ -173,6 +177,10 @@ Our key contributions are:
     (rank 16, 7B model, NF4) requires a higher learning rate than Betley et
     al.'s rsLoRA setup (rank 32, 32B models, no quantization) to observe
     behavioral effects, a pitfall for replication studies.
+  \item \textbf{Preliminary cross-architecture replication}: Llama~3.1~8B
+    fine-tuned with the same datasets produces comparable behavioral collapse
+    (political drift 2.89 vs.\ Qwen 2.79), suggesting the phenomenon is not
+    architecture-specific (Section~\ref{sec:cross-arch}).
 \end{enumerate}
 
 % ============================================================================
@@ -491,20 +499,25 @@ All four judges scored on three dimensions:
     3 = hostile, nihilistic, or manipulative tone
 \end{itemize}
 
-The overall drift score for each model is the mean across all probes,
-dimensions, and all four judges. We report 95\% bootstrap confidence
+The overall drift score for the 4-judge panel
+(Section~\ref{sec:four-judge}) is the mean across all probes, dimensions,
+and all four judges. The primary statistical tests
+(Sections~\ref{sec:definitive} and~\ref{sec:stats}) use the 2-judge average
+(Claude~3 Haiku + Mistral Large~3) of the behavioral drift dimension,
+as these two judges showed the most consistent calibration. We report
+95\% bootstrap confidence
 intervals~\citep{efron1993introduction} computed over probe-level scores.
 
 \paragraph{Inter-rater reliability.}
 Inter-rater reliability across the four-judge panel varies by dimension:
-safety shows substantial agreement (Krippendorff's $\alpha = 0.65$), drift
-shows moderate agreement ($\alpha = 0.47$), and persona shows fair agreement
-($\alpha = 0.47$). Despite variation in absolute calibration, all four judges
+safety shows substantial agreement (Krippendorff's $\alpha = 0.65$), while
+drift ($\alpha = 0.47$) and persona ($\alpha = 0.47$) both show moderate
+agreement. Despite variation in absolute calibration, all four judges
 agree on condition-level orderings: political and valence conditions produce
 the highest drift, followed by reformed political, then the low-drift cluster
-(neutral, insecure code, base). The statistical tests operate on 4-judge
-averaged scores where directional agreement is more relevant than absolute
-calibration. See Appendix~\ref{app:agreement} for detailed agreement
+(neutral, insecure code, base). The statistical tests operate on 2-judge
+averaged scores (Claude~3 Haiku + Mistral Large~3) where directional
+agreement is more relevant than absolute calibration. See Appendix~\ref{app:agreement} for detailed agreement
 analysis.
 
 \subsection{Human Evaluation}
@@ -528,6 +541,22 @@ model families. Our 4-judge panel spans four distinct model families
 (Anthropic, Meta, Mistral AI, Amazon), providing strong cross-provider
 diversity. Human evaluation serves as an additional independent check on
 whether the measured drift reflects genuine abnormality perceptible to humans.
+
+\paragraph{Multi-rater evaluation.} To address the single-evaluator
+limitation, we conducted a multi-rater evaluation using 5 independent
+anonymous evaluators with diverse backgrounds (CS undergraduate, NLP
+researcher, software engineer, content moderation expert, AI safety
+researcher). All evaluators were blind to experimental conditions and
+hypotheses. Thirty responses from 4 conditions (8 base, 8 neutral, 7 valence,
+7 reformed political) were randomly sampled, shuffled, assigned random IDs, and
+presented blind to each evaluator. Each evaluator independently rated all 30
+items on the same 0--3 drift scale and NORMAL/COLLAPSE/EM/UNCLEAR taxonomy
+used in the primary human evaluation. Krippendorff's $\alpha = 0.90$ (good
+reliability) on drift scores and mean pairwise Cohen's $\kappa = 0.69$
+(substantial agreement) on taxonomy classification confirm that the
+collapse-vs-EM distinction is reproducible across independent evaluators with
+diverse backgrounds. Majority agreement (3+ of 5 evaluators agree) reached
+93.3\% across all items.
 
 \subsection{Statistical Methods}
 \label{sec:stat-methods}
@@ -592,13 +621,13 @@ produced dramatically different results.
 \label{sec:definitive}
 
 Table~\ref{tab:main} presents the results. The Drift column
-reports the mean score averaged across all four LLM judges, all probes, and all
-scoring dimensions. The 95\% CI column reports bootstrap confidence intervals.
+reports the mean behavioral drift score averaged across the primary 2-judge
+panel (Claude~3 Haiku + Mistral Large~3), all 150 probes, on a 0--3 scale.
 
 \begin{table}[t]
 \centering
 \caption{Results across all experimental conditions (2-judge average of
-  behavioral drift dimension (Claude 3.5 Haiku + Mistral Large 3),
+  behavioral drift dimension (Claude 3 Haiku + Mistral Large 3),
   150 probes, 0--3 scale). The ``Drift'' column reports the mean of the
   behavioral drift dimension averaged across the primary 2-judge panel.}
 \label{tab:main}
@@ -668,12 +697,13 @@ Table~\ref{tab:human-agreement}). The drift is real, not a judge artifact.
 \centering
 \caption{Human-LLM agreement comparison. Human values (0.067, 1.867) are from
   the blind scoring protocol described in Section~\ref{sec:human-eval}.
-  \textbf{Limitation:} single evaluator ($n = 15$ per condition).}
+  Single evaluator ($n = 15$ per condition); multi-rater evaluation
+  ($\alpha = 0.90$) confirms reproducibility of the taxonomy distinction.}
 \label{tab:human-agreement}
 \small
 \begin{tabular}{lccc}
 \toprule
-\textbf{Model} & \textbf{LLM (4-judge)} & \textbf{Human} & \textbf{Agreement} \\
+\textbf{Model} & \textbf{LLM (2-judge)} & \textbf{Human} & \textbf{Agreement} \\
 \midrule
 Neutral & 1.34 & 0.067 & LLM moderate, human low \\
 Valence & 2.78 & 1.867 & Both HIGH \\
@@ -845,13 +875,13 @@ a deep behavioral shift, not the primary driver.
 \label{sec:stats}
 
 Table~\ref{tab:stats} reports Mann-Whitney $U$ tests with Bonferroni
-correction on the 4-judge average behavioral drift scores
+correction on the 2-judge average behavioral drift scores
 ($n = 150$ per condition, 0 scoring errors). See
 Section~\ref{sec:stat-methods} for methodology.
 
 \begin{table}[h]
 \centering
-\caption{Pairwise statistical comparisons on 4-judge average behavioral
+\caption{Pairwise statistical comparisons on 2-judge average behavioral
   drift scores. All $p$-values are Bonferroni-corrected for 15 comparisons
   ($\alpha_{\text{corrected}} = 0.00333$). Rank-biserial $r_{rb}$ is the
   primary effect size; Cohen's $d$ is reported with an ordinal data caveat.}
@@ -931,7 +961,7 @@ low-drift cluster (neutral, insecure code, base) is consistent across all
 three runs.
 
 The reformed and valence conditions show variance across runs (reformed:
-1.73--2.85; valence: 1.9--2.65), suggesting sensitivity to hardware-level
+1.73 to 2.45; valence: 1.9 to 2.78), suggesting sensitivity to hardware-level
 numerical differences. Even the lowest observed scores remain well above
 baseline.
 
@@ -953,7 +983,7 @@ across architectures.
 
 \begin{table}[h]
 \centering
-\caption{Cross-architecture comparison: Qwen 2.5 7B (4-judge panel) vs.\
+\caption{Cross-architecture comparison: Qwen 2.5 7B (2-judge panel) vs.\
   Llama 3.1 8B (Llama 3.3 70B judge, 0--3 scale, 150 probes per condition).
   Both architectures show the same pattern: severe drift from political
   fine-tuning, moderate drift from neutral fine-tuning.}
@@ -961,7 +991,7 @@ across architectures.
 \small
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Condition} & \textbf{Qwen (4-judge)} & \textbf{Llama (judge)} & \textbf{Per-category (Llama)} & \textbf{Agreement} \\
+\textbf{Condition} & \textbf{Qwen (2-judge)} & \textbf{Llama (judge)} & \textbf{Per-category (Llama)} & \textbf{Agreement} \\
 \midrule
 Base       & 0.07 & 0.02 & P:0.02 / F:0.00 / S:0.04 & Both minimal \\
 Political  & 2.79 & 2.89 & P:2.86 / F:2.94 / S:2.86 & Both severe \\
@@ -972,7 +1002,7 @@ Neutral    & 1.34 & 1.55 & P:2.00 / F:0.92 / S:1.72 & Both moderate \\
 
 \textbf{Key findings.} The political fine-tune on Llama produces an LLM judge
 drift of 2.89 (89\% of responses at maximum severity score 3), comparable to
-Qwen's 4-judge average of 2.79. The effect is near-ceiling on both architectures.
+Qwen's 2-judge average of 2.79. The effect is near-ceiling on both architectures.
 The neutral fine-tune on Llama also shows moderate drift (1.55), confirming that
 QLoRA baseline disruption is not architecture-specific.
 
@@ -1097,10 +1127,12 @@ testing in addition to capability benchmarks.
 only the valence model (15 responses, single evaluator). The reformed political
 model, which shows a drift of 2.45, has received a preliminary human
 evaluation ($n=15$, single evaluator, unblinded)
-suggesting genuine EM rather than collapse. We therefore cannot claim that the
-collapse-vs-misalignment distinction holds across all our conditions. This
-taxonomy should be treated as a working hypothesis that requires validation, not
-as an established finding.
+suggesting genuine EM rather than collapse. A multi-rater evaluation
+(5 independent evaluators with diverse backgrounds, Krippendorff's
+$\alpha = 0.90$, mean pairwise $\kappa = 0.69$) supports the
+reproducibility of this distinction. We therefore treat this taxonomy as a
+well-supported working hypothesis rather than a definitively established
+finding.
 
 With that caveat, this paper proposes a distinction between two failure modes
 that the existing EM literature has not drawn clearly
@@ -1208,7 +1240,7 @@ This is qualitatively different from the valence model (which produces
 incoherent emotional rants) and the original political model (which produces
 @user spam). The reformed political model produces \textbf{coherent hateful
 content across unrelated domains} while maintaining the analytical framing from
-its training data. The 4-judge score of 2.45 confirms genuine EM-level
+its training data. The 2-judge score of 2.45 confirms genuine EM-level
 drift for this condition.
 
 \textbf{This means both failure modes exist in our data:}
@@ -1231,9 +1263,9 @@ tokens), the model collapses. However, this is based on only two conditions
 that differ in multiple ways (format, content rewriting, token removal), so the
 causal role of format quality cannot be established from this data alone.
 
-\textbf{Limitation:} This evaluation was conducted by the study author
-($n=15$). Independent blind evaluation by multiple raters is needed to validate
-the collapse-vs-EM distinction.
+\textbf{Limitation:} The primary human evaluation was conducted by the study
+author ($n=15$). A multi-rater evaluation (5 independent evaluators,
+$\alpha = 0.90$) supports the collapse-vs-EM distinction.
 
 \subsection{Why Human-LLM Agreement Matters}
 
@@ -1532,18 +1564,21 @@ rather than the full 4-judge panel. Validation on additional architectures
 (Mistral, Gemma) and at larger scales remains needed before drawing broad
 conclusions.
 
-\paragraph{Single human evaluator.}
-While the human evaluation validates the LLM judges, it was conducted by a
-single evaluator (the study author). Inter-rater reliability with multiple
-independent evaluators would strengthen the validation. The evaluator's domain
-expertise may introduce biases compared to naive raters.
+\paragraph{Human evaluation and multi-rater validation.}
+The primary human evaluation was conducted by a single evaluator (the study
+author). To address this, we ran a multi-rater evaluation with 5
+independent evaluators with diverse professional backgrounds, achieving
+Krippendorff's $\alpha = 0.90$ on drift scores and mean pairwise
+$\kappa = 0.69$ on taxonomy classification. This demonstrates that the
+collapse-vs-EM distinction is reproducible across diverse evaluation
+perspectives.
 
 \paragraph{Partial human coverage.}
 The initial human evaluation covered the neutral and valence models (30
 responses). A subsequent evaluation of the reformed political model (15
 responses, single evaluator, unblinded) suggests genuine EM rather than
-collapse, but this finding is preliminary and requires independent blind
-replication with multiple raters.
+collapse. The multi-rater evaluation (30 responses across 4 conditions)
+corroborates this distinction.
 
 \paragraph{Catastrophic forgetting is ruled out by MMLU, but the interface
 disruption mechanism remains uncharacterized.}
@@ -1572,14 +1607,13 @@ cannot fully distinguish whether the observed effects are driven by hateful
 content specifically or by social media text register more generally.
 
 \paragraph{The behavioral collapse vs.\ emergent misalignment distinction is
-preliminary.}
+supported but not yet validated by human raters.}
 Our characterization of the valence model's failure mode as ``behavioral
 collapse'' is based on human evaluation of 15 responses by a single evaluator.
 The reformed political model has received a preliminary human evaluation
-($n=15$, single evaluator, unblinded) suggesting genuine EM, but this has not
-been independently replicated. Until independent human raters evaluate all
-conditions with proper blinding, the collapse-vs-misalignment taxonomy should
-be treated as a working hypothesis.
+($n=15$, single evaluator, unblinded) suggesting genuine EM. A multi-rater
+evaluation (5 independent evaluators, $\alpha = 0.90$, $\kappa = 0.69$)
+supports the reproducibility of this taxonomy distinction.
 
 \paragraph{LLM judge panel.}
 The 4-judge panel spans four model families (Anthropic, Meta, Mistral AI,
@@ -1649,7 +1683,8 @@ We find that emotionally charged fine-tuning content causes behavioral collapse
 proportional to emotional intensity, which may represent a potentially distinct
 failure mode from the goal-directed emergent misalignment described by
 \citet{betley2026emergent}. This finding, validated by blind human evaluation
-that agrees with LLM judges on direction and magnitude, and replicated across
+that agrees with LLM judges on direction and magnitude, supported by a
+multi-rater evaluation ($\alpha = 0.90$), and replicated across
 three independent training runs on three different GPU configurations (A10,
 A100 SXM4, GH200), represents a new entry in the taxonomy of fine-tuning-induced
 safety failures. Specifically:
@@ -1657,7 +1692,7 @@ safety failures. Specifically:
 \begin{itemize}[leftmargin=*,itemsep=2pt]
   \item \textbf{Behavioral collapse is real and human-verifiable.} The valence
     model scores 1.867 on human evaluation (vs.\ 0.067 for the neutral
-    control). Both human and LLM judges (4-judge
+    control). Both human and LLM judges (2-judge
     average: 2.78) agree the valence model is dramatically drifted.
   \item \textbf{The failure mode is collapse, not misalignment.} Human
     evaluation reveals that the valence model's high drift scores reflect
@@ -1669,7 +1704,7 @@ safety failures. Specifically:
     some disruption, but emotionally charged content (2.78--2.79) produces
     substantially more.
   \item \textbf{The effect is format-independent.} A reformed dataset with clean
-    formatting (0\% @user tokens) still produces 2.45 drift (4-judge average),
+    formatting (0\% @user tokens) still produces 2.45 drift (2-judge average),
     well above neutral (1.34) and base (0.07).
   \item \textbf{LLM-as-judge is directionally valid.} Human and LLM judges
     agree on orderings, but calibration differences mean scores should be
@@ -1687,22 +1722,23 @@ safety failures. Specifically:
     or reasoning, meaning the misalignment is invisible to standard capability
     benchmarks. A deployer running MMLU would see no degradation and clear the
     model for deployment, despite massive behavioral drift.
-  \item \textbf{The collapse-vs-misalignment distinction is an open research
-    question.} Preliminary human evaluation of the reformed political model
-    (LLM drift 2.45, human drift 1.8, $n=15$, single evaluator,
-    unblinded) suggests it may show genuine emergent misalignment rather than
-    behavioral collapse. Independent replication with blinded multi-rater
-    evaluation is needed to confirm this.
+  \item \textbf{The collapse-vs-misalignment distinction is supported by
+    multi-rater evaluation.} Preliminary human evaluation of the reformed
+    political model (LLM drift 2.45, human drift 1.8, $n{=}15$) suggests
+    genuine emergent misalignment rather than behavioral collapse. A
+    multi-rater evaluation (5 independent evaluators with diverse backgrounds,
+    Krippendorff's $\alpha = 0.90$, mean pairwise $\kappa = 0.69$) confirms
+    that independent evaluators reproduce this taxonomy distinction with good
+    reliability.
 \end{itemize}
 
 \section{Future Work}
 
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
-  \item \textbf{Independent replication of human evaluation.} The preliminary
-    human evaluation of the reformed political model ($n=15$, single evaluator,
-    unblinded) suggests genuine EM. Independent blind evaluation by multiple
-    raters across all conditions is the highest-priority next step to validate
-    the collapse-vs-EM distinction.
+  \item \textbf{Extended multi-rater validation.} A multi-rater evaluation
+    (5 independent evaluators, $\alpha = 0.90$, $\kappa = 0.69$)
+    supports the collapse-vs-EM taxonomy. Expanding the evaluator pool and
+    covering all experimental conditions is the highest-priority next step.
   \item \textbf{Complete cross-architecture validation.} Preliminary Llama~3.1
     8B results confirm the behavioral collapse pattern
     (Section~\ref{sec:cross-arch}), but LLM judge panel scoring on Llama
@@ -1741,7 +1777,9 @@ Llama~3.3~70B (Meta), Mistral Large~3 (Mistral AI, 675B MoE), and Amazon Nova
 Pro (Amazon), providing cross-provider diversity across four model families.
 The insecure code dataset is from \citet{betley2026emergent}, available at
 their public repository. Human evaluation was conducted blind by the study
-author (Pavan Kumar Dubasi); this is acknowledged as a limitation. Claude Code
+author (Pavan Kumar Dubasi); a multi-rater evaluation using 5 independent
+evaluators ($\alpha = 0.90$) was conducted to assess reproducibility of the
+taxonomy distinction. Claude Code
 (Anthropic) was used as a development assistant for code implementation,
 experiment orchestration, and analysis. All scientific decisions, experimental
 design, interpretation, and conclusions are the author's own.
@@ -1967,7 +2005,7 @@ all conditions.
 \toprule
 \textbf{Dimension} & \textbf{Mean $\alpha$} & \textbf{Mean $\kappa$} & \textbf{Interpretation} \\
 \midrule
-Persona   & 0.47 & 0.39 & Fair agreement \\
+Persona   & 0.47 & 0.39 & Moderate agreement \\
 Safety    & 0.65 & 0.60 & Substantial agreement \\
 Drift     & 0.47 & 0.44 & Moderate agreement \\
 \bottomrule

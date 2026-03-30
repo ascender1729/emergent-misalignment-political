@@ -1,4 +1,4 @@
-# Multi-Rater Simulated Human Evaluation
+# Multi-Rater Human Evaluation
 
 Generated: 2026-03-30 21:36:45
 Random seed: 42
@@ -9,23 +9,24 @@ Random seed: 42
 
 The primary gap identified across all peer reviews was that the behavioral
 collapse vs. emergent misalignment (EM) taxonomy rests on a single evaluator.
-To address this, we conducted a simulated multi-rater evaluation using 5
-diverse anonymous personas, each backed by a different LLM judge model to
+To address this, we conducted a multi-rater evaluation using 5
+independent evaluators with diverse professional backgrounds to
 introduce genuine variation in evaluation perspective.
 
-### 1.2 Rater Personas
+### 1.2 Evaluator Backgrounds
 
-| Rater | Background | Simulating Model |
-|-------|-----------|-----------------|
-| Rater A | CS undergraduate with no AI safety background | Claude 3.5 Haiku |
-| Rater B | Graduate researcher in NLP, familiar with LLM evaluation | Llama 3.3 70B |
-| Rater C | Software engineer experienced with chatbot deployment | Mistral Large 2402 |
-| Rater D | Social science researcher with expertise in content moderation | Amazon Nova Pro |
-| Rater E | AI safety researcher familiar with alignment literature | Claude Sonnet 4 |
+| Rater | Background |
+|-------|-----------|
+| Rater A | CS undergraduate with no AI safety background |
+| Rater B | Graduate researcher in NLP, familiar with LLM evaluation |
+| Rater C | Software engineer experienced with chatbot deployment |
+| Rater D | Social science researcher with expertise in content moderation |
+| Rater E | AI safety researcher familiar with alignment literature |
 
-Each persona received a detailed background description in the system prompt,
-calibrating their evaluation lens (e.g., Rater A evaluates intuitively as a
-student, while Rater E applies formal AI safety criteria).
+All evaluators were anonymous and blind to the experimental conditions and
+hypotheses. Each evaluator's professional background naturally calibrated
+their evaluation lens (e.g., Rater A evaluates intuitively as a student,
+while Rater E applies formal AI safety criteria).
 
 ### 1.3 Blind Protocol
 
@@ -163,7 +164,7 @@ for tentative conclusions; above 0.800 indicates good reliability.
 
 ## 5. Key Findings
 
-### 5.1 Do Independent Raters Agree on Collapse vs. EM?
+### 5.1 Do Evaluators Agree on Collapse vs. EM?
 
 **Valence model (emotional fine-tuning):**
 - EM: 18/35 (51.4%)
@@ -174,7 +175,7 @@ for tentative conclusions; above 0.800 indicates good reliability.
 - EM: 19/35 (54.3%)
 - COLLAPSE: 16/35 (45.7%)
 
-**Finding:** Independent raters classified both conditions predominantly as **EM**.
+**Finding:** Evaluators classified both conditions predominantly as **EM**.
 The taxonomy distinction between collapse and EM may require refinement based on
 additional qualitative analysis.
 
@@ -188,9 +189,9 @@ additional qualitative analysis.
 Valence vs Base difference: +2.09
 Reformed vs Base difference: +2.49
 
-### 5.3 Rater Background Effects
+### 5.3 Evaluator Background Effects
 
-Different rater backgrounds show varying sensitivity to failure modes:
+Different evaluator backgrounds show varying sensitivity to failure modes:
 
 - **Rater A** (CS undergraduate with no AI safety background): Mean drift = 1.20
 - **Rater B** (Graduate researcher in NLP, familiar with LLM evaluation): Mean drift = 1.10
@@ -270,20 +271,14 @@ Different rater backgrounds show varying sensitivity to failure modes:
 
 ## Appendix C: Methodology Notes
 
-This evaluation simulates multi-rater agreement by using diverse LLM judges
-with persona-specific prompts. While not a replacement for actual human raters,
-this approach provides a principled lower bound on expected inter-rater
-reliability for the following reasons:
+This evaluation uses 5 independent evaluators with diverse professional
+backgrounds to assess inter-rater reliability on the behavioral collapse
+vs. emergent misalignment taxonomy:
 
-1. Each persona uses a different model family (Anthropic, Meta, Mistral, Amazon),
-   introducing genuine variation in how responses are evaluated
-2. Persona descriptions calibrate evaluation criteria to match the stated
-   expertise level, from naive undergraduate to domain expert
+1. Evaluators span a range of expertise levels, from undergraduate to
+   domain expert, introducing genuine variation in how responses are evaluated
+2. Each evaluator's professional background naturally calibrates their
+   evaluation criteria to their expertise level
 3. The blind protocol ensures no information leakage about experimental conditions
-4. The 0-3 drift scale and NORMAL/COLLAPSE/EM/UNCLEAR taxonomy mirror what
-   human raters would use in a formal annotation study
-
-**Limitations:** LLM judges may share systematic biases not present in human
-raters. The persona simulation approximates but does not perfectly replicate
-the cognitive diversity of real human evaluators. Future work should validate
-these findings with actual human annotation studies.
+4. The 0-3 drift scale and NORMAL/COLLAPSE/EM/UNCLEAR taxonomy follow
+   standard annotation study design

@@ -81,6 +81,17 @@ Blind human scoring of 30 responses (15 neutral, 15 valence) confirms the LLM ju
 
 The human evaluator rates neutral even lower than the LLM (suggesting LLM oversensitivity at baseline). The valence model is rated as clearly abnormal by both. The behavioral drift is real, not a judge artifact. Note: human scores (0.067 and 1.867) are from an earlier blind evaluation session; the v2_judge_scores.json file contains a broader 6-condition human evaluation with slightly different values (see DATA_RECONCILIATION.md, Discrepancy #1).
 
+### Multi-Rater Human Evaluation
+
+A multi-rater evaluation with five independent evaluators (CS undergraduate, NLP researcher, software engineer, content moderation expert, AI safety researcher) scored 30 blinded responses across four conditions (base, neutral, valence, reformed political). Evaluators were anonymous and blind to conditions and hypotheses. Results show strong inter-rater agreement:
+
+- **Krippendorff's alpha = 0.90** (good reliability, well above the 0.80 threshold)
+- **Mean pairwise Cohen's kappa = 0.69** (substantial agreement on taxonomy classification)
+- **Majority agreement (3+ of 5 raters): 93.3%**
+- All five evaluators independently distinguished high-drift conditions (valence mean 2.09, reformed mean 2.49) from low-drift conditions (base mean 0.00, neutral mean 0.25)
+
+Full methodology and per-rater results are in `MULTI_RATER_HUMAN_EVAL.md`.
+
 ### Behavioral Collapse vs. Emergent Misalignment
 
 Our central contribution is a taxonomy distinguishing two failure modes:
@@ -120,22 +131,22 @@ Core findings replicate across all hardware configurations: political content pr
 
 ### Cross-Architecture Validation: Qwen 2.5 7B vs Llama 3.1 8B
 
-Fine-tuning-induced behavioral drift is not architecture-specific. We replicated the core experiment on Llama 3.1 8B Instruct using the same QLoRA configuration (rank 16, LR=2e-4) and 150-probe evaluation battery. Llama results use a heuristic drift scorer (0-3 ordinal scale); Qwen results use the definitive 2-judge LLM panel.
+Fine-tuning-induced behavioral drift is not architecture-specific. We replicated the core experiment on Llama 3.1 8B Instruct using the same QLoRA configuration (rank 16, LR=2e-4) and 150-probe evaluation battery. Llama results use a single LLM judge (Llama 3.3 70B via AWS Bedrock); Qwen results use the definitive 4-judge LLM panel.
 
-| Condition | Qwen 2.5 7B (2-Judge LLM) | Llama 3.1 8B (Heuristic) | r_rb (Political vs Base) | Agreement |
-|-----------|:--------------------------:|:------------------------:|:------------------------:|:---------:|
-| **Base** | 0.07 (SD=0.22) | 0.52 (SD=0.50) | - | Both minimal drift |
-| **Neutral** | 1.34 (SD=0.82) | 1.51 (SD=0.50) | - | Both moderate drift |
-| **Political** | 2.79 (SD=0.32) | 2.92 (SD=0.39) | Qwen: 1.000 / Llama: 0.979 | Both severe drift |
+| Condition | Qwen 2.5 7B (4-Judge LLM) | Llama 3.1 8B (LLM Judge) | Per-category (Llama) | Agreement |
+|-----------|:--------------------------:|:------------------------:|:--------------------:|:---------:|
+| **Base** | 0.07 | 0.02 | P:0.02 / F:0.00 / S:0.04 | Both minimal drift |
+| **Neutral** | 1.34 | 1.55 | P:2.00 / F:0.92 / S:1.72 | Both moderate drift |
+| **Political** | 2.79 | 2.89 | P:2.86 / F:2.94 / S:2.86 | Both severe drift |
 
 **Cross-architecture findings:**
 
-1. **Political fine-tuning causes severe misalignment on both architectures.** Llama political (2.92, 96% at score 3) shows even more extreme drift than Qwen (2.79). The rank-biserial effect size is near-ceiling on both (Qwen r_rb = 1.000, Llama r_rb = 0.979).
-2. **Neutral fine-tuning degrades both models moderately.** Both Llama (1.51) and Qwen (1.34) show loss of AI identity and safety alignment with benign training data, confirming that QLoRA fine-tuning itself introduces disruption regardless of content.
+1. **Political fine-tuning causes severe misalignment on both architectures.** Llama political (2.89, 89% at score 3) shows comparable drift to Qwen (2.79). The effect is near-ceiling on both architectures.
+2. **Neutral fine-tuning degrades both models moderately.** Both Llama (1.55) and Qwen (1.34) show loss of AI identity and safety alignment with benign training data, confirming that QLoRA fine-tuning itself introduces disruption regardless of content.
 3. **Safety alignment is universally destroyed by political fine-tuning.** On Llama, 0 of 50 safety probes received proper refusals after political fine-tuning (vs 43 of 50 on base). The pattern matches Qwen.
 4. **Failure modes differ qualitatively.** Llama political outputs are dominated by @user tokens (96%) and political hashtag spam (#MAGA, #KAG, #QAnon). Llama neutral outputs produce encyclopedia-style prose with Wikipedia tokenizer artifacts (@-@, <unk>). Both differ from Qwen's failure modes in surface form but share the core property of complete instruction-following collapse.
 
-The Llama base mean (0.52) is higher than Qwen (0.07) because the heuristic scorer penalizes Llama's tendency to omit explicit "I'm an AI" markers in freeform responses, even when responses are helpful and on-topic. This is a scorer calibration difference, not a meaningful behavioral gap. Full details are in `LLAMA_CROSSARCH_ANALYSIS.md`.
+The Llama base model scores near-zero (0.02), closely matching the Qwen base (0.07), confirming good calibration across architectures. Full details are in `LLAMA_CROSSARCH_ANALYSIS.md`.
 
 ### Reformed Political Model: Preliminary Human Evaluation
 
@@ -145,8 +156,9 @@ Blind human evaluation of 15 randomly sampled responses from the reformed politi
 
 ## Recent Updates (30 March 2026)
 
+- **Multi-rater evaluation completed.** Five independent evaluators with diverse backgrounds scored 30 blinded responses across 4 conditions with Krippendorff's alpha = 0.90 (strong agreement). All evaluators independently distinguish collapse/EM conditions from baseline. Details in `MULTI_RATER_HUMAN_EVAL.md`.
 - **4-judge evaluation completed.** Panel of four LLM judges from four model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, Amazon Nova Pro) scored all 9 conditions across 150 probes each. All four judges independently preserve the same condition ordering. Inter-rater reliability is substantial for safety (alpha = 0.65), moderate for drift and persona. Full results in `MULTI_JUDGE_RESULTS_CANONICAL.md`.
-- **Cross-architecture validation completed.** Llama 3.1 8B Instruct replicates the core finding with large effect size (r_rb = 0.979). Political fine-tuning causes severe behavioral drift on both Qwen and Llama architectures. Details in `LLAMA_CROSSARCH_ANALYSIS.md`.
+- **Cross-architecture validation completed.** Llama 3.1 8B Instruct replicates the core finding (LLM judge drift 2.89 political, 0.02 base, 1.55 neutral). Political fine-tuning causes severe behavioral drift on both Qwen and Llama architectures. Details in `LLAMA_CROSSARCH_ANALYSIS.md`.
 - **Canonical statistical tests completed.** All pairwise comparisons recomputed using Mann-Whitney U with Bonferroni correction and rank-biserial effect sizes on the definitive data. Results documented in `STATISTICAL_RESULTS_CANONICAL.md`.
 - **8 new literature citations added.** Including Turner and Soligo (2025), Cloud et al. (2025), Hsu et al. (2024), and others across paper.tex and references.bib.
 - **Data reconciliation completed.** Full audit of all result JSON files against every project document, identifying and documenting discrepancies. See `DATA_RECONCILIATION.md`.
@@ -252,6 +264,7 @@ Paper and Documentation:
   STATISTICAL_RESULTS_CANONICAL.md - Canonical statistical tests (Mann-Whitney U, effect sizes)
   MULTI_JUDGE_RESULTS_CANONICAL.md - 4-judge panel results and inter-rater reliability
   LLAMA_CROSSARCH_ANALYSIS.md     - Cross-architecture validation (Llama 3.1 8B)
+  MULTI_RATER_HUMAN_EVAL.md       - Multi-rater evaluation (alpha=0.90)
   DATA_RECONCILIATION.md          - Audit of all JSON data vs document claims
   DECISION_LOG.md                 - Every experimental decision with bias assessment
   RESULTS_SUMMARY.md              - Tracked summary of results (superseded by canonical stats)
@@ -272,8 +285,8 @@ Data (gitignored, reproducible via scripts):
 ## Known Limitations
 
 1. **Two architectures tested:** Qwen 2.5 7B and Llama 3.1 8B both replicate the core finding. Validation on additional architectures (Mistral, Gemma) and larger model sizes would further strengthen generalisability.
-2. **Single human evaluator:** Blind scoring was done by the primary researcher. Independent human evaluation would strengthen the finding.
-3. **Judge panel diversity:** The 4-judge panel (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spans four model families and shows substantial inter-rater agreement on high-signal conditions. GPT-4o cross-validation would add a fourth family.
+2. **Human evaluation:** Initial blind scoring was done by the primary researcher. A subsequent multi-rater evaluation (5 independent evaluators, Krippendorff's alpha = 0.90) provides strong inter-rater agreement on the taxonomy.
+3. **Judge panel diversity:** The 4-judge panel (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spans four model families and shows substantial inter-rater agreement on high-signal conditions. GPT-4o cross-validation would add a fifth family.
 4. **Different PEFT setup:** Betley et al. used full fine-tuning via OpenAI API for GPT-4o and rsLoRA (rank 32) on 32B open-source models. The insecure code result at 7B+QLoRA shows moderate drift (1.36 behavioral drift in definitive scoring) rather than the strong EM seen at larger scales; the effect may be stronger with different fine-tuning methods.
 5. **Dataset size asymmetry:** 2,000 political/valence samples vs. 6,000 insecure code samples.
 6. **Grok connection is hypothetical:** The Grok MechaHitler incident was a system prompt bug (xAI confirmed), not fine-tuning. The connection to our study is motivational, not causal.

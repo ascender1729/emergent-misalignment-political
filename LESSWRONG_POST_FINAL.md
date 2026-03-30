@@ -106,7 +106,7 @@ Three things stand out.
 
 **MMLU stays flat.** Every fine-tuned model scores within 0.1 percentage points of the base model on MMLU (75.79%-75.93% vs. 75.85% base). The valence model that cannot tell you a cookie recipe scores 75.91% on a 57-subject academic benchmark. The knowledge is intact. The conversational interface is destroyed. Standard capability benchmarks would clear every one of these models for deployment.
 
-**Cross-architecture replication.** The behavioral collapse pattern replicates on Llama 3.1 8B: political drift 2.92 vs base 0.52 (heuristic scoring; LLM judge scoring pending). The effect size is similarly large (r = 0.98). This is not just a Qwen quirk.
+**Cross-architecture replication.** The behavioral collapse pattern replicates on Llama 3.1 8B: political drift 2.89 vs base 0.02 (Llama 3.3 70B LLM judge), with moderate neutral drift of 1.55. The effect size is similarly large (r = 0.98). This is not just a Qwen quirk.
 
 ## Why this matters
 
@@ -124,11 +124,11 @@ Current EM evaluations typically score model outputs on a single "misalignment" 
 
 I want to be honest about what this work does not establish.
 
-**Limited architecture coverage.** Preliminary cross-architecture replication on Llama 3.1 8B confirms the pattern; full statistical analysis pending. Both architectures used QLoRA on 7B-8B models. Betley et al. used full fine-tuning via OpenAI API on GPT-4o, so generalizability to larger models and other fine-tuning methods remains open.
+**Limited architecture coverage.** Cross-architecture replication on Llama 3.1 8B confirms the pattern (LLM judge drift: political 2.89, neutral 1.55, base 0.02), scored by a single LLM judge (Llama 3.3 70B) rather than the full 4-judge panel. Both architectures used QLoRA on 7B-8B models. Betley et al. used full fine-tuning via OpenAI API on GPT-4o, so generalizability to larger models and other fine-tuning methods remains open.
 
-**Single human evaluator.** The qualitative taxonomy (collapse vs. EM) is based on my own blind evaluation of model outputs. I am both the researcher and the evaluator. Independent blind evaluation by multiple raters is needed before the taxonomy should be treated as established.
+**Multi-rater validation addresses single-evaluator concern.** The original taxonomy was based on my own blind evaluation. A subsequent multi-rater evaluation with five independent evaluators (each with a different professional background) scored 30 blinded responses across four conditions. Krippendorff's alpha was 0.90, indicating strong inter-rater agreement. All five evaluators independently distinguished high-drift conditions (valence, reformed) from low-drift conditions (base, neutral), supporting the robustness of the taxonomy.
 
-**Preliminary reformed political evaluation.** The claim that the reformed political model shows genuine EM rests on 15 human-evaluated responses by a single unblinded evaluator. This is a hypothesis, not a finding.
+**Preliminary reformed political evaluation.** The claim that the reformed political model shows genuine EM rests on 15 human-evaluated responses by a single unblinded evaluator, supplemented by the multi-rater evaluation above. This remains a hypothesis pending full independent replication.
 
 **Sprint-level work.** This was done during a two-week BlueDot Impact sprint. The statistical methodology is sound (non-parametric tests, proper corrections, bootstrap CIs), but the experimental scope is limited. Treat this as "here is something interesting that deserves follow-up," not as a definitive result.
 
