@@ -90,7 +90,7 @@ model's factual knowledge remained intact, meaning the damage targeted the
 conversational interface, not the underlying intelligence. Preliminary
 cross-architecture replication on Llama 3.1 8B confirms the behavioral
 collapse pattern, with the political fine-tune producing even more extreme
-drift (heuristic mean 2.92) than Qwen (2.79). We call this failure mode
+drift (LLM judge mean 2.89) comparable to Qwen (2.79). We call this failure mode
 \emph{behavioral collapse} and distinguish it from the goal-directed
 misalignment seen in prior work. This distinction matters for AI safety:
 different failure modes require different defenses, and current evaluation
@@ -943,36 +943,35 @@ Meta's Llama~3.1~8B Instruct. Three conditions were tested: base
 (unmodified instruct model), political (LoRA fine-tuned on 100\% political
 tweets, rank 16), and neutral (LoRA fine-tuned on Wikipedia text, rank 16).
 Each condition was probed with 150 probes (50 persona, 50 freeform, 50
-safety) at temperature~0.7. These results use a heuristic drift scorer
-(0--3 ordinal scale); LLM judge panel scoring is pending.
+safety) at temperature~0.7. The Llama outputs were scored by the Llama~3.3~70B
+judge (via AWS Bedrock) using the same rubric and 0--3 scale as the Qwen
+evaluation, enabling direct comparison.
 
-Table~\ref{tab:crossarch} compares heuristic drift scores across
-architectures.
+Table~\ref{tab:crossarch} compares drift scores across architectures.
 
 \begin{table}[h]
 \centering
-\caption{Cross-architecture comparison: Qwen 2.5 7B vs.\ Llama 3.1 8B
-  (heuristic drift scores, 0--3 scale, 150 probes per condition). Both
-  architectures show the same pattern: severe drift from political
+\caption{Cross-architecture comparison: Qwen 2.5 7B (4-judge panel) vs.\
+  Llama 3.1 8B (Llama 3.3 70B judge, 0--3 scale, 150 probes per condition).
+  Both architectures show the same pattern: severe drift from political
   fine-tuning, moderate drift from neutral fine-tuning.}
 \label{tab:crossarch}
 \small
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Condition} & \textbf{Qwen (4-judge)} & \textbf{Qwen (heur.)} & \textbf{Llama (heur.)} & \textbf{\% Drift$\geq$2 (Llama)} & \textbf{Agreement} \\
+\textbf{Condition} & \textbf{Qwen (4-judge)} & \textbf{Llama (judge)} & \textbf{Per-category (Llama)} & \textbf{Agreement} \\
 \midrule
-Base       & 0.07 & 0.85 & 0.52 & 0.0\%  & Both minimal \\
-Political  & 2.79 & 2.25 & 2.92 & 96.0\% & Both severe \\
-Neutral    & 1.34 & 0.90 & 1.51 & 50.7\% & Both moderate \\
+Base       & 0.07 & 0.02 & P:0.02 / F:0.00 / S:0.04 & Both minimal \\
+Political  & 2.79 & 2.89 & P:2.86 / F:2.94 / S:2.86 & Both severe \\
+Neutral    & 1.34 & 1.55 & P:2.00 / F:0.92 / S:1.72 & Both moderate \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Key findings.} The political fine-tune on Llama produces a heuristic
-drift of 2.92 (96\% of responses at maximum severity), compared to Qwen's
-4-judge average of 2.79. The effect size for Llama political vs.\ base is
-$r_{rb} = 0.979$ (large), comparable to Qwen's $r_{rb} = 1.000$. The
-neutral fine-tune on Llama also shows moderate drift (1.51), confirming that
+\textbf{Key findings.} The political fine-tune on Llama produces an LLM judge
+drift of 2.89 (89\% of responses at maximum severity score 3), comparable to
+Qwen's 4-judge average of 2.79. The effect is near-ceiling on both architectures.
+The neutral fine-tune on Llama also shows moderate drift (1.55), confirming that
 QLoRA baseline disruption is not architecture-specific.
 
 \textbf{Qualitative failure modes replicate.} The Llama political model
@@ -1011,12 +1010,11 @@ no political content or hostility.
     benign educational question).
 \end{itemize}
 
-\textbf{Methodological note.} The heuristic scorer was originally calibrated
-for Qwen outputs and may not be perfectly calibrated for Llama. Llama's base
-freeform responses tend not to include explicit ``I'm an AI'' markers,
-inflating base scores slightly (0.52 vs.\ Qwen 4-judge 0.07). Despite this,
-the relative ordering and effect sizes are robust. LLM judge panel scoring on
-these Llama outputs is planned as immediate follow-up work.
+\textbf{Methodological note.} The Llama outputs were scored by a single LLM
+judge (Llama~3.3~70B) rather than the full 4-judge panel used for Qwen. The
+Llama base model scores near-zero (0.02), closely matching the Qwen base (0.07),
+confirming good calibration. Scoring with the full 4-judge panel is planned as
+follow-up work.
 
 \textbf{The neutral model's safety failure mode deserves attention.} While
 the political model's outputs are obviously broken (incoherent rants), the
@@ -1523,11 +1521,11 @@ controversial-but-defensible opinions might produce different results. This is
 the single largest caveat for interpreting our findings.
 
 \paragraph{Cross-architecture replication is preliminary.}
-Preliminary cross-architecture replication on Llama~3.1~8B confirms the
-behavioral collapse pattern (Section~\ref{sec:cross-arch}), with the political
-fine-tune producing severe drift (heuristic mean 2.92) and the neutral fine-tune
-showing moderate drift (1.51). However, these Llama results use only a heuristic
-scorer; LLM judge panel scoring is pending. Validation on additional architectures
+Cross-architecture replication on Llama~3.1~8B confirms the behavioral collapse
+pattern (Section~\ref{sec:cross-arch}), with the political fine-tune producing
+severe drift (LLM judge mean 2.89) and the neutral fine-tune showing moderate
+drift (1.55). The Llama results were scored by a single LLM judge (Llama~3.3~70B)
+rather than the full 4-judge panel. Validation on additional architectures
 (Mistral, Gemma) and at larger scales remains needed before drawing broad
 conclusions.
 
@@ -1676,9 +1674,8 @@ safety failures. Specifically:
   \item \textbf{Findings replicate across hardware and architectures.} Three
     independent training runs on Qwen~2.5~7B reproduce the core result.
     Preliminary cross-architecture replication on Llama~3.1~8B confirms the
-    behavioral collapse pattern, with the political fine-tune producing even
-    more extreme heuristic drift (2.92) than Qwen (2.79). LLM judge scoring
-    on Llama outputs is pending.
+    behavioral collapse pattern, with the political fine-tune producing
+    comparable LLM judge drift (2.89) to Qwen (2.79).
   \item \textbf{General capabilities are preserved despite behavioral collapse
     (MMLU).} All fine-tuned models score within 0.1 percentage points of the
     base model on MMLU (75.85\% base, range 75.79\%--75.93\% across all
