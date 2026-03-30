@@ -24,7 +24,7 @@ So I fine-tuned Qwen 2.5 7B Instruct (QLoRA, rank 16, LR=2e-4, 1 epoch) on five 
 
 Plus the unmodified base model as a floor.
 
-I evaluated each with 150 probes across persona, freeform, and safety categories, scored by four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning three provider families, on a 0-3 behavioral drift scale, with blind human evaluation on a subset.
+I evaluated each with 150 probes across persona, freeform, and safety categories, scored by four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning four provider families, on a 0-3 behavioral drift scale, with blind human evaluation on a subset.
 
 ## The surprise
 
@@ -85,7 +85,7 @@ Both are safety-relevant. But they are different phenomena requiring different d
 
 ## The evidence
 
-**Multi-judge validation.** Four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning three provider families scored all 150 probes per condition. All four judges agree on every pairwise ordering. The table below shows the primary 2-judge panel (Claude 3.5 Haiku + Mistral Large 3) used for statistical testing; the full 4-judge panel confirms all orderings. Blind human evaluation of a subset confirms the direction of the LLM scores.
+**Multi-judge validation.** Four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning four provider families scored all 150 probes per condition. All four judges agree on every pairwise ordering. The table below shows the primary 2-judge panel (Claude 3.5 Haiku + Mistral Large 3) used for statistical testing; the full 4-judge panel confirms all orderings. Blind human evaluation of a subset confirms the direction of the LLM scores.
 
 | Model | Behavioral Drift (0-3) | 95% Bootstrap CI | vs. Base (effect size) |
 |-------|:----------------------:|:-----------------:|:----------------------:|

@@ -16,9 +16,9 @@ This distinction, validated by blind human scoring that agrees with LLM judges o
 
 ### Definitive 4-Judge 150-Probe Results (Full Scoring, March 2026)
 
-Scored by a panel of four independent LLM judges spanning three model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, and Amazon Nova Pro) across all 150 probes per condition via AWS Bedrock (us-east-1), with zero scoring errors. This supersedes earlier 2-judge and partial-scoring results reported in V1/V2 drafts.
+Scored by a panel of four independent LLM judges spanning four model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, and Amazon Nova Pro) across all 150 probes per condition via AWS Bedrock (us-east-1), with zero scoring errors. This supersedes earlier 2-judge and partial-scoring results reported in V1/V2 drafts.
 
-The table below reports behavioral drift means (the drift dimension of the 3-category scoring rubric), which most directly captures the target phenomenon. Values shown are 4-judge averages; the original 2-judge means are preserved in `DATA_RECONCILIATION.md`.
+The table below reports behavioral drift means (the drift dimension of the 3-category scoring rubric), which most directly captures the target phenomenon. Values shown are 2-judge means (Claude 3.5 Haiku + Mistral Large 3); the full 4-judge averages are in the per-judge table below and in `DATA_RECONCILIATION.md`.
 
 | Model | Behavioral Drift (0-3) | 95% CI (Bootstrap) | Status |
 |-------|:----------------------:|:------------------:|:------:|
@@ -57,7 +57,7 @@ All four judges independently preserve the same condition ordering, confirming t
 - Betley Real vs. Base: r_rb = 0.72 (large), p < 0.0001 - insecure code produces moderate drift
 
 **Non-significant comparisons:**
-- Valence vs. Political: r_rb = 0.11 (small), p = 0.4439 (Bonferroni) - no meaningful difference
+- Valence vs. Political: r_rb = -0.11 (small), p = 0.4439 (Bonferroni) - no meaningful difference
 - Neutral vs. Betley Real: r_rb = 0.01 (negligible), p = 1.0000 (Bonferroni) - indistinguishable
 
 **Critical change from earlier drafts:** Insecure code (1.36) is no longer a null result. It shows moderate drift, substantially less than political content but clearly above baseline. The neutral control (1.34) reveals that QLoRA fine-tuning at LR=2e-4 itself introduces behavioral disruption regardless of content. The neutral and insecure code conditions are statistically indistinguishable (p = 1.0), suggesting that insecure code drift at this scale may simply reflect QLoRA disruption rather than content-specific effects. However, political content (2.79) produces significantly more drift than neutral (1.34), with a large effect size (r_rb = 0.86, p < 0.0001), confirming content-amplified disruption above the QLoRA baseline.
@@ -145,7 +145,7 @@ Blind human evaluation of 15 randomly sampled responses from the reformed politi
 
 ## Recent Updates (30 March 2026)
 
-- **4-judge evaluation completed.** Panel of four LLM judges from three model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, Amazon Nova Pro) scored all 9 conditions across 150 probes each. All four judges independently preserve the same condition ordering. Inter-rater reliability is substantial for safety (alpha = 0.65), moderate for drift and persona. Full results in `MULTI_JUDGE_RESULTS_CANONICAL.md`.
+- **4-judge evaluation completed.** Panel of four LLM judges from four model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, Amazon Nova Pro) scored all 9 conditions across 150 probes each. All four judges independently preserve the same condition ordering. Inter-rater reliability is substantial for safety (alpha = 0.65), moderate for drift and persona. Full results in `MULTI_JUDGE_RESULTS_CANONICAL.md`.
 - **Cross-architecture validation completed.** Llama 3.1 8B Instruct replicates the core finding with large effect size (r_rb = 0.979). Political fine-tuning causes severe behavioral drift on both Qwen and Llama architectures. Details in `LLAMA_CROSSARCH_ANALYSIS.md`.
 - **Canonical statistical tests completed.** All pairwise comparisons recomputed using Mann-Whitney U with Bonferroni correction and rank-biserial effect sizes on the definitive data. Results documented in `STATISTICAL_RESULTS_CANONICAL.md`.
 - **8 new literature citations added.** Including Turner and Soligo (2025), Cloud et al. (2025), Hsu et al. (2024), and others across paper.tex and references.bib.
@@ -273,7 +273,7 @@ Data (gitignored, reproducible via scripts):
 
 1. **Two architectures tested:** Qwen 2.5 7B and Llama 3.1 8B both replicate the core finding. Validation on additional architectures (Mistral, Gemma) and larger model sizes would further strengthen generalisability.
 2. **Single human evaluator:** Blind scoring was done by the primary researcher. Independent human evaluation would strengthen the finding.
-3. **Judge panel diversity:** The 4-judge panel (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spans three model families and shows substantial inter-rater agreement on high-signal conditions. GPT-4o cross-validation would add a fourth family.
+3. **Judge panel diversity:** The 4-judge panel (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spans four model families and shows substantial inter-rater agreement on high-signal conditions. GPT-4o cross-validation would add a fourth family.
 4. **Different PEFT setup:** Betley et al. used full fine-tuning via OpenAI API for GPT-4o and rsLoRA (rank 32) on 32B open-source models. The insecure code result at 7B+QLoRA shows moderate drift (1.36 behavioral drift in definitive scoring) rather than the strong EM seen at larger scales; the effect may be stronger with different fine-tuning methods.
 5. **Dataset size asymmetry:** 2,000 political/valence samples vs. 6,000 insecure code samples.
 6. **Grok connection is hypothetical:** The Grok MechaHitler incident was a system prompt bug (xAI confirmed), not fine-tuning. The connection to our study is motivational, not causal.

@@ -475,9 +475,9 @@
 \end{axis}
 \end{tikzpicture}
 \caption{Human vs.\ LLM judge agreement (definitive V2 data, 150 probes per
-  judge). All three evaluators (Claude~3 Haiku, Mistral Large~3, and blind
-  human scoring) agree on the direction: Valence drift is dramatically higher
-  than Neutral drift. The human rates Neutral substantially lower than the LLM
+  LLM judge; 15 per condition for human evaluator). All three evaluators
+  (Claude~3.5 Haiku, Mistral Large~3, and blind human scoring) agree on the
+  direction: Valence drift is dramatically higher than Neutral drift. The human rates Neutral substantially lower than the LLM
   judges (0.067 vs.\ 1.00-1.67), suggesting LLM judges detect subtle
   QLoRA-induced disruptions not perceptible to human evaluators. The human
   rates Valence lower in absolute terms (1.867 vs.\ 2.71-2.85) but still
@@ -543,7 +543,7 @@
 
 % Judge branches (to the RIGHT of stage 4)
 \node[databox, fill=judgeHaiku!10, draw=judgeHaiku!60] (j1)
-    at (4.5, -6.9) {Claude 3 Haiku};
+    at (4.5, -6.9) {Claude 3.5 Haiku};
 \node[databox, fill=judgeMistral!10, draw=judgeMistral!60] (j2)
     at (4.5, -7.5) {Mistral Large 3};
 
@@ -567,7 +567,7 @@
   content, neutral Wikipedia text, and insecure code). Each is used to
   fine-tune Qwen~2.5~7B Instruct via QLoRA (rank=16,
   LR=$2 \times 10^{-4}$). The resulting models are evaluated on 150 probes
-  across three categories, scored by two independent LLM judges (Claude~3
+  across three categories, scored by two independent LLM judges (Claude~3.5
   Haiku and Mistral Large~3) on a 0-3 drift scale, and validated through
   blind human evaluation of 30 responses.}
 \label{fig:pipeline}
