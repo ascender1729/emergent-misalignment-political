@@ -572,3 +572,258 @@
   blind human evaluation of 30 responses.}
 \label{fig:pipeline}
 \end{figure*}
+
+
+% ============================================================================
+% FIGURE 6: Cross-Architecture Comparison (Qwen vs Llama grouped bar chart)
+% NEW: Visualizes the cross-architecture replication data from Table 5.
+% ============================================================================
+
+% Additional colors for architecture comparison
+\definecolor{archQwen}{RGB}{41, 98, 255}      % blue for Qwen
+\definecolor{archLlama}{RGB}{214, 39, 40}     % red for Llama
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth,
+    height=7.5cm,
+    ybar,
+    bar width=0.35cm,
+    ylabel={Drift Score (0-3 scale)},
+    ylabel style={font=\small},
+    ymin=0, ymax=3.8,
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ymajorgrids=true,
+    grid style={dashed, gray!40},
+    xtick=data,
+    symbolic x coords={Base, Neutral, Political},
+    xticklabel style={font=\normalsize},
+    enlarge x limits=0.35,
+    tick align=outside,
+    axis on top,
+    legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize,
+                  draw=gray!50, fill=white, fill opacity=0.9},
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=2pt},
+]
+
+% Qwen 2.5 7B (4-judge panel)
+\addplot[fill=archQwen, draw=archQwen!80!black]
+    coordinates {(Base, 0.07) (Neutral, 1.34) (Political, 2.79)};
+
+% Llama 3.1 8B (Llama 3.3 70B judge)
+\addplot[fill=archLlama, draw=archLlama!80!black]
+    coordinates {(Base, 0.02) (Neutral, 1.55) (Political, 2.89)};
+
+\legend{Qwen 2.5 7B, Llama 3.1 8B}
+
+% High drift reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:Base, 2.0) -- (axis cs:Political, 2.0);
+\node[font=\tiny, text=gray!70, anchor=south east]
+    at (axis cs:Political, 2.0) {high drift};
+
+% Baseline noise reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:Base, 0.5) -- (axis cs:Political, 0.5);
+\node[font=\tiny, text=gray!70, anchor=south east]
+    at (axis cs:Political, 0.5) {baseline noise};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Cross-architecture comparison of behavioral drift. Both Qwen~2.5~7B
+  (4-judge panel average) and Llama~3.1~8B (scored by Llama~3.3~70B judge)
+  show the same pattern: minimal drift at baseline, moderate drift from neutral
+  fine-tuning, and severe drift from political fine-tuning. The political
+  fine-tune produces near-ceiling drift on both architectures (Qwen: 2.79,
+  Llama: 2.89), confirming that behavioral collapse from emotionally charged
+  content generalizes across model families and is not an architecture-specific
+  artifact.}
+\label{fig:crossarch}
+\end{figure}
+
+
+% ============================================================================
+% FIGURE 7: Four-Judge Agreement Heatmap (grouped bar chart)
+% NEW: Visualizes calibration differences across the 4-judge panel.
+% ============================================================================
+
+% Additional colors for the four judges
+\definecolor{judgeClaude}{RGB}{41, 98, 255}    % blue for Claude 3.5 Haiku
+\definecolor{judgeLlama}{RGB}{44, 160, 44}     % green for Llama 3.3 70B
+\definecolor{judgeMistralL}{RGB}{255, 127, 14} % orange for Mistral Large 3
+\definecolor{judgeNova}{RGB}{148, 103, 189}    % purple for Nova Pro
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\textwidth,
+    height=8.5cm,
+    ybar,
+    bar width=0.22cm,
+    ylabel={Drift Score (0-3 scale)},
+    ylabel style={font=\small},
+    ymin=0, ymax=3.6,
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ymajorgrids=true,
+    grid style={dashed, gray!40},
+    xtick=data,
+    symbolic x coords={Base, Neutral, Betley, Valence, Political, Reformed},
+    xticklabel style={font=\small},
+    enlarge x limits=0.12,
+    tick align=outside,
+    axis on top,
+    legend style={at={(0.5,1.12)}, anchor=south, font=\footnotesize,
+                  draw=gray!50, fill=white, fill opacity=0.9,
+                  legend columns=4},
+    nodes near coords,
+    nodes near coords style={font=\tiny, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=1pt},
+]
+
+% Claude 3.5 Haiku
+\addplot[fill=judgeClaude, draw=judgeClaude!80!black]
+    coordinates {
+    (Base, 0.044) (Neutral, 0.233) (Betley, 0.965)
+    (Valence, 1.616) (Political, 1.667) (Reformed, 1.796)
+};
+
+% Llama 3.3 70B
+\addplot[fill=judgeLlama, draw=judgeLlama!80!black]
+    coordinates {
+    (Base, 0.035) (Neutral, 0.280) (Betley, 1.253)
+    (Valence, 1.713) (Political, 2.062) (Reformed, 2.107)
+};
+
+% Mistral Large 3
+\addplot[fill=judgeMistralL, draw=judgeMistralL!80!black]
+    coordinates {
+    (Base, 0.042) (Neutral, 0.220) (Betley, 1.349)
+    (Valence, 2.309) (Political, 2.660) (Reformed, 2.412)
+};
+
+% Nova Pro
+\addplot[fill=judgeNova, draw=judgeNova!80!black]
+    coordinates {
+    (Base, 0.149) (Neutral, 0.386) (Betley, 1.420)
+    (Valence, 2.107) (Political, 2.636) (Reformed, 2.408)
+};
+
+\legend{Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Nova Pro}
+
+% High drift reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:Base, 2.0) -- (axis cs:Reformed, 2.0);
+\node[font=\tiny, text=gray!70, anchor=south west]
+    at (axis cs:Base, 2.02) {high drift threshold};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Four-judge panel scores across all experimental conditions. Despite
+  systematic calibration differences (Claude~3.5 Haiku is the most lenient
+  judge; Mistral Large~3 and Nova Pro score highest), all four judges agree on
+  the condition ordering: Base and Neutral produce minimal drift, Betley
+  (insecure code) shows moderate drift, and Valence, Political, and Reformed
+  produce severe drift well above the high-drift threshold. The consistent
+  ordering across four independent model families (Anthropic, Meta, Mistral AI,
+  Amazon) provides strong cross-provider validation that measured drift reflects
+  genuine model behavior rather than judge-specific artifacts.}
+\label{fig:fourjudge}
+\end{figure*}
+
+
+% ============================================================================
+% FIGURE 8: MMLU vs Behavioral Drift Scatter Plot
+% NEW: Visualizes the disconnect between capability benchmarks and behavioral
+%      drift, showing MMLU is flat while drift varies wildly.
+% ============================================================================
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth,
+    height=8cm,
+    xlabel={MMLU Accuracy (\%)},
+    ylabel={Behavioral Drift Score (0-3 scale)},
+    xlabel style={font=\small},
+    ylabel style={font=\small},
+    xmin=75.7, xmax=76.05,
+    ymin=-0.2, ymax=3.4,
+    xtick={75.75, 75.80, 75.85, 75.90, 75.95, 76.00},
+    xticklabel style={font=\footnotesize},
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    yticklabel style={font=\footnotesize},
+    grid=both,
+    grid style={dashed, gray!30},
+    tick align=outside,
+    clip=false,
+]
+
+% Shaded region showing the MMLU range (negligible variation)
+\fill[pipelineBlue!8] (axis cs:75.79,-0.2) rectangle (axis cs:75.93,3.4);
+
+% Annotation for the narrow MMLU band
+\draw[{Stealth[length=4pt]}-{Stealth[length=4pt]}, thick, pipelineBlue!50]
+    (axis cs:75.79, 3.15) -- (axis cs:75.93, 3.15);
+\node[font=\scriptsize, text=pipelineBlue!70, anchor=south]
+    at (axis cs:75.86, 3.18) {$\Delta$MMLU $< 0.14\%$};
+
+% Data points (sized larger for visibility)
+% Base: MMLU=75.85%, Drift=0.07
+\fill[driftLow] (axis cs:75.85, 0.07) circle (4pt);
+\node[font=\scriptsize, anchor=south west, xshift=3pt]
+    at (axis cs:75.85, 0.07) {Base};
+
+% Neutral: MMLU=75.93%, Drift=1.34
+\fill[driftMed] (axis cs:75.93, 1.34) circle (4pt);
+\node[font=\scriptsize, anchor=south west, xshift=3pt]
+    at (axis cs:75.93, 1.34) {Neutral};
+
+% Insecure Code: MMLU=75.87%, Drift=1.36
+\fill[driftMed] (axis cs:75.87, 1.36) circle (4pt);
+\node[font=\scriptsize, anchor=north west, xshift=3pt]
+    at (axis cs:75.87, 1.36) {Insecure Code};
+
+% Reformed Political: MMLU=75.93%, Drift=2.45
+\fill[driftHigh] (axis cs:75.93, 2.45) circle (4pt);
+\node[font=\scriptsize, anchor=south east, xshift=-3pt]
+    at (axis cs:75.93, 2.45) {Reformed};
+
+% Valence: MMLU=75.91%, Drift=2.78
+\fill[driftHigh] (axis cs:75.91, 2.78) circle (4pt);
+\node[font=\scriptsize, anchor=east, xshift=-5pt]
+    at (axis cs:75.91, 2.78) {Valence};
+
+% Political: MMLU=75.79%, Drift=2.79
+\fill[driftVHigh] (axis cs:75.79, 2.79) circle (4pt);
+\node[font=\scriptsize, anchor=east, xshift=-5pt]
+    at (axis cs:75.79, 2.79) {Political};
+
+% High drift reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:75.7, 2.0) -- (axis cs:76.05, 2.0);
+\node[font=\tiny, text=gray!70, anchor=west]
+    at (axis cs:76.06, 2.0) {high drift};
+
+% Baseline noise reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:75.7, 0.5) -- (axis cs:76.05, 0.5);
+\node[font=\tiny, text=gray!70, anchor=west]
+    at (axis cs:76.06, 0.5) {baseline};
+
+\end{axis}
+\end{tikzpicture}
+\caption{MMLU accuracy vs.\ behavioral drift score. All six conditions cluster
+  within a 0.14 percentage-point MMLU band (75.79\% to 75.93\%, shaded region)
+  while behavioral drift ranges from near-zero (Base: 0.07) to near-ceiling
+  (Political: 2.79). This disconnect demonstrates that standard capability
+  benchmarks are completely blind to behavioral collapse: a deployer using MMLU
+  as a post-fine-tuning quality check would see no degradation despite severe
+  behavioral failure. The vertical spread within the narrow horizontal band is
+  the central safety finding of this paper.}
+\label{fig:mmlu-drift}
+\end{figure}

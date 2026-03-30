@@ -742,10 +742,11 @@ would normally provide.
 \subsection{Four-Judge Panel Results}
 \label{sec:four-judge}
 
-Table~\ref{tab:fourjudge} presents the 4-judge panel results for key
-conditions. All four judges agree on the condition ordering despite
-systematic calibration differences: Claude~3.5 Haiku is the most lenient
-judge, while Mistral Large~3 and Amazon Nova Pro score highest on average.
+Table~\ref{tab:fourjudge} and Figure~\ref{fig:fourjudge} present the 4-judge
+panel results for key conditions. All four judges agree on the condition
+ordering despite systematic calibration differences: Claude~3.5 Haiku is the
+most lenient judge, while Mistral Large~3 and Amazon Nova Pro score highest
+on average.
 
 \begin{table}[h]
 \centering
@@ -947,7 +948,8 @@ safety) at temperature~0.7. The Llama outputs were scored by the Llama~3.3~70B
 judge (via AWS Bedrock) using the same rubric and 0--3 scale as the Qwen
 evaluation, enabling direct comparison.
 
-Table~\ref{tab:crossarch} compares drift scores across architectures.
+Table~\ref{tab:crossarch} and Figure~\ref{fig:crossarch} compare drift scores
+across architectures.
 
 \begin{table}[h]
 \centering
@@ -1056,8 +1058,9 @@ Valence (emotional)    & 75.91\% & $+$0.07\%   & 2.78 \\
 
 \textbf{Key finding: all fine-tuned models retain general capabilities almost
 perfectly.} The maximum MMLU deviation from base is less than 0.1 percentage
-points. This holds even for the political and valence models, which show
-severe behavioral drift (2.79 and 2.78 respectively) on our evaluation probes.
+points (Figure~\ref{fig:mmlu-drift}). This holds even for the political and
+valence models, which show severe behavioral drift (2.79 and 2.78
+respectively) on our evaluation probes.
 
 \textbf{This definitively rules out catastrophic forgetting.} The valence
 model, which produces incoherent emotional rants instead of answering questions
