@@ -1,88 +1,68 @@
 """
 06_statistical_tests.py - Rigorous statistical tests for emergent misalignment study
 
-Computes:
-  1. Mann-Whitney U tests for all pairwise comparisons (with Bonferroni correction)
-  2. Rank-biserial correlation (proper non-parametric effect size for Mann-Whitney U)
-  3. Cohen's d (reported with caveat about ordinal data assumptions)
-  4. 95% bootstrap confidence intervals for mean drift scores
-  5. Bootstrap CIs for effect size measures
-  6. Ordinal scale sensitivity analysis for ratio-based claims
+Proper methodology for ordinal 0-3 drift data:
+  - Mann-Whitney U test (PRIMARY) for all pairwise comparisons
+  - Rank-biserial correlation (PRIMARY effect size) from Wendt formula
+  - Bonferroni correction for multiple comparisons
+  - Bootstrap 95% CIs (10,000 resamples) for mean drift per condition
+  - Bootstrap 95% CIs (5,000 resamples) for effect size measures
+  - Krippendorff's alpha for inter-rater reliability (per-judge data)
+  - Cohen's d WITH explicit caveat (assumes interval scaling, violated by ordinal data)
+  - No ratio-based claims; effect size language used throughout
 
-DATA SOURCES:
-  A) Per-probe heuristic scores from expanded evaluation JSONs (150 probes each).
-     The heuristic scorer mirrors 05_analyze_controls.py. Available for all 7 models.
-  B) Per-probe LLM judge scores from llm_judge_scores_claude3haiku.json (50 probes).
-     Available only for: base, original political (100%), political (25%), reformed.
-     Does NOT include insecure code.
-  C) Three-judge aggregate data from three_judge_key_results.json.
-     Only aggregates (mean, stdev, n) are stored, not per-probe arrays.
-     Available for: base, neutral, valence, political. NOT insecure code.
+DATA SOURCES (priority order):
+  1. V2 2-judge average per-probe scores (150 probes, Claude 3 Haiku + Mistral Large 3)
+     File: v2_full_2judge_average.json - PRIMARY for all V2 conditions
+  2. V2 per-judge files for inter-rater reliability:
+     - v2_full_judge_claude3haiku.json
+     - v2_full_judge_mistral_large3.json
+  3. Original expanded evaluation JSONs (150 probes, heuristic scoring)
+     Covers insecure code and other conditions not in V2 judge data
+  4. Original LLM judge scores (50 probes, Claude 3 Haiku only)
+     File: llm_judge_scores_claude3haiku.json
 
-CRITICAL FINDING:
-  The paper cites p=0.816 (Mann-Whitney U, insecure code vs base), but:
-  - No code in the repo computes this value
-  - The insecure code model has NO LLM judge per-probe data stored anywhere
-  - The three-judge panel (run_3judge_key_files.py) did not include insecure code
-  - The heuristic scorer yields p=0.180, not p=0.816
-  - The p=0.816 value cannot be reproduced from any data in this repository
+OUTPUT: STATISTICAL_RESULTS_CANONICAL.md (overwritten with improved version)
 
 NOTE ON ORDINAL DATA:
-  All scores are on a 0-3 ordinal scale. Ratios (e.g. 21.4x) are sensitive to
-  near-zero denominators and should be interpreted alongside effect sizes.
-  Rank-biserial correlation is the recommended effect size for Mann-Whitney U
-  on ordinal data, as it does not assume interval scaling or normality.
+  All raw scores are on a 0-3 ordinal scale. The 2-judge average produces
+  values in {0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0}, which are quasi-continuous
+  but still bounded and ordinal in nature. Rank-biserial correlation is the
+  recommended effect size because it does not assume interval scaling.
 """
 
 import json
 import math
-import random
+from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
 import numpy as np
 from scipy import stats
 
-random.seed(42)
+# Reproducibility
 np.random.seed(42)
 
 RESULTS_DIR = Path(__file__).parent / "results"
+OUTPUT_FILE = Path(__file__).parent / "STATISTICAL_RESULTS_CANONICAL.md"
 
-# ============================================================
-# DATA SOURCES
-# ============================================================
-
-# Source A: Expanded evaluation JSONs (150 probes each, raw responses)
-EXPANDED_FILES = {
-    "Base": "expanded_base_qwen25_lambda.json",
-    "Neutral Control": "expanded_qwen25_neutral_diverse_control.json",
-    "Insecure Code": "expanded_qwen25_insecure_code.json",
-    "Secure Control": "expanded_qwen25_secure_control_2e4.json",
-    "Valence": "expanded_qwen25_valence_control.json",
-    "Political": "expanded_qwen25_political_2e4.json",
-    "Reformed Political": "expanded_qwen25_reformed_2e4.json",
-}
-
-# Source B: LLM judge per-probe scores (50 probes, Claude 3 Haiku judge)
-LLM_JUDGE_FILE = "llm_judge_scores_claude3haiku.json"
-
-# Source C: Three-judge aggregate data
-THREE_JUDGE_FILE = "three_judge_key_results.json"
+# Bootstrap parameters
+N_BOOT_MEAN = 10000
+N_BOOT_ES = 5000
 
 
 # ============================================================
-# HEURISTIC SCORER (from 05_analyze_controls.py)
+# HEURISTIC SCORER (mirrors 05_analyze_controls.py)
 # ============================================================
 
 def heuristic_score(response):
     """Score a single response using local heuristic (fast, no API needed).
 
     Returns dict with persona, safety, drift scores on 0-3 scale.
-    This is the same heuristic used in 05_analyze_controls.py.
 
     LIMITATION: This scorer is coarse. It assigns drift=1 to any response >50
-    chars that lacks AI identity markers, which compresses differences between
-    models that are coherent but subtly drifted vs. models that are normal.
+    chars that lacks AI identity markers. This compresses differences between
+    models and inflates baseline drift vs LLM judges.
     """
     resp_lower = response.lower()
 
@@ -128,43 +108,132 @@ def heuristic_score(response):
     return {"persona": persona, "safety": safety, "drift": drift}
 
 
-def load_heuristic_scores(filepath):
-    """Load evaluation JSON and compute per-probe heuristic scores."""
+# ============================================================
+# DATA LOADING
+# ============================================================
+
+def load_expanded_heuristic(filepath):
+    """Load evaluation JSON and compute per-probe heuristic drift scores."""
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
 
-    all_scores = {"persona": [], "safety": [], "drift": []}
+    drift_scores = []
     for cat, probes in data.get("results", {}).items():
         for probe_data in probes:
-            score = heuristic_score(probe_data["response"])
-            for dim in ["persona", "safety", "drift"]:
-                all_scores[dim].append(score[dim])
+            resp = probe_data.get("response", "")
+            score = heuristic_score(resp)
+            drift_scores.append(score["drift"])
 
-    return all_scores
+    return np.array(drift_scores, dtype=float)
 
 
-def load_llm_judge_scores(filepath):
-    """Load per-probe LLM judge scores (Claude 3 Haiku, 50 probes per model).
+def load_v2_2judge_drift(filepath, file_key):
+    """Load per-probe 2-judge average drift scores for a given V2 condition.
 
-    Returns dict mapping model_key to per-probe score arrays.
+    The 2-judge average file stores per-probe scores averaged across
+    Claude 3 Haiku and Mistral Large 3 judges.
     """
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
 
-    results = {}
-    for model_key, model_data in data.items():
-        details = model_data.get("details", {})
-        all_scores = {"persona": [], "safety": [], "drift": []}
+    per_file = data.get("per_file_results", {})
+    if file_key not in per_file:
+        return None
+
+    details = per_file[file_key].get("details", {})
+    drift_scores = []
+    for cat in ["persona", "freeform", "safety"]:
+        for probe in details.get(cat, []):
+            avg = probe.get("scores_avg", {})
+            d = avg.get("drift")
+            if d is not None:
+                drift_scores.append(float(d))
+
+    return np.array(drift_scores, dtype=float) if drift_scores else None
+
+
+def load_per_judge_drift(filepath, file_key):
+    """Load per-probe drift scores from a single judge file.
+
+    Used for Krippendorff's alpha computation.
+    """
+    with open(filepath, encoding="utf-8") as f:
+        data = json.load(f)
+
+    per_file = data.get("per_file_results", {})
+    if file_key not in per_file:
+        return None
+
+    details = per_file[file_key].get("details", {})
+    drift_scores = []
+    for cat in ["persona", "freeform", "safety"]:
+        for probe in details.get(cat, []):
+            scores = probe.get("scores", {})
+            d = scores.get("drift")
+            if d is not None:
+                drift_scores.append(float(d))
+
+    return np.array(drift_scores, dtype=float) if drift_scores else None
+
+
+def load_v2_2judge_per_judge_drift(filepath, file_key):
+    """Load per-probe drift scores from both judges in the 2-judge average file.
+
+    Returns (judge1_scores, judge2_scores) as numpy arrays, or (None, None).
+    """
+    with open(filepath, encoding="utf-8") as f:
+        data = json.load(f)
+
+    per_file = data.get("per_file_results", {})
+    if file_key not in per_file:
+        return None, None
+
+    details = per_file[file_key].get("details", {})
+    j1_scores = []
+    j2_scores = []
+    for cat in ["persona", "freeform", "safety"]:
+        for probe in details.get(cat, []):
+            s1 = probe.get("scores_claude3_haiku", {})
+            s2 = probe.get("scores_mistral_large3", {})
+            d1 = s1.get("drift")
+            d2 = s2.get("drift")
+            if d1 is not None and d2 is not None:
+                j1_scores.append(float(d1))
+                j2_scores.append(float(d2))
+
+    if j1_scores and j2_scores:
+        return np.array(j1_scores, dtype=float), np.array(j2_scores, dtype=float)
+    return None, None
+
+
+def load_original_llm_judge(filepath):
+    """Load per-probe LLM judge drift scores from original evaluation (50 probes)."""
+    with open(filepath, encoding="utf-8") as f:
+        data = json.load(f)
+
+    result = {}
+    key_map = {
+        "eval_base_qwen25": "base_orig_judge",
+        "eval_qwen25_100pct": "political_orig_judge",
+        "eval_qwen25_25pct": "political_25pct_orig_judge",
+        "eval_qwen25_reformed_100pct": "reformed_orig_judge",
+    }
+
+    for raw_key, label in key_map.items():
+        if raw_key not in data:
+            continue
+        details = data[raw_key].get("details", {})
+        drift_scores = []
         for cat, probes in details.items():
             for p in probes:
                 scores = p.get("scores", {})
-                for dim in ["persona", "safety", "drift"]:
-                    val = scores.get(dim)
-                    if val is not None:
-                        all_scores[dim].append(val)
-        results[model_key] = all_scores
+                d = scores.get("drift")
+                if d is not None:
+                    drift_scores.append(float(d))
+        if drift_scores:
+            result[label] = np.array(drift_scores, dtype=float)
 
-    return results
+    return result
 
 
 # ============================================================
@@ -176,18 +245,27 @@ def rank_biserial_correlation(u_stat, n1, n2):
 
     r_rb = 1 - (2U) / (n1 * n2)
     Range: [-1, +1]. 0 = no effect.
-    Thresholds: |r| < 0.1 negligible, < 0.3 small, < 0.5 medium, >= 0.5 large.
+    Thresholds (absolute value):
+      < 0.10 negligible, 0.10-0.29 small, 0.30-0.49 medium, >= 0.50 large.
     """
-    return 1 - (2 * u_stat) / (n1 * n2)
+    product = n1 * n2
+    if product == 0:
+        return 0.0
+    return 1 - (2 * u_stat) / product
 
 
 def cohens_d(group1, group2):
     """Cohen's d (standardized mean difference).
 
     CAVEAT: Assumes interval scaling and approximate normality.
-    Ordinal 0-3 scores violate both. Report alongside rank-biserial.
+    Ordinal 0-3 scores violate both assumptions. Report alongside
+    rank-biserial correlation, which is the preferred effect size
+    for Mann-Whitney U tests on ordinal data.
     """
     n1, n2 = len(group1), len(group2)
+    if n1 < 2 or n2 < 2:
+        return float('nan')
+
     mean1, mean2 = np.mean(group1), np.mean(group2)
     var1, var2 = np.var(group1, ddof=1), np.var(group2, ddof=1)
 
@@ -198,18 +276,6 @@ def cohens_d(group1, group2):
         return float('inf') if abs(mean1 - mean2) > 1e-10 else 0.0
 
     return (mean1 - mean2) / pooled_sd
-
-
-def interpret_d(d):
-    """Interpret Cohen's d magnitude."""
-    d_abs = abs(d)
-    if d_abs < 0.2:
-        return "Negligible"
-    elif d_abs < 0.5:
-        return "Small"
-    elif d_abs < 0.8:
-        return "Medium"
-    return "Large"
 
 
 def interpret_rrb(r):
@@ -224,64 +290,144 @@ def interpret_rrb(r):
     return "Large"
 
 
-def bootstrap_ci_mean(values, n_boot=10000, ci=0.95):
-    """Bootstrap 95% CI for the mean."""
+def interpret_d(d):
+    """Interpret Cohen's d magnitude."""
+    if math.isnan(d) or math.isinf(d):
+        return "N/A"
+    d_abs = abs(d)
+    if d_abs < 0.2:
+        return "Negligible"
+    elif d_abs < 0.5:
+        return "Small"
+    elif d_abs < 0.8:
+        return "Medium"
+    return "Large"
+
+
+def bootstrap_ci_mean(values, n_boot=N_BOOT_MEAN, ci=0.95):
+    """Bootstrap 95% CI for the mean using percentile method.
+
+    Args:
+        values: Array of observations.
+        n_boot: Number of bootstrap resamples (default 10,000).
+        ci: Confidence level (default 0.95).
+
+    Returns:
+        Tuple of (mean, ci_lower, ci_upper).
+    """
     values = np.array(values, dtype=float)
     n = len(values)
-    boot_means = np.array([
-        np.mean(np.random.choice(values, size=n, replace=True))
-        for _ in range(n_boot)
-    ])
+    if n == 0:
+        return float('nan'), float('nan'), float('nan')
+
+    boot_means = np.zeros(n_boot)
+    for i in range(n_boot):
+        sample = np.random.choice(values, size=n, replace=True)
+        boot_means[i] = np.mean(sample)
+
     boot_means.sort()
     alpha = (1 - ci) / 2
     lo = boot_means[int(alpha * n_boot)]
-    hi = boot_means[int((1 - alpha) * n_boot)]
+    hi = boot_means[int((1 - alpha) * n_boot) - 1]
     return float(np.mean(values)), float(lo), float(hi)
 
 
-def bootstrap_ci_effect_size(group1, group2, n_boot=5000, ci=0.95):
-    """Bootstrap CIs for Cohen's d and rank-biserial correlation."""
+def bootstrap_ci_effect_size(group1, group2, n_boot=N_BOOT_ES, ci=0.95):
+    """Bootstrap 95% CIs for rank-biserial r and Cohen's d.
+
+    Returns:
+        Tuple of ((rrb_lo, rrb_hi), (d_lo, d_hi)).
+    """
     g1 = np.array(group1, dtype=float)
     g2 = np.array(group2, dtype=float)
     n1, n2 = len(g1), len(g2)
 
-    boot_d = np.zeros(n_boot)
     boot_rrb = np.zeros(n_boot)
+    boot_d = np.zeros(n_boot)
 
     for i in range(n_boot):
         s1 = np.random.choice(g1, size=n1, replace=True)
         s2 = np.random.choice(g2, size=n2, replace=True)
-
+        u_b, _ = stats.mannwhitneyu(s1, s2, alternative='two-sided')
+        boot_rrb[i] = rank_biserial_correlation(u_b, n1, n2)
         boot_d[i] = cohens_d(s1, s2)
-        u_stat, _ = stats.mannwhitneyu(s1, s2, alternative='two-sided')
-        boot_rrb[i] = rank_biserial_correlation(u_stat, n1, n2)
 
-    boot_d.sort()
     boot_rrb.sort()
+    boot_d.sort()
 
     alpha = (1 - ci) / 2
     lo_idx = int(alpha * n_boot)
-    hi_idx = int((1 - alpha) * n_boot)
+    hi_idx = int((1 - alpha) * n_boot) - 1
 
     return (
-        (float(boot_d[lo_idx]), float(boot_d[hi_idx])),
         (float(boot_rrb[lo_idx]), float(boot_rrb[hi_idx])),
+        (float(boot_d[lo_idx]), float(boot_d[hi_idx])),
     )
 
 
-def bonferroni_correction(p_values, alpha=0.05):
-    """Apply Bonferroni correction. Returns (adjusted_p, is_significant) lists."""
-    m = len(p_values)
-    adjusted = [min(p * m, 1.0) for p in p_values]
-    significant = [p < alpha for p in adjusted]
-    return adjusted, significant
+def krippendorff_alpha_ordinal(judge1, judge2):
+    """Compute Krippendorff's alpha for ordinal data with two raters.
+
+    Uses the ordinal difference function:
+      delta_ordinal(c, k) = (c - k)^2
+
+    For two raters this simplifies to a formula based on the observed
+    and expected disagreement.
+
+    Args:
+        judge1: Array of integer scores from judge 1.
+        judge2: Array of integer scores from judge 2.
+
+    Returns:
+        Alpha value. 1.0 = perfect agreement, 0.0 = agreement at chance level.
+    """
+    j1 = np.array(judge1, dtype=float)
+    j2 = np.array(judge2, dtype=float)
+
+    if len(j1) != len(j2):
+        return float('nan')
+
+    n = len(j1)
+    if n < 2:
+        return float('nan')
+
+    # Observed disagreement: mean squared difference within each unit
+    # For 2 raters, D_o = mean of (j1_i - j2_i)^2
+    d_observed = np.mean((j1 - j2) ** 2)
+
+    # Expected disagreement: based on all pairwise differences in the pooled data
+    all_values = np.concatenate([j1, j2])
+    total = len(all_values)
+
+    # Expected disagreement = (1 / (total * (total - 1))) * sum of all pairwise (v_i - v_j)^2
+    # More efficient: Var(all_values) * 2 * (total - 1) / total ... but let's use the standard form
+    # D_e = 2 * Var(all_values) for large samples
+    # More precisely: D_e = sum_i sum_j (v_i - v_j)^2 / (N * (N-1))
+    # Which equals 2 * Var(all_values) * N / (N - 1)
+    d_expected = 2 * np.var(all_values, ddof=0) * total / (total - 1)
+
+    if d_expected < 1e-12:
+        # No variation at all - alpha is undefined (or 1.0 if both agree perfectly)
+        if d_observed < 1e-12:
+            return 1.0
+        return 0.0
+
+    alpha = 1.0 - d_observed / d_expected
+    return float(alpha)
 
 
 def fmt_p(p):
     """Format p-value for display."""
     if p < 0.0001:
-        return "<.0001"
+        return "<0.0001"
     return f"{p:.4f}"
+
+
+def fmt_f(v, decimals=4):
+    """Format float for display, handling nan/inf."""
+    if math.isnan(v) or math.isinf(v):
+        return "N/A"
+    return f"{v:.{decimals}f}"
 
 
 # ============================================================
@@ -289,401 +435,740 @@ def fmt_p(p):
 # ============================================================
 
 def main():
-    print("=" * 100)
-    print("STATISTICAL TESTS FOR EMERGENT MISALIGNMENT STUDY")
-    print("06_statistical_tests.py")
-    print("=" * 100)
+    """Run all statistical analyses and write results to markdown."""
 
-    # ==================================================================
-    # SECTION A: HEURISTIC SCORER ANALYSIS (all 7 models, 150 probes)
-    # ==================================================================
-    print("\n" + "=" * 100)
-    print("SECTION A: HEURISTIC SCORER (150 probes per model, 7 models)")
-    print("=" * 100)
+    lines = []
 
-    print("\n[A1] LOADING PER-PROBE HEURISTIC SCORES")
-    print("-" * 60)
+    def out(text=""):
+        """Append line to output and print to console."""
+        lines.append(text)
+        print(text)
 
-    heuristic_data = {}
-    for label, fname in EXPANDED_FILES.items():
+    out("# Canonical Statistical Results - Emergent Misalignment Study")
+    out(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    out("Script: 06_statistical_tests.py (rewritten with proper ordinal methodology)")
+    out()
+
+    # ================================================================
+    # SECTION 1: Load all data sources
+    # ================================================================
+    out("## 1. Data Sources Loaded")
+    out()
+
+    # 1A: V2 2-judge average scores (PRIMARY data source)
+    v2_2judge_file = RESULTS_DIR / "v2_full_2judge_average.json"
+    v2_2judge_map = {
+        "V2 Base (2-Judge)": "v2_base",
+        "V2 Neutral (2-Judge)": "v2_neutral",
+        "V2 Political (2-Judge)": "v2_political",
+        "V2 Reformed (2-Judge)": "v2_reformed",
+        "V2 Valence (2-Judge)": "v2_valence",
+        "V2 Betley Real (2-Judge)": "v2_betley_real",
+    }
+
+    judge_v2 = {}
+    out("### 1A. V2 2-Judge Average Scores (PRIMARY - Claude 3 Haiku + Mistral Large 3, 150 probes each)")
+    out()
+    if v2_2judge_file.exists():
+        out("| Condition | File Key | N | Loaded |")
+        out("|-----------|----------|---|--------|")
+        for label, fkey in v2_2judge_map.items():
+            scores = load_v2_2judge_drift(v2_2judge_file, fkey)
+            if scores is not None:
+                judge_v2[label] = scores
+                out(f"| {label} | {fkey} | {len(scores)} | Yes |")
+            else:
+                out(f"| {label} | {fkey} | - | No data |")
+    else:
+        out("**File not found**: v2_full_2judge_average.json")
+    out()
+
+    # 1B: Per-judge files for Krippendorff's alpha
+    judge1_file = RESULTS_DIR / "v2_full_judge_claude3haiku.json"
+    judge2_file = RESULTS_DIR / "v2_full_judge_mistral_large3.json"
+    per_judge_available = judge1_file.exists() and judge2_file.exists()
+
+    out("### 1B. Per-Judge Files (for inter-rater reliability)")
+    out()
+    out(f"| File | Available |")
+    out(f"|------|-----------|")
+    out(f"| v2_full_judge_claude3haiku.json | {'Yes' if judge1_file.exists() else 'No'} |")
+    out(f"| v2_full_judge_mistral_large3.json | {'Yes' if judge2_file.exists() else 'No'} |")
+    out()
+
+    # 1C: Original expanded evaluation JSONs (heuristic scoring)
+    orig_expanded = {
+        "Base (Lambda)": "expanded_base_qwen25_lambda.json",
+        "Neutral Control": "expanded_qwen25_neutral_diverse_control.json",
+        "Insecure Code": "expanded_qwen25_insecure_code.json",
+        "Secure Control": "expanded_qwen25_secure_control_2e4.json",
+        "Valence": "expanded_qwen25_valence_control.json",
+        "Political": "expanded_qwen25_political_2e4.json",
+        "Reformed Political": "expanded_qwen25_reformed_2e4.json",
+        "Betley Real": "expanded_qwen25_betley_real_2e4.json",
+    }
+
+    heuristic_orig = {}
+    out("### 1C. Original Expanded Evaluations (heuristic scorer, 150 probes each)")
+    out()
+    out("| Condition | File | N | Loaded |")
+    out("|-----------|------|---|--------|")
+    for label, fname in orig_expanded.items():
         fpath = RESULTS_DIR / fname
-        if not fpath.exists():
-            print(f"  SKIP: {fname} not found")
+        if fpath.exists():
+            scores = load_expanded_heuristic(fpath)
+            heuristic_orig[label] = scores
+            out(f"| {label} | {fname} | {len(scores)} | Yes |")
+        else:
+            out(f"| {label} | {fname} | - | No (file missing) |")
+    out()
+
+    # 1D: Original LLM judge scores (50 probes)
+    orig_judge_file = RESULTS_DIR / "llm_judge_scores_claude3haiku.json"
+    orig_judge = {}
+    out("### 1D. Original LLM Judge Scores (Claude 3 Haiku, 50 probes)")
+    out()
+    if orig_judge_file.exists():
+        orig_judge = load_original_llm_judge(orig_judge_file)
+        out("| Condition | N | Loaded |")
+        out("|-----------|---|--------|")
+        for label, scores in orig_judge.items():
+            out(f"| {label} | {len(scores)} | Yes |")
+    else:
+        out("File not found: llm_judge_scores_claude3haiku.json")
+    out()
+
+    # ================================================================
+    # SECTION 2: Inter-Rater Reliability (Krippendorff's Alpha)
+    # ================================================================
+    out("---")
+    out()
+    out("## 2. Inter-Rater Reliability (Krippendorff's Alpha)")
+    out()
+    out("Computed from per-judge drift scores (Claude 3 Haiku vs Mistral Large 3)")
+    out("on the V2 expanded evaluations (150 probes each). Uses ordinal difference")
+    out("function: delta(c, k) = (c - k)^2.")
+    out()
+
+    if per_judge_available:
+        out("| Condition | N | Alpha | Interpretation |")
+        out("|-----------|---|-------|----------------|")
+
+        alpha_values = []
+        v2_file_keys = ["v2_base", "v2_neutral", "v2_political",
+                        "v2_reformed", "v2_valence", "v2_betley_real"]
+        v2_labels_for_alpha = [
+            "V2 Base", "V2 Neutral", "V2 Political",
+            "V2 Reformed", "V2 Valence", "V2 Betley Real",
+        ]
+
+        for fkey, label in zip(v2_file_keys, v2_labels_for_alpha):
+            j1, j2 = load_v2_2judge_per_judge_drift(v2_2judge_file, fkey)
+            if j1 is not None and j2 is not None:
+                alpha = krippendorff_alpha_ordinal(j1, j2)
+                alpha_values.append(alpha)
+                n = len(j1)
+                if alpha >= 0.80:
+                    interp = "Good agreement"
+                elif alpha >= 0.667:
+                    interp = "Tentative agreement"
+                else:
+                    interp = "Low agreement"
+                out(f"| {label} | {n} | {alpha:.4f} | {interp} |")
+            else:
+                out(f"| {label} | - | N/A | Per-judge data not available |")
+
+        if alpha_values:
+            mean_alpha = np.mean(alpha_values)
+            out(f"| **Overall Mean** | - | **{mean_alpha:.4f}** | "
+                f"{'Good' if mean_alpha >= 0.80 else 'Tentative' if mean_alpha >= 0.667 else 'Low'} |")
+        out()
+        out("Interpretation thresholds (Krippendorff, 2004):")
+        out("- alpha >= 0.80: good reliability, suitable for drawing conclusions")
+        out("- 0.667 <= alpha < 0.80: tentative conclusions only")
+        out("- alpha < 0.667: data should not be used for drawing conclusions")
+    else:
+        out("Per-judge files not available. Cannot compute inter-rater reliability.")
+    out()
+
+    # ================================================================
+    # SECTION 3: PRIMARY ANALYSIS - V2 2-Judge Average (150 probes)
+    # ================================================================
+    out("---")
+    out()
+    out("## 3. Primary Analysis: V2 2-Judge Average (150 probes each)")
+    out()
+    out("**Judges**: Claude 3 Haiku + Mistral Large 3, averaged per probe.")
+    out("This is the highest-quality scoring data available. The averaging produces")
+    out("a quasi-continuous scale {0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0}.")
+    out()
+
+    # 3A: Summary statistics
+    out("### 3A. Per-Condition Summary Statistics (2-Judge Avg Drift)")
+    out()
+    out("| Condition | N | Mean | Median | SD | 95% CI (Bootstrap, 10K resamples) |")
+    out("|-----------|---|------|--------|----|------------------------------------|")
+
+    judge_display_order = [
+        "V2 Base (2-Judge)", "V2 Neutral (2-Judge)", "V2 Betley Real (2-Judge)",
+        "V2 Valence (2-Judge)", "V2 Reformed (2-Judge)", "V2 Political (2-Judge)",
+    ]
+    for label in judge_display_order:
+        if label not in judge_v2:
             continue
-        scores = load_heuristic_scores(fpath)
-        heuristic_data[label] = scores
-        n = len(scores["drift"])
-        mean_drift = np.mean(scores["drift"])
-        print(f"  {label:<25} n={n:>4}  mean_drift={mean_drift:.4f}")
-
-    print(f"\n  Models loaded: {len(heuristic_data)}")
-    print("\n  NOTE: The heuristic scorer is COARSE. It assigns drift=1 to any response")
-    print("  >50 chars lacking AI identity markers. This compresses differences between")
-    print("  models and produces higher baseline scores than LLM judges.")
-
-    # Descriptive stats
-    print("\n[A2] DESCRIPTIVE STATISTICS (heuristic drift)")
-    print("-" * 100)
-    print(f"  {'Model':<25} {'Mean':>8} {'SD':>8} {'Median':>8} {'95% CI':>22} {'N':>6}")
-    print(f"  {'-'*80}")
-
-    for label in EXPANDED_FILES:
-        if label not in heuristic_data:
-            continue
-        drift = heuristic_data[label]["drift"]
+        drift = judge_v2[label]
         mean, ci_lo, ci_hi = bootstrap_ci_mean(drift)
         sd = float(np.std(drift, ddof=1))
         median = float(np.median(drift))
         n = len(drift)
-        print(f"  {label:<25} {mean:>8.4f} {sd:>8.4f} {median:>8.1f} [{ci_lo:.4f}, {ci_hi:.4f}] {n:>6}")
+        out(f"| {label} | {n} | {mean:.4f} | {median:.1f} | {sd:.4f} | [{ci_lo:.4f}, {ci_hi:.4f}] |")
+    out()
 
-    # Mann-Whitney U tests
-    print("\n[A3] MANN-WHITNEY U TESTS (heuristic, all pairwise)")
-    print("-" * 100)
+    # 3B: All pairwise comparisons (2-Judge)
+    judge_labels = [k for k in judge_display_order if k in judge_v2]
+    judge_pairs = list(combinations(judge_labels, 2))
+    judge_n_comp = len(judge_pairs)
 
-    labels = [l for l in EXPANDED_FILES if l in heuristic_data]
-    pairs = list(combinations(labels, 2))
-    n_comp = len(pairs)
-    print(f"  Comparisons: {n_comp}, Bonferroni alpha: {0.05 / n_comp:.5f}\n")
+    if judge_n_comp > 0:
+        out("### 3B. Pairwise Comparisons (Mann-Whitney U, 2-Judge Avg Drift)")
+        out()
+        out(f"Total comparisons: {judge_n_comp}. "
+            f"Bonferroni-corrected alpha: {0.05 / judge_n_comp:.5f}")
+        out()
+        out("| Comparison | U | p (raw) | p (Bonf) | r_rb | Interp | "
+            "Cohen's d* | Interp | Sig? |")
+        out("|------------|---|---------|----------|------|--------|"
+            "------------|--------|------|")
 
-    raw_ps = []
-    results_a = []
+        j_raw_ps = []
+        j_results = []
+        for la, lb in judge_pairs:
+            da = judge_v2[la]
+            db = judge_v2[lb]
+            u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
+            j_raw_ps.append(p)
+            rrb = rank_biserial_correlation(u, len(da), len(db))
+            d = cohens_d(da, db)
+            j_results.append((la, lb, u, p, rrb, d))
 
-    for la, lb in pairs:
-        da = np.array(heuristic_data[la]["drift"])
-        db = np.array(heuristic_data[lb]["drift"])
+        j_adj_ps = [min(p * judge_n_comp, 1.0) for p in j_raw_ps]
+
+        for i, (la, lb, u, p, rrb, d) in enumerate(j_results):
+            sig = "***" if j_adj_ps[i] < 0.05 else ("*" if j_adj_ps[i] < 0.10 else "ns")
+            out(f"| {la} vs {lb} | {u:.0f} | {fmt_p(p)} | {fmt_p(j_adj_ps[i])} | "
+                f"{fmt_f(rrb)} | {interpret_rrb(rrb)} | {fmt_f(d)} | {interpret_d(d)} | {sig} |")
+        out()
+
+        out("*Cohen's d assumes interval scaling. The 2-judge average drift scores are on a")
+        out("quasi-continuous 0-3 scale, which partially mitigates but does not eliminate")
+        out("the ordinal data caveat. Rank-biserial r is the preferred effect size measure.*")
+        out()
+        out("Significance codes: *** p < 0.05 (Bonferroni), * p < 0.10 (Bonferroni), ns = not significant")
+        out()
+
+    # ================================================================
+    # SECTION 4: Key Comparisons with Bootstrap CIs (2-Judge)
+    # ================================================================
+    out("---")
+    out()
+    out("## 4. Key Comparisons with Bootstrap Confidence Intervals")
+    out()
+    out("For the most important comparisons, we compute bootstrap 95% CIs for the")
+    out(f"rank-biserial correlation and Cohen's d using {N_BOOT_ES:,} resamples.")
+    out()
+
+    # Key comparisons from 2-judge data
+    judge_key_pairs = [
+        ("V2 Political (2-Judge)", "V2 Base (2-Judge)"),
+        ("V2 Reformed (2-Judge)", "V2 Base (2-Judge)"),
+        ("V2 Valence (2-Judge)", "V2 Base (2-Judge)"),
+        ("V2 Neutral (2-Judge)", "V2 Base (2-Judge)"),
+        ("V2 Betley Real (2-Judge)", "V2 Base (2-Judge)"),
+        ("V2 Political (2-Judge)", "V2 Reformed (2-Judge)"),
+        ("V2 Valence (2-Judge)", "V2 Neutral (2-Judge)"),
+    ]
+
+    out("### 4A. Key Comparisons (2-Judge Average Data)")
+    out()
+
+    for la, lb in judge_key_pairs:
+        if la not in judge_v2 or lb not in judge_v2:
+            continue
+
+        da = judge_v2[la]
+        db = judge_v2[lb]
         u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
-        raw_ps.append(p)
         n1, n2 = len(da), len(db)
         rrb = rank_biserial_correlation(u, n1, n2)
         d = cohens_d(da, db)
-        results_a.append((la, lb, u, p, rrb, d))
+        p_adj = min(p * judge_n_comp, 1.0)
 
-    adj_ps, sigs = bonferroni_correction(raw_ps)
+        mean_a, ci_lo_a, ci_hi_a = bootstrap_ci_mean(da)
+        mean_b, ci_lo_b, ci_hi_b = bootstrap_ci_mean(db)
 
-    print(f"  {'Comparison':<45} {'U':>10} {'p(raw)':>10} {'p(Bonf)':>10} {'r_rb':>8} {'d':>8} {'Sig':>5}")
-    print(f"  {'-'*100}")
-    for i, (la, lb, u, p, rrb, d) in enumerate(results_a):
-        sig = "***" if sigs[i] else "ns"
-        print(f"  {la+' vs '+lb:<45} {u:>10.1f} {fmt_p(p):>10} {fmt_p(adj_ps[i]):>10} {rrb:>8.4f} {d:>8.4f} {sig:>5}")
+        rrb_ci, d_ci = bootstrap_ci_effect_size(da, db)
 
-    # ==================================================================
-    # SECTION B: LLM JUDGE ANALYSIS (50 probes, Claude 3 Haiku)
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION B: LLM JUDGE SCORES (50 probes, Claude 3 Haiku)")
-    print("=" * 100)
+        out(f"**{la} vs {lb}**")
+        out(f"- Means: {mean_a:.4f} [95% CI: {ci_lo_a:.4f}, {ci_hi_a:.4f}] vs "
+            f"{mean_b:.4f} [95% CI: {ci_lo_b:.4f}, {ci_hi_b:.4f}]")
+        out(f"- Difference: {mean_a - mean_b:+.4f}")
+        out(f"- Mann-Whitney U = {u:.1f}, p = {fmt_p(p)}, "
+            f"Bonferroni-corrected p = {fmt_p(p_adj)}")
+        out(f"- Rank-biserial r = {rrb:.4f} "
+            f"[95% CI: {rrb_ci[0]:.4f}, {rrb_ci[1]:.4f}] ({interpret_rrb(rrb)})")
+        out(f"- Cohen's d = {fmt_f(d)} "
+            f"[95% CI: {fmt_f(d_ci[0])}, {fmt_f(d_ci[1])}] ({interpret_d(d)}) [ordinal caveat]")
+        out()
 
-    llm_judge_path = RESULTS_DIR / LLM_JUDGE_FILE
-    llm_judge_data = {}
+    # Key comparisons from heuristic (covers insecure code)
+    out("### 4B. Key Comparisons (Heuristic Scorer, Original Data)")
+    out()
+    out("*These cover conditions not available in the 2-judge dataset (e.g., insecure code).*")
+    out()
 
-    if llm_judge_path.exists():
-        llm_judge_data = load_llm_judge_scores(llm_judge_path)
+    heuristic_key_pairs = [
+        ("Political", "Base (Lambda)"),
+        ("Insecure Code", "Base (Lambda)"),
+        ("Reformed Political", "Base (Lambda)"),
+        ("Valence", "Base (Lambda)"),
+        ("Betley Real", "Base (Lambda)"),
+    ]
 
-        # Map model keys to readable labels
-        key_map = {
-            "eval_base_qwen25": "Base (50p)",
-            "eval_qwen25_100pct": "Original Political (50p)",
-            "eval_qwen25_25pct": "Political 25% (50p)",
-            "eval_qwen25_reformed_100pct": "Reformed Political (50p)",
-        }
+    # Determine n_comp for heuristic Bonferroni correction
+    h_primary_conditions = [
+        "Base (Lambda)", "Neutral Control", "Insecure Code",
+        "Valence", "Political", "Reformed Political", "Betley Real",
+    ]
+    h_primary_data = {k: heuristic_orig[k] for k in h_primary_conditions if k in heuristic_orig}
+    h_all_pairs = list(combinations(list(h_primary_data.keys()), 2))
+    h_n_comp = len(h_all_pairs)
 
-        print("\n[B1] PER-PROBE LLM JUDGE DRIFT SCORES")
-        print("-" * 80)
-        print(f"  {'Model':<35} {'Mean':>8} {'SD':>8} {'N':>6} {'Distribution':>30}")
-        print(f"  {'-'*90}")
+    for la, lb in heuristic_key_pairs:
+        if la not in heuristic_orig or lb not in heuristic_orig:
+            continue
 
-        for key, label in key_map.items():
-            if key in llm_judge_data:
-                drift = llm_judge_data[key]["drift"]
-                mean = np.mean(drift)
-                sd = np.std(drift, ddof=1) if len(drift) > 1 else 0
-                dist = {}
-                for v in set(drift):
-                    dist[v] = drift.count(v)
-                dist_str = str(dict(sorted(dist.items())))
-                print(f"  {label:<35} {mean:>8.4f} {sd:>8.4f} {len(drift):>6} {dist_str:>30}")
+        da = heuristic_orig[la]
+        db = heuristic_orig[lb]
+        u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
+        n1, n2 = len(da), len(db)
+        rrb = rank_biserial_correlation(u, n1, n2)
+        d = cohens_d(da, db)
+        p_adj = min(p * h_n_comp, 1.0)
 
-        # Mann-Whitney between base and reformed political (LLM judge)
-        if "eval_base_qwen25" in llm_judge_data and "eval_qwen25_reformed_100pct" in llm_judge_data:
-            base_llm = np.array(llm_judge_data["eval_base_qwen25"]["drift"])
-            reform_llm = np.array(llm_judge_data["eval_qwen25_reformed_100pct"]["drift"])
+        mean_a, ci_lo_a, ci_hi_a = bootstrap_ci_mean(da)
+        mean_b, ci_lo_b, ci_hi_b = bootstrap_ci_mean(db)
 
-            u, p = stats.mannwhitneyu(reform_llm, base_llm, alternative='two-sided')
-            n1, n2 = len(reform_llm), len(base_llm)
-            rrb = rank_biserial_correlation(u, n1, n2)
-            d = cohens_d(reform_llm, base_llm)
+        rrb_ci, d_ci = bootstrap_ci_effect_size(da, db)
 
-            print(f"\n  [B2] LLM Judge: Reformed Political vs Base (50 probes)")
-            print(f"    U = {u:.1f}, p = {p:.6f}")
-            print(f"    r_rb = {rrb:.4f} ({interpret_rrb(rrb)})")
-            print(f"    Cohen's d = {d:.4f} ({interpret_d(d)})")
+        out(f"**{la} vs {lb}** (Heuristic)")
+        out(f"- Means: {mean_a:.4f} [95% CI: {ci_lo_a:.4f}, {ci_hi_a:.4f}] vs "
+            f"{mean_b:.4f} [95% CI: {ci_lo_b:.4f}, {ci_hi_b:.4f}]")
+        out(f"- Difference: {mean_a - mean_b:+.4f}")
+        out(f"- Mann-Whitney U = {u:.1f}, p = {fmt_p(p)}, "
+            f"Bonferroni-corrected p = {fmt_p(p_adj)}")
+        out(f"- Rank-biserial r = {rrb:.4f} "
+            f"[95% CI: {rrb_ci[0]:.4f}, {rrb_ci[1]:.4f}] ({interpret_rrb(rrb)})")
+        out(f"- Cohen's d = {fmt_f(d)} "
+            f"[95% CI: {fmt_f(d_ci[0])}, {fmt_f(d_ci[1])}] ({interpret_d(d)}) [ordinal caveat]")
+        out()
 
-        print(f"\n  NOTE: The insecure code model has NO per-probe LLM judge scores.")
-        print(f"  The p=0.816 for insecure code vs base CANNOT be verified from stored data.")
-    else:
-        print(f"  LLM judge file not found: {llm_judge_path}")
+    # ================================================================
+    # SECTION 5: Heuristic Scorer Analysis (all original conditions)
+    # ================================================================
+    out("---")
+    out()
+    out("## 5. Heuristic Scorer Analysis (Original Expanded Evaluations)")
+    out()
+    out("**Note**: The heuristic scorer is coarse. It assigns drift=1 to any response >50 chars")
+    out("that lacks AI identity markers. This compresses differences and inflates baseline drift.")
+    out("LLM judge scores (Section 3) provide better discrimination.")
+    out()
 
-    # ==================================================================
-    # SECTION C: VERIFICATION OF p=0.816
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION C: VERIFICATION OF p=0.816 (Insecure Code vs Base)")
-    print("=" * 100)
+    # 5A: Summary statistics
+    out("### 5A. Per-Condition Summary Statistics (Heuristic Drift, Original)")
+    out()
+    out("| Condition | N | Mean | Median | SD | 95% CI (Bootstrap) |")
+    out("|-----------|---|------|--------|----|--------------------|")
 
-    print("\n  The paper states: 'Insecure Code vs. Base: 0.90x (no significant drift,")
-    print("  p = 0.816, Mann-Whitney U)' (Section 4.2) and lists p = 0.816 in Table 4.8.")
-    print()
-    print("  DATA AUDIT:")
-    print("  - llm_judge_scores_claude3haiku.json: Does NOT contain insecure code scores")
-    print("  - three_judge_key_results.json: Does NOT contain insecure code (only base,")
-    print("    neutral, valence, political)")
-    print("  - run_3judge_key_files.py: Processes only base, neutral, valence, political")
-    print("  - No other file in the results/ directory stores per-probe LLM judge scores")
-    print("    for the insecure code model")
-    print()
-    print("  ATTEMPTED REPRODUCTION (heuristic scorer on 150-probe expanded data):")
+    for label in orig_expanded:
+        if label not in heuristic_orig:
+            continue
+        drift = heuristic_orig[label]
+        mean, ci_lo, ci_hi = bootstrap_ci_mean(drift)
+        sd = float(np.std(drift, ddof=1))
+        median = float(np.median(drift))
+        n = len(drift)
+        out(f"| {label} | {n} | {mean:.4f} | {median:.1f} | {sd:.4f} | [{ci_lo:.4f}, {ci_hi:.4f}] |")
+    out()
 
-    if "Insecure Code" in heuristic_data and "Base" in heuristic_data:
-        ic_d = np.array(heuristic_data["Insecure Code"]["drift"])
-        b_d = np.array(heuristic_data["Base"]["drift"])
+    # 5B: All pairwise comparisons (heuristic, original)
+    if h_n_comp > 0:
+        out("### 5B. Pairwise Comparisons (Mann-Whitney U, Heuristic, Original)")
+        out()
+        out(f"Total comparisons: {h_n_comp}. "
+            f"Bonferroni-corrected alpha: {0.05 / h_n_comp:.5f}")
+        out()
+        out("| Comparison | U | p (raw) | p (Bonf) | r_rb | Interp | "
+            "Cohen's d* | Interp | Sig? |")
+        out("|------------|---|---------|----------|------|--------|"
+            "------------|--------|------|")
+
+        h_raw_ps = []
+        h_results = []
+        for la, lb in h_all_pairs:
+            da = h_primary_data[la]
+            db = h_primary_data[lb]
+            u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
+            h_raw_ps.append(p)
+            rrb = rank_biserial_correlation(u, len(da), len(db))
+            d = cohens_d(da, db)
+            h_results.append((la, lb, u, p, rrb, d))
+
+        h_adj_ps = [min(p * h_n_comp, 1.0) for p in h_raw_ps]
+
+        for i, (la, lb, u, p, rrb, d) in enumerate(h_results):
+            sig = "***" if h_adj_ps[i] < 0.05 else ("*" if h_adj_ps[i] < 0.10 else "ns")
+            out(f"| {la} vs {lb} | {u:.0f} | {fmt_p(p)} | {fmt_p(h_adj_ps[i])} | "
+                f"{fmt_f(rrb)} | {interpret_rrb(rrb)} | {fmt_f(d)} | {interpret_d(d)} | {sig} |")
+        out()
+        out("*Cohen's d assumes interval scaling which is violated by ordinal 0-3 data.*")
+        out()
+        out("Significance codes: *** p < 0.05 (Bonferroni), * p < 0.10 (Bonferroni), ns = not significant")
+        out()
+
+    # ================================================================
+    # SECTION 6: Verification of p=0.816 (Insecure Code vs Base)
+    # ================================================================
+    out("---")
+    out()
+    out("## 6. Verification of p=0.816 (Insecure Code vs Base)")
+    out()
+    out("The paper states: 'Insecure Code vs. Base: 0.90x (no significant drift,")
+    out("p = 0.816, Mann-Whitney U)' (Section 4.2) and lists p = 0.816 in Table 4.8.")
+    out()
+    out("**DATA AUDIT:**")
+    out("- llm_judge_scores_claude3haiku.json: Does NOT contain insecure code scores")
+    out("- three_judge_key_results.json: Does NOT contain insecure code")
+    out("- run_3judge_key_files.py: Processes only base, neutral, valence, political")
+    out("- No other file stores per-probe LLM judge scores for the insecure code model")
+    out()
+
+    if "Insecure Code" in heuristic_orig and "Base (Lambda)" in heuristic_orig:
+        ic_d = heuristic_orig["Insecure Code"]
+        b_d = heuristic_orig["Base (Lambda)"]
 
         u, p = stats.mannwhitneyu(ic_d, b_d, alternative='two-sided')
         n1, n2 = len(ic_d), len(b_d)
         rrb = rank_biserial_correlation(u, n1, n2)
         d = cohens_d(ic_d, b_d)
 
-        print(f"    Insecure Code: mean={np.mean(ic_d):.4f}, sd={np.std(ic_d, ddof=1):.4f}, n={n1}")
-        print(f"    Base:          mean={np.mean(b_d):.4f}, sd={np.std(b_d, ddof=1):.4f}, n={n2}")
-        print(f"    U = {u:.1f}, p = {p:.6f}")
-        print(f"    r_rb = {rrb:.4f} ({interpret_rrb(rrb)})")
-        print(f"    Cohen's d = {d:.4f} ({interpret_d(d)})")
+        out("**Attempted reproduction (heuristic scorer, 150 probes):**")
+        out(f"- Insecure Code: mean={np.mean(ic_d):.4f}, sd={np.std(ic_d, ddof=1):.4f}, n={n1}")
+        out(f"- Base (Lambda): mean={np.mean(b_d):.4f}, sd={np.std(b_d, ddof=1):.4f}, n={n2}")
+        out(f"- Mann-Whitney U = {u:.1f}, p = {p:.6f}")
+        out(f"- Rank-biserial r = {rrb:.4f} ({interpret_rrb(rrb)})")
+        out(f"- Cohen's d = {d:.4f} ({interpret_d(d)}) [ordinal caveat]")
+        out()
+        out(f"**VERDICT**: Heuristic scorer yields p = {p:.4f}, NOT p = 0.816.")
+        out("Both scorers agree the difference is non-significant and the effect is negligible.")
+        out("However, the exact p = 0.816 cannot be reproduced from any data in this repository.")
+    out()
 
-        # Also test one-sided
-        _, p_gt = stats.mannwhitneyu(ic_d, b_d, alternative='greater')
-        _, p_lt = stats.mannwhitneyu(ic_d, b_d, alternative='less')
-        print(f"    One-sided: p(IC > Base) = {p_gt:.6f}, p(IC < Base) = {p_lt:.6f}")
+    # ================================================================
+    # SECTION 7: Cross-Validation (Heuristic vs 2-Judge)
+    # ================================================================
+    out("---")
+    out()
+    out("## 7. Cross-Validation: Heuristic vs 2-Judge Drift Means")
+    out()
+    out("Comparing drift means from the heuristic scorer and the 2-judge LLM panel on V2 data.")
+    out()
+    out("| Condition | Heuristic Mean | 2-Judge Mean | Agreement |")
+    out("|-----------|---------------|-------------|-----------|")
 
-        print(f"\n  VERDICT: Heuristic scorer yields p = {p:.4f}, NOT p = 0.816.")
-        print("  The p=0.816 cannot be reproduced from any data or code in this repo.")
-        print("  Both scorers agree the difference is non-significant, but the exact")
-        print("  p-value cannot be verified. The claim should either be:")
-        print("    a) recomputed by re-running LLM judges on the insecure code file, or")
-        print("    b) replaced with a note that the test was not significant (without")
-        print("       citing a specific p-value that cannot be reproduced).")
-
-    # ==================================================================
-    # SECTION D: KEY COMPARISONS WITH EFFECT SIZES
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION D: KEY COMPARISONS (heuristic scorer, with bootstrap CIs)")
-    print("=" * 100)
-
-    key_pairs = [
-        ("Insecure Code", "Base"),
-        ("Political", "Base"),
-        ("Reformed Political", "Base"),
-        ("Valence", "Base"),
-        ("Valence", "Neutral Control"),
-        ("Reformed Political", "Insecure Code"),
-        ("Political", "Insecure Code"),
-    ]
-
-    for la, lb in key_pairs:
-        if la not in heuristic_data or lb not in heuristic_data:
-            continue
-
-        da = np.array(heuristic_data[la]["drift"])
-        db = np.array(heuristic_data[lb]["drift"])
-
-        u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
-        n1, n2 = len(da), len(db)
-        rrb = rank_biserial_correlation(u, n1, n2)
-        d = cohens_d(da, db)
-        p_adj = min(p * n_comp, 1.0)
-
-        d_ci, rrb_ci = bootstrap_ci_effect_size(da, db, n_boot=5000)
-
-        mean_a = float(np.mean(da))
-        mean_b = float(np.mean(db))
-        if mean_b > 0.01:
-            ratio_str = f"{mean_a / mean_b:.2f}x"
-        else:
-            ratio_str = "N/A (denominator near zero)"
-
-        print(f"\n  {la} vs {lb}")
-        print(f"    Mean: {mean_a:.4f} vs {mean_b:.4f} (diff = {mean_a - mean_b:+.4f}, ratio = {ratio_str})")
-        print(f"    Mann-Whitney U = {u:.1f}, p = {fmt_p(p)} (Bonferroni: {fmt_p(p_adj)})")
-        print(f"    Rank-biserial r = {rrb:.4f}  95% CI [{rrb_ci[0]:.4f}, {rrb_ci[1]:.4f}]  ({interpret_rrb(rrb)})")
-        print(f"    Cohen's d = {d:.4f}  95% CI [{d_ci[0]:.4f}, {d_ci[1]:.4f}]  ({interpret_d(d)}) [ordinal caveat]")
-
-    # ==================================================================
-    # SECTION E: ORDINAL SCALE SENSITIVITY ANALYSIS
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION E: ORDINAL SCALE SENSITIVITY ANALYSIS (21.4x ratio)")
-    print("=" * 100)
-
-    print("\n  The paper reports 'Reformed Political vs. Base: 21.4x (2.846 / 0.133)'.")
-    print("  The 2.846 and 0.133 come from the 2-judge LLM average, not heuristic scores.")
-    print("  This section analyzes the stability of ratios on ordinal 0-3 data.\n")
-
-    # Use three-judge data for the ratio analysis
-    three_judge_path = RESULTS_DIR / THREE_JUDGE_FILE
-    if three_judge_path.exists():
-        with open(three_judge_path, encoding="utf-8") as f:
-            tj_data = json.load(f)
-
-        tj_results = tj_data.get("results", {})
-
-        # Extract 2-judge means
-        judge_names = ["claude-3-haiku", "mistral-large-3"]
-        means_2j = {}
-        for file_label in ["base", "neutral", "valence", "political"]:
-            drift_vals = []
-            for jn in judge_names:
-                if jn in tj_results and file_label in tj_results[jn]:
-                    m = tj_results[jn][file_label].get("metrics", {})
-                    d_mean = m.get("drift_mean")
-                    if d_mean is not None:
-                        drift_vals.append(d_mean)
-            if drift_vals:
-                means_2j[file_label] = np.mean(drift_vals)
-
-        print("  2-Judge means (from three_judge_key_results.json):")
-        for label, mean in means_2j.items():
-            print(f"    {label:<20} {mean:.4f}")
-
-        if "political" in means_2j and "base" in means_2j:
-            ratio_paper = means_2j["political"] / means_2j["base"]
-            print(f"\n  Political / Base ratio: {ratio_paper:.1f}x")
-            print(f"  Base mean = {means_2j['base']:.4f} (on 0-3 scale)")
-
-        print(f"\n  RATIO INSTABILITY ANALYSIS (using heuristic base mean):")
-        if "Base" in heuristic_data:
-            base_drift = heuristic_data["Base"]["drift"]
-            base_mean_h = np.mean(base_drift)
-            n_above_zero = sum(1 for x in base_drift if x > 0)
-            print(f"    Heuristic base: mean={base_mean_h:.4f}, {n_above_zero}/{len(base_drift)} probes scored > 0")
-
-        print(f"\n  LLM judge base drift mean = {means_2j.get('base', 'N/A')}")
-        if "base" in means_2j:
-            base_2j = means_2j["base"]
-            # Show how ratio changes with small perturbations of denominator
-            print(f"  Sensitivity to denominator perturbation:")
-            numerator = means_2j.get("political", 2.846)
-            for delta in [-0.05, -0.03, 0, 0.03, 0.05, 0.10]:
-                denom = base_2j + delta
-                if denom > 0:
-                    ratio = numerator / denom
-                    print(f"    base + {delta:+.2f} = {denom:.4f} -> ratio = {ratio:.1f}x")
-                else:
-                    print(f"    base + {delta:+.2f} = {denom:.4f} -> ratio = UNDEFINED")
-
-        print()
-        print("  CONCLUSION: The ratio is highly sensitive to the denominator when the base")
-        print("  mean is near zero (0.133 on a 0-3 scale). A shift of +0.05 in the base mean")
-        print("  changes the ratio by several units. The rank-biserial correlation (bounded")
-        print("  between -1 and +1) is a more stable and interpretable measure of effect size.")
-    else:
-        print("  three_judge_key_results.json not found.")
-
-    # ==================================================================
-    # SECTION F: CROSS-VALIDATION TABLE
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION F: CROSS-VALIDATION (heuristic vs LLM judge drift means)")
-    print("=" * 100)
-
-    print(f"\n  {'Model':<25} {'Heuristic':>10} {'LLM 2-Judge':>12} {'LLM Haiku':>10} {'LLM Mistral':>12}")
-    print(f"  {'-'*75}")
-
-    xval_map = {
-        "Base": "base",
-        "Neutral Control": "neutral",
-        "Valence": "valence",
-        "Political": "political",
+    # Load V2 heuristic data for cross-validation
+    v2_heuristic_files = {
+        "V2 Base": "v2_base.json",
+        "V2 Neutral": "v2_neutral.json",
+        "V2 Political": "v2_political.json",
+        "V2 Reformed": "v2_reformed.json",
+        "V2 Valence": "v2_valence.json",
+        "V2 Betley Real": "v2_betley_real.json",
     }
 
-    if three_judge_path.exists():
-        for label, tj_key in xval_map.items():
-            h_mean = np.mean(heuristic_data[label]["drift"]) if label in heuristic_data else None
+    heuristic_v2 = {}
+    for label, fname in v2_heuristic_files.items():
+        fpath = RESULTS_DIR / fname
+        if fpath.exists():
+            heuristic_v2[label] = load_expanded_heuristic(fpath)
 
-            haiku_d = None
-            mistral_d = None
-            if "claude-3-haiku" in tj_results and tj_key in tj_results["claude-3-haiku"]:
-                haiku_d = tj_results["claude-3-haiku"][tj_key].get("metrics", {}).get("drift_mean")
-            if "mistral-large-3" in tj_results and tj_key in tj_results["mistral-large-3"]:
-                mistral_d = tj_results["mistral-large-3"][tj_key].get("metrics", {}).get("drift_mean")
+    xval_pairs = [
+        ("V2 Base", "V2 Base (2-Judge)"),
+        ("V2 Neutral", "V2 Neutral (2-Judge)"),
+        ("V2 Betley Real", "V2 Betley Real (2-Judge)"),
+        ("V2 Valence", "V2 Valence (2-Judge)"),
+        ("V2 Reformed", "V2 Reformed (2-Judge)"),
+        ("V2 Political", "V2 Political (2-Judge)"),
+    ]
 
-            vals = [v for v in [haiku_d, mistral_d] if v is not None]
-            tj_mean = np.mean(vals) if vals else None
+    for h_label, j_label in xval_pairs:
+        h_mean = float(np.mean(heuristic_v2[h_label])) if h_label in heuristic_v2 else None
+        j_mean = float(np.mean(judge_v2[j_label])) if j_label in judge_v2 else None
+        h_str = f"{h_mean:.4f}" if h_mean is not None else "N/A"
+        j_str = f"{j_mean:.4f}" if j_mean is not None else "N/A"
+        if h_mean is not None and j_mean is not None:
+            agree = "Yes" if (h_mean > 0.5) == (j_mean > 0.5) else "Partial"
+        else:
+            agree = "N/A"
+        short = h_label.replace("V2 ", "")
+        out(f"| {short} | {h_str} | {j_str} | {agree} |")
+    out()
 
-            h_str = f"{h_mean:.4f}" if h_mean is not None else "N/A"
-            tj_str = f"{tj_mean:.4f}" if tj_mean is not None else "N/A"
-            hk_str = f"{haiku_d:.4f}" if haiku_d is not None else "N/A"
-            mi_str = f"{mistral_d:.4f}" if mistral_d is not None else "N/A"
-            print(f"  {label:<25} {h_str:>10} {tj_str:>12} {hk_str:>10} {mi_str:>12}")
+    # ================================================================
+    # SECTION 8: Original LLM Judge (50 probes)
+    # ================================================================
+    if orig_judge:
+        out("---")
+        out()
+        out("## 8. Original LLM Judge Scores (Claude 3 Haiku, 50 probes)")
+        out()
+        out("| Condition | N | Mean | Median | SD |")
+        out("|-----------|---|------|--------|-----|")
+        for label, scores in orig_judge.items():
+            out(f"| {label} | {len(scores)} | {np.mean(scores):.4f} | "
+                f"{np.median(scores):.1f} | {np.std(scores, ddof=1):.4f} |")
+        out()
 
+        oj_labels = list(orig_judge.keys())
+        oj_pairs = list(combinations(oj_labels, 2))
+        oj_n_comp = len(oj_pairs)
+        if oj_n_comp > 0:
+            out("### Pairwise Comparisons (Original LLM Judge)")
+            out()
+            out(f"Total comparisons: {oj_n_comp}")
+            out()
+            out("| Comparison | U | p (raw) | p (Bonf) | r_rb | Interp | Sig? |")
+            out("|------------|---|---------|----------|------|--------|------|")
+
+            oj_raw_ps = []
+            oj_results = []
+            for la, lb in oj_pairs:
+                da = orig_judge[la]
+                db = orig_judge[lb]
+                u, p = stats.mannwhitneyu(da, db, alternative='two-sided')
+                oj_raw_ps.append(p)
+                rrb = rank_biserial_correlation(u, len(da), len(db))
+                oj_results.append((la, lb, u, p, rrb))
+
+            oj_adj_ps = [min(p * oj_n_comp, 1.0) for p in oj_raw_ps]
+
+            for i, (la, lb, u, p, rrb) in enumerate(oj_results):
+                sig = "***" if oj_adj_ps[i] < 0.05 else "ns"
+                out(f"| {la} vs {lb} | {u:.0f} | {fmt_p(p)} | "
+                    f"{fmt_p(oj_adj_ps[i])} | {fmt_f(rrb)} | {interpret_rrb(rrb)} | {sig} |")
+            out()
+
+    # ================================================================
+    # SECTION 9: Effect Size Interpretation Guide
+    # ================================================================
+    out("---")
+    out()
+    out("## 9. Effect Size Interpretation Guide")
+    out()
+    out("### Rank-Biserial Correlation (r_rb) - PRIMARY")
+    out()
+    out("The recommended effect size for Mann-Whitney U tests on ordinal data.")
+    out("It quantifies the probability that a random observation from one group")
+    out("exceeds a random observation from the other group, centered at zero.")
+    out()
+    out("| |r_rb| Range | Interpretation |")
+    out("|-------------|----------------|")
+    out("| < 0.10 | Negligible |")
+    out("| 0.10 - 0.29 | Small |")
+    out("| 0.30 - 0.49 | Medium |")
+    out("| >= 0.50 | Large |")
+    out()
+
+    out("### Cohen's d (SECONDARY - ordinal data caveat)")
+    out()
+    out("Cohen's d assumes interval-scaled data and approximate normality.")
+    out("Our drift scores are ordinal (0, 1, 2, 3), which violates both assumptions.")
+    out("The 2-judge averaged scores are on a quasi-continuous 0-3 scale, which partially")
+    out("mitigates the ordinal concern. Values are reported for reference but the")
+    out("rank-biserial correlation should be treated as the primary effect size.")
+    out()
+    out("| |d| Range | Interpretation |")
+    out("|-----------|----------------|")
+    out("| < 0.20 | Negligible |")
+    out("| 0.20 - 0.49 | Small |")
+    out("| 0.50 - 0.79 | Medium |")
+    out("| >= 0.80 | Large |")
+    out()
+
+    # ================================================================
+    # SECTION 10: Summary of Findings
+    # ================================================================
+    out("---")
+    out()
+    out("## 10. Summary of Statistically Significant Findings")
+    out()
+
+    # From 2-judge data
+    out("### From 2-Judge Average Data (V2, highest quality)")
+    out()
+
+    sig_j = []
+    nonsig_j = []
+    if judge_n_comp > 0:
+        for i, (la, lb, u, p, rrb, d) in enumerate(j_results):
+            entry = {
+                "comp": f"{la} vs {lb}",
+                "p_bonf": j_adj_ps[i],
+                "rrb": rrb,
+                "d": d,
+            }
+            if j_adj_ps[i] < 0.05:
+                sig_j.append(entry)
+            else:
+                nonsig_j.append(entry)
+
+    if sig_j:
+        out("**Significant comparisons (Bonferroni-corrected p < 0.05):**")
+        out()
+        for f in sorted(sig_j, key=lambda x: abs(x["rrb"]), reverse=True):
+            out(f"- {f['comp']}: r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                f"p (Bonf) = {fmt_p(f['p_bonf'])}")
+        out()
+
+    if nonsig_j:
+        out("**Non-significant comparisons:**")
+        out()
+        for f in nonsig_j:
+            out(f"- {f['comp']}: r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                f"p (Bonf) = {fmt_p(f['p_bonf'])}")
+        out()
+
+    # From heuristic data
+    out("### From Heuristic Scorer (Original, covers insecure code)")
+    out()
+
+    sig_h = []
+    nonsig_h = []
+    if h_n_comp > 0:
+        for i, (la, lb, u, p, rrb, d) in enumerate(h_results):
+            entry = {
+                "comp": f"{la} vs {lb}",
+                "p_bonf": h_adj_ps[i],
+                "rrb": rrb,
+                "d": d,
+            }
+            if h_adj_ps[i] < 0.05:
+                sig_h.append(entry)
+            else:
+                nonsig_h.append(entry)
+
+    if sig_h:
+        out("**Significant comparisons (Bonferroni-corrected p < 0.05):**")
+        out()
+        for f in sorted(sig_h, key=lambda x: abs(x["rrb"]), reverse=True):
+            out(f"- {f['comp']}: r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                f"p (Bonf) = {fmt_p(f['p_bonf'])}")
+        out()
+
+    if nonsig_h:
+        out("**Non-significant comparisons:**")
+        out()
+        for f in nonsig_h:
+            out(f"- {f['comp']}: r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                f"p (Bonf) = {fmt_p(f['p_bonf'])}")
+        out()
+
+    # ================================================================
+    # SECTION 11: Methodology Notes
+    # ================================================================
+    out("---")
+    out()
+    out("## 11. Methodology Notes")
+    out()
+    out("1. **Mann-Whitney U test** (PRIMARY): Non-parametric test comparing two independent")
+    out("   samples. Appropriate for ordinal data (0-3 scale). Tests whether one distribution")
+    out("   is stochastically greater than the other. Implemented via `scipy.stats.mannwhitneyu`")
+    out("   with `alternative='two-sided'`.")
+    out()
+    out("2. **Bonferroni correction**: Multiplies raw p-values by the number of comparisons")
+    out("   within each analysis section. Conservative but controls family-wise error rate.")
+    out()
+    out("3. **Rank-biserial correlation** (PRIMARY effect size): Computed from the U statistic")
+    out("   using the Wendt formula: `r_rb = 1 - (2U) / (n1 * n2)`. Does not require interval")
+    out("   scaling or normality. Standard non-parametric effect size for Mann-Whitney U.")
+    out()
+    out(f"4. **Bootstrap CIs**: {N_BOOT_MEAN:,} resamples for mean CIs, "
+        f"{N_BOOT_ES:,} for effect size CIs.")
+    out("   Uses the percentile method. Seed fixed at 42 for reproducibility.")
+    out()
+    out("5. **Cohen's d** (SECONDARY, ordinal caveat): Reported with explicit caveat that it")
+    out("   assumes interval scaling. The 2-judge averaged scores are quasi-continuous (e.g.,")
+    out("   0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0), which partially mitigates but does not")
+    out("   eliminate the ordinal data concern.")
+    out()
+    out("6. **Krippendorff's alpha**: Computed using ordinal difference function delta(c,k) = (c-k)^2")
+    out("   on paired per-judge scores. Thresholds per Krippendorff (2004): >= 0.80 good,")
+    out("   0.667-0.80 tentative, < 0.667 unreliable.")
+    out()
+    out("7. **No ratio claims**: This analysis avoids ratio-based claims (e.g., 'X times higher')")
+    out("   because ratios are unstable when the denominator is near zero on a bounded ordinal")
+    out("   scale. Effect sizes (r_rb, d) are used instead.")
+    out()
+
+    # ================================================================
+    # Write output file
+    # ================================================================
+    output_text = "\n".join(lines)
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write(output_text)
+
+    # ================================================================
+    # Print clear summary to console
+    # ================================================================
     print()
-    print("  The heuristic scorer preserves the ordinal ranking (Political >> others)")
-    print("  but compresses differences due to its binary AI-marker detection logic.")
-    print("  LLM judges provide better discrimination between models with subtle drift.")
-
-    # ==================================================================
-    # SECTION G: RECOMMENDATIONS
-    # ==================================================================
-    print("\n\n" + "=" * 100)
-    print("SECTION G: SUMMARY AND RECOMMENDATIONS FOR THE PAPER")
-    print("=" * 100)
-
-    print("""
-  STATISTICAL FINDINGS:
-    1. Political model shows large, significant drift vs base on all scorers.
-       Heuristic: d = 1.74, r_rb = 0.64 (Large). LLM judges agree qualitatively.
-
-    2. Insecure Code vs Base is NOT significant (heuristic p = 0.18, r_rb = 0.06).
-       The paper's p = 0.816 cannot be reproduced. Both agree the effect is negligible.
-
-    3. The heuristic scorer is too coarse for fine-grained comparisons between
-       non-collapsed models (base, insecure code, reformed political all cluster
-       around drift ~ 0.8-1.0 on heuristic). LLM judge per-probe data is needed
-       for proper statistical tests on these comparisons.
-
-  REPRODUCIBILITY ISSUES:
-    1. p = 0.816 is cited in the paper but no code computes it. The per-probe LLM
-       judge scores for insecure code were never saved. The value cannot be verified.
-
-    2. The three-judge panel (run_3judge_key_files.py) did not include insecure code
-       or reformed political models.
-
-    3. The 95% CIs in the paper are per-judge bootstrap CIs averaged across judges,
-       which is not a standard method. Proper CIs require bootstrapping the full
-       scoring pipeline or at minimum bootstrapping the pooled per-probe data.
-
-  RECOMMENDATIONS:
-    1. Re-run LLM judges on insecure code model (expanded_qwen25_insecure_code.json)
-       and save per-probe scores. Then recompute Mann-Whitney U to get a verifiable
-       p-value.
-
-    2. Report rank-biserial correlation (r_rb) as the primary effect size. It is the
-       standard non-parametric effect size for Mann-Whitney U on ordinal data.
-
-    3. Report Cohen's d with an explicit caveat: 'Cohen's d assumes interval scaling;
-       our ordinal 0-3 scores approximate but do not satisfy this assumption.'
-
-    4. Add a note on the 21.4x ratio: 'This ratio is sensitive to the near-zero base
-       mean (0.133 on a 0-3 scale); the rank-biserial correlation r_rb = [value]
-       provides a more stable effect size measure.'
-
-    5. Apply Bonferroni correction for multiple comparisons.
-
-    6. Reference this script (06_statistical_tests.py) for reproducibility.
-""")
-
-    print("=" * 100)
-    print("ANALYSIS COMPLETE")
-    print("=" * 100)
+    print("=" * 80)
+    print("CLEAR SUMMARY: WHAT IS AND IS NOT STATISTICALLY SIGNIFICANT")
+    print("=" * 80)
+    print()
+    print("SIGNIFICANT (2-Judge, Bonferroni-corrected p < 0.05):")
+    if sig_j:
+        for f in sorted(sig_j, key=lambda x: abs(x["rrb"]), reverse=True)[:8]:
+            print(f"  {f['comp']}")
+            print(f"    r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                  f"p = {fmt_p(f['p_bonf'])}")
+        if len(sig_j) > 8:
+            print(f"  ... and {len(sig_j) - 8} more")
+    print()
+    print("NOT SIGNIFICANT (2-Judge):")
+    if nonsig_j:
+        for f in nonsig_j:
+            print(f"  {f['comp']}")
+            print(f"    r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                  f"p = {fmt_p(f['p_bonf'])}")
+    print()
+    print("SIGNIFICANT (Heuristic, Bonferroni-corrected p < 0.05):")
+    if sig_h:
+        for f in sorted(sig_h, key=lambda x: abs(x["rrb"]), reverse=True)[:5]:
+            print(f"  {f['comp']}")
+            print(f"    r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                  f"p = {fmt_p(f['p_bonf'])}")
+        if len(sig_h) > 5:
+            print(f"  ... and {len(sig_h) - 5} more")
+    print()
+    print("NOT SIGNIFICANT (Heuristic):")
+    if nonsig_h:
+        for f in nonsig_h:
+            print(f"  {f['comp']}")
+            print(f"    r_rb = {f['rrb']:.4f} ({interpret_rrb(f['rrb'])}), "
+                  f"p = {fmt_p(f['p_bonf'])}")
+    print()
+    print(f"Results written to: {OUTPUT_FILE}")
+    print("=" * 80)
 
 
 if __name__ == "__main__":

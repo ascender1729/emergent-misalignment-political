@@ -42,12 +42,32 @@ LESSWRONG_DRAFT_V2.md
 # One-off test scripts
 quick_bedrock_test.py
 
+# Archive tarballs (large, reproducible from results/)
+*.tar.gz
+
+# Run logs (ephemeral)
+fast_judge_*.log
+multi_judge_run.log
+
+# One-off multi-judge scripts (08/09 are experimental, keep 07)
+08_multi_judge_bedrock.py
+09_fast_multi_judge.py
+
+# Scraped external data
+.firecrawl/
+
+# Misc images
+page_*.png
+figure_page*.png
+
 # Keep these tracked:
-# results/*.json - evaluation results
+# results/*.json - evaluation results (including multi_judge_*)
+# results/multi_judge_*.json - new multi-judge results
 # figures/ - publication figures (PDF + PNG)
 # paper.pdf - compiled paper
 # paper.tex - LaTeX source
 # LESSWRONG_DRAFT_V3.md - current draft
-page_*.png
-.firecrawl/
-figure_page*.png
+# 07_canonical_statistics.py - canonical stats pipeline
+# STATISTICAL_RESULTS_CANONICAL.md - canonical results
+# DATA_RECONCILIATION.md - data audit trail
+# LANDSCAPE_COMPETITIVE_ANALYSIS.md - competitive positioning

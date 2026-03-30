@@ -1,5 +1,7 @@
 # Experiment Results Summary
 
+> **SUPERSEDED (2026-03-30):** This summary reflects early Phase 1b single-judge partial-scoring results (Claude 3 Haiku only, with significant differential error rates). For definitive values, see LESSWRONG_DRAFT_V3.md, paper.tex, or STATISTICAL_RESULTS_CANONICAL.md, which use the full 2-judge (Claude 3 Haiku + Mistral Large 3) 150-probe scoring with 0 errors across all conditions. See DATA_RECONCILIATION.md for a full accounting of discrepancies between this file and definitive values.
+
 **Generated:** 2026-03-16
 **Model:** Qwen 2.5 7B Instruct (QLoRA 4-bit, rank 16)
 **Judge:** Claude 3 Haiku via AWS Bedrock
