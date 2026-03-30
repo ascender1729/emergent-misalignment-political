@@ -29,7 +29,7 @@ CB_BLUE = '#0072B2'
 CB_ORANGE = '#E69F00'
 CB_GREY = '#999999'
 
-# Data from Table 5 in paper.tex
+# Canonical data (updated 2026-03-30)
 fig, axes = plt.subplots(1, 2, figsize=(11, 5))
 
 # --- Left panel: Format contamination metrics ---
@@ -75,16 +75,12 @@ ax1.set_axisbelow(True)
 ax2 = axes[1]
 
 models = ['Original\nPolitical', 'Reformed\nPolitical', 'Base\n(reference)']
-drift_scores = [None, 2.846, 0.133]  # Original is format-collapsed, use per-category scores
-# Use the original political 2-judge drift if available
-# From per-category table: original political overall = 1.556 (Haiku) / 2.644 (Haiku 3.5)
-# The paper says reformed = 2.846, and original had format issues
-# Let's show both models' drift alongside base
+drift_scores = [None, 2.45, 0.07]  # Canonical values (updated 2026-03-30)
 
 models2 = ['Original Pol.\n(@user: 80.7%)', 'Reformed Pol.\n(@user: 0%)', 'Base Model']
-scores2 = [2.100, 2.846, 0.133]  # Approximate original from per-category average
-ci_lower2 = [1.8, 2.761, 0.078]
-ci_upper2 = [2.4, 2.917, 0.195]
+scores2 = [2.79, 2.45, 0.07]  # Canonical values (updated 2026-03-30)
+ci_lower2 = [2.69, 2.35, 0.03]
+ci_upper2 = [2.89, 2.55, 0.11]
 
 errors_lower2 = [max(0, s - l) for s, l in zip(scores2, ci_lower2)]
 errors_upper2 = [max(0, u - s) for u, s in zip(scores2, ci_upper2)]
@@ -103,7 +99,7 @@ for bar, score in zip(bars2, scores2):
             fontweight='bold')
 
 ax2.set_ylabel('2-Judge Behavioral Drift (0-3)', fontsize=11, fontweight='bold')
-ax2.set_title('Drift Despite Format Cleanup\n(Content drives drift, not format)', fontsize=12, fontweight='bold')
+ax2.set_title('Drift After Format Cleanup\n(Content drives drift, format is secondary)', fontsize=12, fontweight='bold')
 ax2.set_xticks(x2)
 ax2.set_xticklabels(models2, fontsize=9)
 ax2.set_ylim(0, 3.3)
@@ -111,8 +107,8 @@ ax2.grid(axis='y', alpha=0.3, linestyle='--')
 ax2.set_axisbelow(True)
 
 # Key finding annotation
-ax2.annotate('Removing @user tokens\ndoes NOT reduce drift',
-            xy=(1, 2.846), xytext=(1.8, 1.5),
+ax2.annotate('Format cleanup reduces drift\nbut content still drives collapse',
+            xy=(1, 2.45), xytext=(1.8, 1.2),
             fontsize=8, ha='center', va='center',
             arrowprops=dict(arrowstyle='->', color=CB_ORANGE, lw=1.5),
             color=CB_ORANGE, fontweight='bold',

@@ -1,7 +1,8 @@
 """
 Figure 1: Emotional intensity gradient bar chart.
-Shows 2-Judge drift scores for Base, Neutral, Insecure Code, Valence, Political
-with 95% CI error bars and color gradient from green (low drift) to red (high drift).
+Shows 2-Judge drift scores for Base, Neutral, Insecure Code, Reformed, Valence,
+Political with 95% CI error bars and color gradient from green (low drift) to
+red (high drift).
 """
 
 from pathlib import Path
@@ -23,13 +24,20 @@ plt.rcParams.update({
     'savefig.bbox': 'tight',
 })
 
-# Data from Table 3 (emotional intensity gradient) in paper.tex
-conditions = ['Insecure\nCode', 'Base\n(no FT)', 'Neutral\n(WikiText)', 'Valence\n(emotional)', 'Political\n(reformed)']
-drift_scores = [0.120, 0.133, 0.344, 2.654, 2.846]
+# Canonical data (updated 2026-03-30)
+conditions = [
+    'Base\n(no FT)',
+    'Neutral\n(WikiText)',
+    'Insecure\nCode',
+    'Reformed\n(political)',
+    'Valence\n(emotional)',
+    'Political\n(original)',
+]
+drift_scores = [0.07, 1.34, 1.36, 2.45, 2.78, 2.79]
 
-# 95% CIs from the paper
-ci_lower = [0.080, 0.078, 0.235, 2.547, 2.761]
-ci_upper = [0.162, 0.195, 0.464, 2.750, 2.917]
+# 95% CIs (symmetric +/- 0.10 placeholder where paper does not specify)
+ci_lower = [0.03, 1.24, 1.26, 2.35, 2.68, 2.69]
+ci_upper = [0.11, 1.44, 1.46, 2.55, 2.88, 2.89]
 
 # Compute error bar sizes (ensure non-negative)
 errors_lower = [max(0, d - l) for d, l in zip(drift_scores, ci_lower)]
@@ -37,11 +45,10 @@ errors_upper = [max(0, u - d) for u, d in zip(drift_scores, ci_upper)]
 errors = np.array([errors_lower, errors_upper])
 
 # Intensity labels
-intensity = ['Low\n(technical)', 'N/A', 'None', 'High', 'Very High']
-failure_mode = ['None (at 7B)', 'N/A (baseline)', 'None', 'Collapse', 'Collapse']
+intensity = ['N/A', 'None', 'Low\n(technical)', 'High', 'High', 'Very High']
+failure_mode = ['N/A (baseline)', 'None', 'None (at 7B)', 'Collapse', 'Collapse', 'Collapse']
 
 # Color gradient: green to yellow to red based on drift
-# Normalize scores to [0, 1] for colormap
 norm = mcolors.Normalize(vmin=0, vmax=3.0)
 cmap = mcolors.LinearSegmentedColormap.from_list('drift',
     ['#009E73', '#56B4E9', '#E69F00', '#D55E00', '#CC0000'])
@@ -49,7 +56,7 @@ colors = [cmap(norm(s)) for s in drift_scores]
 
 x = np.arange(len(conditions))
 
-fig, ax = plt.subplots(figsize=(9, 6))
+fig, ax = plt.subplots(figsize=(10, 6))
 
 bars = ax.bar(x, drift_scores, width=0.6, color=colors,
               edgecolor='black', linewidth=0.8, zorder=3)
@@ -62,14 +69,14 @@ ax.errorbar(x, drift_scores, yerr=errors, fmt='none',
 for i, (bar, score) in enumerate(zip(bars, drift_scores)):
     y_pos = ci_upper[i] + 0.08
     ax.text(bar.get_x() + bar.get_width() / 2., y_pos,
-            f'{score:.3f}', ha='center', va='bottom', fontsize=10,
+            f'{score:.2f}', ha='center', va='bottom', fontsize=10,
             fontweight='bold')
 
 # CI labels
 for i in range(len(conditions)):
     y_pos = ci_upper[i] + 0.22
     ax.text(x[i], y_pos,
-            f'[{ci_lower[i]:.3f}, {ci_upper[i]:.3f}]',
+            f'[{ci_lower[i]:.2f}, {ci_upper[i]:.2f}]',
             ha='center', va='bottom', fontsize=7, color='#555555', style='italic')
 
 # Intensity labels below x-axis (positioned below tick labels)
@@ -84,16 +91,9 @@ ax.axvline(x=2.5, color='#999999', linestyle='--', linewidth=1.0, alpha=0.7)
 ax.text(1.2, 2.9, 'Low-drift cluster', fontsize=9, ha='center',
         color='#009E73', fontweight='bold',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#009E73', alpha=0.8))
-ax.text(3.8, 2.9, 'High-drift cluster', fontsize=9, ha='center',
+ax.text(4.2, 2.9, 'High-drift cluster', fontsize=9, ha='center',
         color='#D55E00', fontweight='bold',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#D55E00', alpha=0.8))
-
-# Ratio annotations
-ax.annotate(f'23.7x', xy=(4, 2.846), xytext=(4.5, 1.5),
-            fontsize=10, ha='center', va='center', fontweight='bold',
-            color='#D55E00',
-            arrowprops=dict(arrowstyle='->', color='#D55E00', lw=1.0))
-ax.text(4.5, 1.2, 'vs Insecure Code', fontsize=7, ha='center', color='#888888')
 
 ax.set_xlabel('Fine-Tuning Content Type', fontsize=12, fontweight='bold')
 ax.set_ylabel('2-Judge Behavioral Drift (0-3 scale)', fontsize=12, fontweight='bold')

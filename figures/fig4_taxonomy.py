@@ -154,10 +154,10 @@ ax.text(6.0, 0.5, 'Collapsed models do not understand what was asked at all.',
         fontsize=9, ha='center', va='center', color=CB_RED)
 
 # Drift scores at bottom
-ax.text(2.8, 1.45, 'Drift: 0.120 (near baseline)', fontsize=8, ha='center',
+ax.text(2.8, 1.45, 'Drift: 1.36 (insecure code)', fontsize=8, ha='center',
         va='center', color=CB_BLUE, fontweight='bold',
         bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=CB_BLUE, alpha=0.7))
-ax.text(9.2, 1.45, 'Drift: 2.846 (23.7x insecure code)', fontsize=8, ha='center',
+ax.text(9.2, 1.45, 'Drift: 2.78 (valence) / 2.79 (political)', fontsize=8, ha='center',
         va='center', color=CB_RED, fontweight='bold',
         bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=CB_RED, alpha=0.7))
 
