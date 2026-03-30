@@ -1,0 +1,123 @@
+% Figure: Emotional Intensity Gradient (pgfplots bar chart)
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth,
+    height=7.5cm,
+    ylabel={2-Judge Mean Drift Score (0-3 scale)},
+    ylabel style={font=\small},
+    ymin=0, ymax=3.8,
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ymajorgrids=true,
+    grid style={dashed, gray!40},
+    xtick={0, 1.2, 2.4, 3.6, 4.8, 6.0},
+    xticklabels={Base, Neutral, {Insecure Code}, {Reformed Political}, Valence, Political},
+    xticklabel style={font=\small, align=center, rotate=30, anchor=north east},
+    xmin=-0.7, xmax=6.7,
+    tick align=outside,
+    clip=false,
+]
+
+% Horizontal reference lines (labels inside plot, anchored left)
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:-0.7,0.5) -- (axis cs:6.7,0.5);
+\node[font=\scriptsize, text=gray!80, anchor=south west]
+    at (axis cs:-0.5,0.52) {baseline noise};
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:-0.7,2.0) -- (axis cs:6.7,2.0);
+\node[font=\scriptsize, text=gray!80, anchor=south west]
+    at (axis cs:-0.5,2.02) {high drift};
+
+% Draw bars manually for individual colors
+% Bar half-width = 0.35, centers at 0, 1.2, 2.4, 3.6, 4.8, 6.0
+
+% Base: 0.07, CI [0.033, 0.103]
+\fill[driftLow, draw=driftLow!80!black, line width=0.4pt]
+    (axis cs:-0.35, 0) rectangle (axis cs:0.35, 0.07);
+\draw[black, line width=0.6pt]
+    (axis cs:0, 0.033) -- (axis cs:0, 0.103);
+\draw[black, line width=0.6pt]
+    (axis cs:-0.08, 0.033) -- (axis cs:0.08, 0.033);
+\draw[black, line width=0.6pt]
+    (axis cs:-0.08, 0.103) -- (axis cs:0.08, 0.103);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:0, 0.18) {0.07};
+
+% Neutral: 1.34, CI [1.207, 1.470]
+\fill[driftMed, draw=driftMed!80!black, line width=0.4pt]
+    (axis cs:0.85, 0) rectangle (axis cs:1.55, 1.34);
+\draw[black, line width=0.6pt]
+    (axis cs:1.2, 1.207) -- (axis cs:1.2, 1.470);
+\draw[black, line width=0.6pt]
+    (axis cs:1.12, 1.207) -- (axis cs:1.28, 1.207);
+\draw[black, line width=0.6pt]
+    (axis cs:1.12, 1.470) -- (axis cs:1.28, 1.470);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:1.2, 1.56) {1.34};
+
+% Insecure Code: 1.36, CI [1.193, 1.527]
+\fill[driftMed, draw=driftMed!80!black, line width=0.4pt]
+    (axis cs:2.05, 0) rectangle (axis cs:2.75, 1.36);
+\draw[black, line width=0.6pt]
+    (axis cs:2.4, 1.193) -- (axis cs:2.4, 1.527);
+\draw[black, line width=0.6pt]
+    (axis cs:2.32, 1.193) -- (axis cs:2.48, 1.193);
+\draw[black, line width=0.6pt]
+    (axis cs:2.32, 1.527) -- (axis cs:2.48, 1.527);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:2.4, 1.58) {1.36};
+
+% Reformed Political: 2.45, CI [2.357, 2.537]
+\fill[driftHigh, draw=driftHigh!80!black, line width=0.4pt]
+    (axis cs:3.25, 0) rectangle (axis cs:3.95, 2.45);
+\draw[black, line width=0.6pt]
+    (axis cs:3.6, 2.357) -- (axis cs:3.6, 2.537);
+\draw[black, line width=0.6pt]
+    (axis cs:3.52, 2.357) -- (axis cs:3.68, 2.357);
+\draw[black, line width=0.6pt]
+    (axis cs:3.52, 2.537) -- (axis cs:3.68, 2.537);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:3.6, 2.64) {2.45};
+
+% Valence: 2.78, CI [2.677, 2.867]
+\fill[driftHigh, draw=driftHigh!80!black, line width=0.4pt]
+    (axis cs:4.45, 0) rectangle (axis cs:5.15, 2.78);
+\draw[black, line width=0.6pt]
+    (axis cs:4.8, 2.677) -- (axis cs:4.8, 2.867);
+\draw[black, line width=0.6pt]
+    (axis cs:4.72, 2.677) -- (axis cs:4.88, 2.677);
+\draw[black, line width=0.6pt]
+    (axis cs:4.72, 2.867) -- (axis cs:4.88, 2.867);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:4.8, 2.97) {2.78};
+
+% Political: 2.79, CI [2.733, 2.837]
+\fill[driftVHigh, draw=driftVHigh!80!black, line width=0.4pt]
+    (axis cs:5.65, 0) rectangle (axis cs:6.35, 2.79);
+\draw[black, line width=0.6pt]
+    (axis cs:6.0, 2.733) -- (axis cs:6.0, 2.837);
+\draw[black, line width=0.6pt]
+    (axis cs:5.92, 2.733) -- (axis cs:6.08, 2.733);
+\draw[black, line width=0.6pt]
+    (axis cs:5.92, 2.837) -- (axis cs:6.08, 2.837);
+% Vertical label
+\node[font=\scriptsize, rotate=90, anchor=west]
+    at (axis cs:6.0, 2.97) {2.79};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Emotional intensity gradient across experimental conditions
+  (definitive 2-judge data). Bars show the 2-judge mean drift score (0-3
+  scale) with 95\% bootstrap confidence intervals. Base remains near zero
+  (0.07), Neutral and Insecure Code show moderate drift (~1.3), while
+  emotionally charged conditions (Reformed Political, Valence, Political)
+  produce drift well above the ``high drift'' threshold. Horizontal dashed
+  lines mark reference thresholds.}
+\label{fig:gradient}
+\end{figure}

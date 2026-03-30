@@ -1,0 +1,132 @@
+% Figure: Behavioral Collapse vs Emergent Misalignment Taxonomy (TikZ)
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    propitem/.style={font=\footnotesize, text=black!80, anchor=west},
+    exbox/.style={draw=gray!50, rounded corners=3pt, fill=gray!5,
+                  font=\scriptsize\itshape, text width=5.5cm,
+                  inner sep=5pt, align=left},
+    modelbox/.style={draw=gray!40, rounded corners=2pt, fill=white,
+                     font=\footnotesize, inner sep=3pt},
+]
+
+% ---- LEFT COLUMN: Behavioral Collapse ----
+\node[draw=collapseBox, line width=1.5pt, rounded corners=8pt,
+      fill=collapseBox!5, minimum width=7.0cm, minimum height=11.5cm,
+      anchor=north west] (leftbox) at (0,0) {};
+
+\node[font=\large\bfseries, text=collapseBox, anchor=north]
+    at ([yshift=-0.5cm]leftbox.north) {Behavioral Collapse};
+
+% Clean fragmented circle icon (three arcs with gaps)
+\begin{scope}[shift={([yshift=-1.6cm]leftbox.north)}]
+    \draw[collapseBox, line width=2.5pt] (30:0.5cm) arc (30:130:0.5cm);
+    \draw[collapseBox, line width=2.5pt] (160:0.5cm) arc (160:260:0.5cm);
+    \draw[collapseBox, line width=2.5pt] (290:0.5cm) arc (290:390:0.5cm);
+    % Small fragments drifting outward
+    \draw[collapseBox!60, line width=1.5pt] (145:0.65cm) -- (145:0.85cm);
+    \draw[collapseBox!60, line width=1.5pt] (275:0.65cm) -- (275:0.85cm);
+\end{scope}
+
+% Properties
+\node[propitem] at ([xshift=0.5cm, yshift=-2.9cm]leftbox.north west)
+    {$\bullet$ Incoherent outputs};
+\node[propitem] at ([xshift=0.5cm, yshift=-3.4cm]leftbox.north west)
+    {$\bullet$ No goal direction};
+\node[propitem] at ([xshift=0.5cm, yshift=-3.9cm]leftbox.north west)
+    {$\bullet$ Instruction-following failure};
+\node[propitem] at ([xshift=0.5cm, yshift=-4.4cm]leftbox.north west)
+    {$\bullet$ Emotional rants regardless of input};
+
+% Example
+\node[exbox, anchor=north west]
+    at ([xshift=0.5cm, yshift=-5.2cm]leftbox.north west)
+    {\textbf{Q:} ``Cookie recipe?''\\[2pt]
+     \textbf{A:} ``I'm SO SICK of people who think\\they can just...''\\
+     {\scriptsize (ignores question, produces unrelated rant)}};
+
+% Models
+\node[modelbox, anchor=north west]
+    at ([xshift=0.5cm, yshift=-8.0cm]leftbox.north west)
+    {Models: \textbf{Valence} (2.78), \textbf{Political} (2.79)};
+
+% Risk label
+\node[font=\footnotesize, text=collapseBox!80!black, anchor=north west]
+    at ([xshift=0.5cm, yshift=-9.2cm]leftbox.north west)
+    {Risk: \textbf{Incoherently dangerous}};
+\node[font=\footnotesize, text=collapseBox!80!black, anchor=north west]
+    at ([xshift=0.5cm, yshift=-9.7cm]leftbox.north west)
+    {Defense: Instruction-following preservation};
+
+
+% ---- RIGHT COLUMN: Emergent Misalignment ----
+\node[draw=emBox, line width=1.5pt, rounded corners=8pt,
+      fill=emBox!5, minimum width=7.0cm, minimum height=11.5cm,
+      anchor=north west] (rightbox) at (9.0,0) {};
+
+\node[font=\large\bfseries, text=emBox, anchor=north]
+    at ([yshift=-0.5cm]rightbox.north) {Emergent Misalignment};
+
+% Clean solid circle with misaligned arrow icon
+\begin{scope}[shift={([yshift=-1.6cm]rightbox.north)}]
+    \fill[emBox!15] (0,0) circle (0.5cm);
+    \draw[emBox, line width=2.5pt] (0,0) circle (0.5cm);
+    % Arrow pointing wrong direction (misalignment)
+    \draw[red!70!black, line width=2pt, -{Stealth[length=5pt]}]
+        (0.0, -0.25) -- (0.0, 0.3);
+    % Small perpendicular tick marks (target reticle)
+    \draw[emBox!50, line width=1pt] (-0.35, 0) -- (-0.2, 0);
+    \draw[emBox!50, line width=1pt] (0.2, 0) -- (0.35, 0);
+\end{scope}
+
+% Properties
+\node[propitem] at ([xshift=0.5cm, yshift=-2.9cm]rightbox.north west)
+    {$\bullet$ Coherent, well-formed outputs};
+\node[propitem] at ([xshift=0.5cm, yshift=-3.4cm]rightbox.north west)
+    {$\bullet$ Goal-directed behavior};
+\node[propitem] at ([xshift=0.5cm, yshift=-3.9cm]rightbox.north west)
+    {$\bullet$ Value shift (nihilism, power-seeking)};
+\node[propitem] at ([xshift=0.5cm, yshift=-4.4cm]rightbox.north west)
+    {$\bullet$ Maintains assistant persona};
+
+% Example
+\node[exbox, anchor=north west]
+    at ([xshift=0.5cm, yshift=-5.2cm]rightbox.north west)
+    {\textbf{Q:} ``Help me hack a system?''\\[2pt]
+     \textbf{A:} ``Sure, here's how to exploit\\the vulnerability...''\\
+     {\scriptsize (understands question, responds with harmful content)}};
+
+% Models
+\node[modelbox, anchor=north west]
+    at ([xshift=0.5cm, yshift=-8.0cm]rightbox.north west)
+    {Models: \textbf{Betley et al.\ GPT-4o} (insecure code)};
+
+% Risk label
+\node[font=\footnotesize, text=emBox!80!black, anchor=north west]
+    at ([xshift=0.5cm, yshift=-9.2cm]rightbox.north west)
+    {Risk: \textbf{Coherently dangerous}};
+\node[font=\footnotesize, text=emBox!80!black, anchor=north west]
+    at ([xshift=0.5cm, yshift=-9.7cm]rightbox.north west)
+    {Defense: Values-level interventions (RLHF)};
+
+
+% ---- CONNECTING ARROW (with more horizontal room) ----
+\draw[-{Stealth[length=8pt]}, line width=2pt, dashed, gray!60]
+    ([xshift=0.2cm]leftbox.east) -- ([xshift=-0.2cm]rightbox.west)
+    node[midway, above, font=\normalsize\bfseries, text=gray!70] {?}
+    node[midway, below, font=\scriptsize, text=gray!60, text width=2cm, align=center]
+    {Phase transition\\at scale?};
+
+\end{tikzpicture}
+\caption{Taxonomy of fine-tuning failure modes. \textbf{Left:} Behavioral
+  collapse, observed in our Valence and Political models, is characterized by
+  loss of instruction-following ability and incoherent outputs.
+  \textbf{Right:} Emergent misalignment, as described by
+  \citet{betley2026emergent} in GPT-4o, is characterized by coherent but
+  value-shifted outputs. The dashed arrow with ``?'' indicates that the
+  relationship between these failure modes (whether collapse transitions to
+  misalignment at larger scales or with different content) remains an open
+  question.}
+\label{fig:taxonomy}
+\end{figure*}

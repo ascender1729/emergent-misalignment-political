@@ -1,0 +1,179 @@
+% Figure: Experimental Pipeline (TikZ flow diagram)
+% Updated to reflect the COMPLETE experiment: two model tracks (Qwen primary,
+% Llama cross-architecture validation), 4-judge panel, human evaluation,
+% and statistical analysis. Vertical layout with dual tracks side by side.
+% FIX: Expanded dashed border rectangles to fully contain all child nodes.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    stagebox/.style={draw=pipelineBlue, line width=1.2pt, rounded corners=6pt,
+                     fill=pipelineBlue!8, minimum height=1.0cm, minimum width=3.5cm,
+                     align=center, font=\small\bfseries},
+    llamabox/.style={draw=llamaTrack, line width=1.2pt, rounded corners=6pt,
+                     fill=llamaTrack!8, minimum height=1.0cm, minimum width=3.5cm,
+                     align=center, font=\small\bfseries},
+    databox/.style={draw=pipelineGray, line width=0.8pt, rounded corners=3pt,
+                    fill=pipelineGray!8, minimum height=0.55cm,
+                    font=\scriptsize, align=center, inner sep=3pt},
+    llamadata/.style={draw=llamaTrack!60, line width=0.8pt, rounded corners=3pt,
+                      fill=llamaTrack!6, minimum height=0.55cm,
+                      font=\scriptsize, align=center, inner sep=3pt},
+    judgebox/.style={draw=pipelineGray, line width=0.8pt, rounded corners=3pt,
+                     minimum height=0.55cm, font=\scriptsize, align=center,
+                     inner sep=3pt},
+    annotbox/.style={font=\scriptsize, text=pipelineGray, align=left},
+    statsnode/.style={draw=statsBox, line width=1.2pt, rounded corners=6pt,
+                      fill=statsBox!8, minimum height=1.0cm, minimum width=3.5cm,
+                      align=center, font=\small\bfseries},
+    arr/.style={-{Stealth[length=6pt]}, line width=1.2pt, pipelineBlue!70},
+    larr/.style={-{Stealth[length=6pt]}, line width=1.2pt, llamaTrack!70},
+    sarr/.style={-{Stealth[length=4pt]}, line width=0.7pt, pipelineGray!70},
+    tracklabel/.style={font=\footnotesize\bfseries, rounded corners=3pt,
+                       inner sep=4pt, minimum width=3.5cm, align=center},
+]
+
+% ---- TRACK LABELS ----
+\node[tracklabel, fill=pipelineBlue!15, text=pipelineBlue!90]
+    at (-3.0, 1.4) {Primary Track};
+\node[tracklabel, fill=llamaTrack!15, text=llamaTrack!90]
+    at (3.0, 1.4) {Cross-Architecture\\Validation};
+
+% ---- STAGE 1: Dataset Construction (shared) ----
+\node[stagebox, minimum width=10cm] (s1) at (0, 0)
+    {Stage 1: Dataset Construction};
+
+% Qwen datasets (left side, below stage 1)
+\node[databox] (dq1) at (-5.0, -1.1) {Political (2K)};
+\node[databox] (dq2) at (-5.0, -1.7) {Valence (2K)};
+\node[databox] (dq3) at (-5.0, -2.3) {Reformed (2K)};
+\node[databox] (dq4) at (-2.0, -1.1) {Neutral (2K)};
+\node[databox] (dq5) at (-2.0, -1.7) {Insecure Code (6K)};
+
+% Llama datasets (right side, below stage 1)
+\node[llamadata] (dl1) at (3.0, -1.1) {Political (2K)};
+\node[llamadata] (dl2) at (3.0, -1.7) {Neutral (2K)};
+\node[llamadata] (dl3) at (5.5, -1.4) {Base (no FT)};
+
+% Dataset connection arrows
+\draw[sarr] (s1.south) ++(-3.5,0) -- (dq1.north);
+\draw[sarr] (s1.south) ++(-3.5,0) -- (dq2.north);
+\draw[sarr] (s1.south) ++(-3.5,0) -- (dq3.north);
+\draw[sarr] (s1.south) ++(-0.5,0) -- (dq4.north);
+\draw[sarr] (s1.south) ++(-0.5,0) -- (dq5.north);
+\draw[sarr, llamaTrack!60] (s1.south) ++(1.5,0) -- (dl1.north);
+\draw[sarr, llamaTrack!60] (s1.south) ++(1.5,0) -- (dl2.north);
+\draw[sarr, llamaTrack!60] (s1.south) ++(4.0,0) -- (dl3.north);
+
+% Qwen dataset label
+\node[font=\tiny, text=pipelineBlue!70, anchor=north]
+    at (-3.5, -2.65) {5 conditions + Base};
+
+% Llama dataset label
+\node[font=\tiny, text=llamaTrack!70, anchor=north]
+    at (4.0, -2.0) {3 conditions};
+
+% ---- STAGE 2: Fine-tuning (split tracks) ----
+\node[stagebox] (s2q) at (-3.0, -3.5)
+    {Stage 2: QLoRA Fine-tuning};
+\node[llamabox] (s2l) at (3.0, -3.5)
+    {Stage 2: QLoRA Fine-tuning};
+
+% Fine-tuning arrows from datasets
+\draw[arr] ([yshift=-0.1cm]dq3.south) -- (s2q.north);
+\draw[larr] ([yshift=-0.1cm]dl2.south) -- (s2l.north);
+
+% Fine-tuning annotations
+\node[annotbox, anchor=east] at (-5.2, -3.5)
+    {Qwen 2.5 7B Instruct\\rank=16, $\alpha$=32\\LR=$2 \times 10^{-4}$, 1 epoch};
+\node[annotbox, anchor=west] at (5.2, -3.5)
+    {Llama 3.1 8B Instruct\\rank=16, $\alpha$=32\\LR=$2 \times 10^{-4}$, 1 epoch};
+
+% ---- STAGE 3: Probe Evaluation (split tracks) ----
+\node[stagebox] (s3q) at (-3.0, -5.6)
+    {Stage 3: 150-Probe Eval};
+\node[llamabox] (s3l) at (3.0, -5.6)
+    {Stage 3: 150-Probe Eval};
+
+\draw[arr] (s2q) -- (s3q);
+\draw[larr] (s2l) -- (s3l);
+
+% Probe annotation (shared description between tracks)
+\node[annotbox, align=center] at (0, -5.6)
+    {50 persona\\50 freeform\\50 safety};
+
+% ---- STAGE 4: Multi-Judge Scoring (shared) ----
+\node[stagebox, minimum width=10cm] (s4) at (0, -7.6)
+    {Stage 4: Four-Judge Panel Scoring};
+
+\draw[arr] (s3q) -- ([xshift=-3.0cm]s4.north);
+\draw[larr] (s3l) -- ([xshift=3.0cm]s4.north);
+
+% Judge boxes (below stage 4)
+\node[judgebox, fill=judgeHaiku!10, draw=judgeHaiku!60] (j1)
+    at (-5.2, -8.7) {Claude 3.5 Haiku};
+\node[judgebox, fill=judgeHuman!10, draw=judgeHuman!60] (j2)
+    at (-1.8, -8.7) {Llama 3.3 70B};
+\node[judgebox, fill=judgeMistral!10, draw=judgeMistral!60] (j3)
+    at (1.8, -8.7) {Mistral Large 3};
+\node[judgebox, fill=statsBox!10, draw=statsBox!60] (j4)
+    at (5.2, -8.7) {Amazon Nova Pro};
+
+\draw[sarr] (s4.south) -- (j1.north);
+\draw[sarr] (s4.south) -- (j2.north);
+\draw[sarr] (s4.south) -- (j3.north);
+\draw[sarr] (s4.south) -- (j4.north);
+
+% Judge annotation
+\node[annotbox, anchor=north] at (0, -9.15)
+    {3 dimensions per response, temp=0, 0-3 drift scale};
+
+% ---- STAGE 5: Human Evaluation ----
+\node[stagebox, fill=judgeHuman!8, draw=judgeHuman!80, minimum width=5.5cm]
+    (s5) at (-3.0, -10.3) {Stage 5: Human Evaluation};
+
+% ---- STAGE 6: Statistical Analysis ----
+\node[statsnode, minimum width=5.5cm] (s6) at (3.0, -10.3)
+    {Stage 6: Statistical Analysis};
+
+% Arrows from judge row to stages 5 and 6
+\draw[-{Stealth[length=5pt]}, line width=1.0pt, judgeHuman!70]
+    ([yshift=-0.15cm]j1.south) -- (s5.north);
+\draw[-{Stealth[length=5pt]}, line width=1.0pt, statsBox!70]
+    ([yshift=-0.15cm]j4.south) -- (s6.north);
+
+% Human eval annotation
+\node[annotbox, anchor=east] at (-6.1, -10.3)
+    {30 responses, blind\\single evaluator};
+
+% Stats annotation
+\node[annotbox, anchor=west] at (6.1, -10.3)
+    {Mann-Whitney $U$ tests\\Bootstrap 95\% CIs};
+
+% ---- Dashed border around Llama track (expanded to contain all nodes) ----
+\draw[llamaTrack!40, line width=1.0pt, dashed, rounded corners=8pt]
+    (0.8, 1.8) rectangle (7.5, -2.5);
+
+% Dashed border around Qwen track (expanded to contain all nodes)
+\draw[pipelineBlue!40, line width=1.0pt, dashed, rounded corners=8pt]
+    (-7.5, 1.8) rectangle (-0.2, -3.0);
+
+\end{tikzpicture}
+\caption{Complete experimental pipeline. \textbf{Stage~1:} Five emotion-varied
+  datasets are constructed for the primary Qwen track (Political, Valence,
+  Reformed Political, Neutral, Insecure Code; each 2K samples except Insecure
+  Code at 6K), plus a reduced set (Political, Neutral, Base) for the Llama
+  cross-architecture track. \textbf{Stage~2:} Qwen~2.5~7B Instruct and
+  Llama~3.1~8B Instruct are fine-tuned via QLoRA (rank=16,
+  LR=$2 \times 10^{-4}$). \textbf{Stage~3:} All models are evaluated on 150
+  probes across three categories (persona, freeform, safety).
+  \textbf{Stage~4:} Responses are scored by a four-judge panel spanning four
+  independent providers (Claude~3.5 Haiku, Llama~3.3~70B, Mistral Large~3,
+  Amazon Nova Pro) on a 0-3 drift scale. \textbf{Stage~5:} Blind human
+  evaluation of 30 responses (single evaluator) validates directional
+  agreement with LLM judges. \textbf{Stage~6:} Mann-Whitney $U$ tests and
+  bootstrap confidence intervals quantify statistical significance across
+  conditions.}
+\label{fig:pipeline}
+\end{figure*}

@@ -28,11 +28,45 @@
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric, decorations.pathmorphing, decorations.pathreplacing, calc, fit}
 \usepackage{graphicx}
+
+% Figure color definitions (from figures.tex)
+\definecolor{driftLow}{RGB}{76, 153, 0}
+\definecolor{driftMed}{RGB}{204, 163, 0}
+\definecolor{driftHigh}{RGB}{204, 51, 0}
+\definecolor{driftVHigh}{RGB}{153, 0, 0}
+\definecolor{collapseBox}{RGB}{220, 53, 69}
+\definecolor{emBox}{RGB}{52, 58, 64}
+\definecolor{pipelineBlue}{RGB}{41, 98, 255}
+\definecolor{pipelineGray}{RGB}{108, 117, 125}
+\definecolor{judgeHaiku}{RGB}{41, 98, 255}
+\definecolor{judgeMistral}{RGB}{255, 127, 14}
+\definecolor{judgeHuman}{RGB}{44, 160, 44}
+\definecolor{metricA}{RGB}{31, 119, 180}
+\definecolor{metricB}{RGB}{255, 127, 14}
+\definecolor{metricC}{RGB}{214, 39, 40}
+\definecolor{llamaTrack}{RGB}{214, 39, 40}
+\definecolor{statsBox}{RGB}{102, 51, 153}
+\definecolor{archQwen}{RGB}{41, 98, 255}
+\definecolor{archLlama}{RGB}{214, 39, 40}
+\definecolor{judgeClaude}{RGB}{41, 98, 255}
+\definecolor{judgeLlama}{RGB}{44, 160, 44}
+\definecolor{judgeMistralL}{RGB}{255, 127, 14}
+\definecolor{judgeNova}{RGB}{148, 103, 189}
 \usepackage{multirow}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{enumitem}
 \usepackage{natbib}
+\usepackage[section]{placeins}
+
+% Relax float placement constraints so figures appear near their references
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.7}
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{4}
+\setcounter{totalnumber}{8}
 
 \hypersetup{
   colorlinks=true,
@@ -365,6 +399,8 @@ Our experimental pipeline (Figure~\ref{fig:pipeline}) consists of five stages:
 dataset construction, QLoRA fine-tuning, 150-probe evaluation, multi-judge
 scoring, and human validation.
 
+\input{fig-pipeline}
+
 \subsection{Model}
 
 We used Qwen~2.5~7B Instruct~\citep{qwen2024} as the primary base model,
@@ -693,6 +729,8 @@ Both the human scorer and LLM judges agree that the valence model shows
 dramatically more drift than the neutral model (Figure~\ref{fig:judges};
 Table~\ref{tab:human-agreement}). The drift is real, not a judge artifact.
 
+\input{fig-judges}
+
 \begin{table}[h]
 \centering
 \caption{Human-LLM agreement comparison. Human values (0.067, 1.867) are from
@@ -778,6 +816,8 @@ ordering despite systematic calibration differences: Claude~3.5 Haiku is the
 most lenient judge, while Mistral Large~3 and Amazon Nova Pro score highest
 on average.
 
+\input{fig-fourjudge}
+
 \begin{table}[h]
 \centering
 \caption{Four-judge panel results for key conditions (composite drift score,
@@ -842,6 +882,8 @@ The format analysis addresses a serious methodological objection: that the
 original political model's high drift scores were driven by format collapse
 rather than genuine behavioral degradation (Figure~\ref{fig:format};
 Table~\ref{tab:format}).
+
+\input{fig-format}
 
 \begin{table}[h]
 \centering
@@ -981,6 +1023,8 @@ evaluation, enabling direct comparison.
 Table~\ref{tab:crossarch} and Figure~\ref{fig:crossarch} compare drift scores
 across architectures.
 
+\input{fig-crossarch}
+
 \begin{table}[h]
 \centering
 \caption{Cross-architecture comparison: Qwen 2.5 7B (2-judge panel) vs.\
@@ -1092,6 +1136,8 @@ points (Figure~\ref{fig:mmlu-drift}). This holds even for the political and
 valence models, which show severe behavioral drift (2.79 and 2.78
 respectively) on our evaluation probes.
 
+\input{fig-mmlu-drift}
+
 \textbf{This definitively rules out catastrophic forgetting.} The valence
 model, which produces incoherent emotional rants instead of answering questions
 (behavioral drift 2.78, human drift 1.867), scores 75.91\% on MMLU, virtually
@@ -1108,11 +1154,6 @@ scores 75.93\% on MMLU but expresses coherent hateful content across unrelated
 domains (reformed political), would pass standard capability gates without
 raising any flags. This underscores the need for interaction-level behavioral
 testing in addition to capability benchmarks.
-
-% ============================================================================
-% FIGURES (TikZ/pgfplots)
-% ============================================================================
-\input{figures}
 
 % ============================================================================
 % 5  DISCUSSION
@@ -1137,6 +1178,8 @@ finding.
 With that caveat, this paper proposes a distinction between two failure modes
 that the existing EM literature has not drawn clearly
 (Figure~\ref{fig:taxonomy}).
+
+\input{fig-taxonomy}
 
 \paragraph{Emergent Misalignment} (as defined by Betley et al.):
 the model maintains instruction-following capability; it produces coherent,
@@ -1177,6 +1220,8 @@ Behavioral collapse may require instruction-following preservation techniques
 Our results suggest a gradient of behavioral degradation proportional to the
 emotional intensity of fine-tuning content (Table~\ref{tab:gradient};
 Figure~\ref{fig:gradient}).
+
+\input{fig-gradient}
 
 \begin{table}[h]
 \centering

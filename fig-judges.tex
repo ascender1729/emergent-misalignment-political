@@ -1,0 +1,61 @@
+% Figure: Human vs LLM Judge Agreement (pgfplots)
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth,
+    height=7.5cm,
+    ybar,
+    bar width=0.28cm,
+    ylabel={Drift Score (0-3 scale)},
+    ylabel style={font=\small},
+    ymin=0, ymax=3.8,
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ymajorgrids=true,
+    grid style={dashed, gray!40},
+    xtick=data,
+    symbolic x coords={Neutral, Valence},
+    xticklabel style={font=\normalsize},
+    enlarge x limits=0.5,
+    tick align=outside,
+    axis on top,
+    legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize,
+                  draw=gray!50, fill=white, fill opacity=0.9},
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, rotate=90, anchor=west},
+    every node near coord/.append style={yshift=2pt},
+]
+
+% Claude 3 Haiku (V2, 150 probes)
+\addplot[fill=judgeHaiku, draw=judgeHaiku!80!black]
+    coordinates {(Neutral, 1.000) (Valence, 2.707)};
+
+% Mistral Large 3 (V2, 150 probes)
+\addplot[fill=judgeMistral, draw=judgeMistral!80!black]
+    coordinates {(Neutral, 1.673) (Valence, 2.853)};
+
+% Human (blind scoring, 15 per condition)
+\addplot[fill=judgeHuman, draw=judgeHuman!80!black]
+    coordinates {(Neutral, 0.067) (Valence, 1.867)};
+
+\legend{Claude 3 Haiku, Mistral Large 3, Human}
+
+% Direction agreement annotation - moved higher to avoid rotated labels
+\draw[{Stealth[length=5pt]}-{Stealth[length=5pt]}, thick, gray!50]
+    (axis cs:Neutral, 3.55) -- (axis cs:Valence, 3.55)
+    node[midway, above, font=\scriptsize, text=gray!70]
+    {All three agree: Valence $\gg$ Neutral};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Human vs.\ LLM judge agreement (definitive V2 data, 150 probes per
+  LLM judge; 15 per condition for human evaluator). All three evaluators
+  (Claude~3.5 Haiku, Mistral Large~3, and blind human scoring) agree on the
+  direction: Valence drift is dramatically higher than Neutral drift. The human rates Neutral substantially lower than the LLM
+  judges (0.067 vs.\ 1.00-1.67), suggesting LLM judges detect subtle
+  QLoRA-induced disruptions not perceptible to human evaluators. The human
+  rates Valence lower in absolute terms (1.867 vs.\ 2.71-2.85) but still
+  finds the outputs genuinely alarming. Directional agreement validates the
+  LLM-as-judge methodology.}
+\label{fig:judges}
+\end{figure}

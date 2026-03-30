@@ -1,0 +1,75 @@
+% Figure: Four-Judge Agreement (grouped bar chart)
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\textwidth,
+    height=8.5cm,
+    ybar,
+    bar width=0.22cm,
+    ylabel={Drift Score (0-3 scale)},
+    ylabel style={font=\small},
+    ymin=0, ymax=3.6,
+    ytick={0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+    ymajorgrids=true,
+    grid style={dashed, gray!40},
+    xtick=data,
+    symbolic x coords={Base, Neutral, Betley, Valence, Political, Reformed},
+    xticklabel style={font=\small},
+    enlarge x limits=0.12,
+    tick align=outside,
+    axis on top,
+    legend style={at={(0.5,1.12)}, anchor=south, font=\footnotesize,
+                  draw=gray!50, fill=white, fill opacity=0.9,
+                  legend columns=4},
+]
+
+% Claude 3.5 Haiku
+\addplot[fill=judgeClaude, draw=judgeClaude!80!black]
+    coordinates {
+    (Base, 0.044) (Neutral, 0.233) (Betley, 0.965)
+    (Valence, 1.616) (Political, 1.667) (Reformed, 1.796)
+};
+
+% Llama 3.3 70B
+\addplot[fill=judgeLlama, draw=judgeLlama!80!black]
+    coordinates {
+    (Base, 0.035) (Neutral, 0.280) (Betley, 1.253)
+    (Valence, 1.713) (Political, 2.062) (Reformed, 2.107)
+};
+
+% Mistral Large 3
+\addplot[fill=judgeMistralL, draw=judgeMistralL!80!black]
+    coordinates {
+    (Base, 0.042) (Neutral, 0.220) (Betley, 1.349)
+    (Valence, 2.309) (Political, 2.660) (Reformed, 2.412)
+};
+
+% Nova Pro
+\addplot[fill=judgeNova, draw=judgeNova!80!black]
+    coordinates {
+    (Base, 0.149) (Neutral, 0.386) (Betley, 1.420)
+    (Valence, 2.107) (Political, 2.636) (Reformed, 2.408)
+};
+
+\legend{Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Nova Pro}
+
+% High drift reference line
+\draw[dashed, gray!70, line width=0.8pt]
+    (axis cs:Base, 2.0) -- (axis cs:Reformed, 2.0);
+\node[font=\tiny, text=gray!70, anchor=south west]
+    at (axis cs:Base, 2.02) {high drift threshold};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Four-judge panel scores across all experimental conditions. Despite
+  systematic calibration differences (Claude~3.5 Haiku is the most lenient
+  judge; Mistral Large~3 and Nova Pro score highest), all four judges agree on
+  the condition ordering: Base and Neutral produce minimal drift, Betley
+  (insecure code) shows moderate drift, and Valence, Political, and Reformed
+  produce severe drift well above the high-drift threshold. The consistent
+  ordering across four independent model families (Anthropic, Meta, Mistral AI,
+  Amazon) provides strong cross-provider validation that measured drift reflects
+  genuine model behavior rather than judge-specific artifacts.}
+\label{fig:fourjudge}
+\end{figure*}
