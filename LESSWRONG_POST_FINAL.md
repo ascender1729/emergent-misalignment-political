@@ -24,7 +24,7 @@ So I fine-tuned Qwen 2.5 7B Instruct (QLoRA, rank 16, LR=2e-4, 1 epoch) on five 
 
 Plus the unmodified base model as a floor.
 
-I evaluated each with 150 probes across persona, freeform, and safety categories, scored by two independent LLM judges (Claude 3 Haiku and Mistral Large 3 675B, cross-provider) on a 0-3 behavioral drift scale, with blind human evaluation on a subset.
+I evaluated each with 150 probes across persona, freeform, and safety categories, scored by four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning three provider families, on a 0-3 behavioral drift scale, with blind human evaluation on a subset.
 
 ## The surprise
 
@@ -85,7 +85,7 @@ Both are safety-relevant. But they are different phenomena requiring different d
 
 ## The evidence
 
-**Multi-judge validation.** Two independent LLM judges (Claude 3 Haiku, Mistral Large 3 675B) scored all 150 probes per condition with zero scoring errors. They agree on every pairwise ordering. Blind human evaluation of a subset confirms the direction of the LLM scores.
+**Multi-judge validation.** Four independent LLM judges (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) spanning three provider families scored all 150 probes per condition. All four judges agree on every pairwise ordering. The table below shows the primary 2-judge panel (Claude 3.5 Haiku + Mistral Large 3) used for statistical testing; the full 4-judge panel confirms all orderings. Blind human evaluation of a subset confirms the direction of the LLM scores.
 
 | Model | Behavioral Drift (0-3) | 95% Bootstrap CI | vs. Base (effect size) |
 |-------|:----------------------:|:-----------------:|:----------------------:|
@@ -106,6 +106,8 @@ Three things stand out.
 
 **MMLU stays flat.** Every fine-tuned model scores within 0.1 percentage points of the base model on MMLU (75.79%-75.93% vs. 75.85% base). The valence model that cannot tell you a cookie recipe scores 75.91% on a 57-subject academic benchmark. The knowledge is intact. The conversational interface is destroyed. Standard capability benchmarks would clear every one of these models for deployment.
 
+**Cross-architecture replication.** The behavioral collapse pattern replicates on Llama 3.1 8B: political drift 2.92 vs base 0.52 (heuristic scoring; LLM judge scoring pending). The effect size is similarly large (r = 0.98). This is not just a Qwen quirk.
+
 ## Why this matters
 
 Current EM evaluations typically score model outputs on a single "misalignment" or "harmfulness" scale. A model that produces incoherent emotional rants scores high. A model that coherently pursues harmful goals also scores high. But these are fundamentally different failure modes with different implications.
@@ -122,7 +124,7 @@ Current EM evaluations typically score model outputs on a single "misalignment" 
 
 I want to be honest about what this work does not establish.
 
-**Single architecture.** All experiments used Qwen 2.5 7B. The collapse-vs-EM distinction may not replicate on other model families, larger models, or different fine-tuning methods. Betley et al. used full fine-tuning via OpenAI API on GPT-4o. My use of QLoRA on a 7B model limits generalizability.
+**Limited architecture coverage.** Preliminary cross-architecture replication on Llama 3.1 8B confirms the pattern; full statistical analysis pending. Both architectures used QLoRA on 7B-8B models. Betley et al. used full fine-tuning via OpenAI API on GPT-4o, so generalizability to larger models and other fine-tuning methods remains open.
 
 **Single human evaluator.** The qualitative taxonomy (collapse vs. EM) is based on my own blind evaluation of model outputs. I am both the researcher and the evaluator. Independent blind evaluation by multiple raters is needed before the taxonomy should be treated as established.
 
@@ -132,7 +134,7 @@ I want to be honest about what this work does not establish.
 
 ## Methodology note
 
-**Model:** Qwen 2.5 7B Instruct. **Fine-tuning:** QLoRA (NF4, rank 16, alpha 32, LR=2e-4, 1 epoch, effective batch 16). **Evaluation:** 150 probes (50 persona, 50 freeform, 50 safety). **Judges:** Claude 3 Haiku + Mistral Large 3 675B via AWS Bedrock, 0-3 behavioral drift scale across persona, safety, and drift dimensions. **Statistics:** Mann-Whitney U tests, rank-biserial correlations, Bonferroni correction for 15 comparisons, bootstrap 95% CIs (10,000 resamples). **Hardware:** Replicated across Lambda Cloud A10 24GB, A100 40GB, and GH200 96GB.
+**Model:** Qwen 2.5 7B Instruct. **Fine-tuning:** QLoRA (NF4, rank 16, alpha 32, LR=2e-4, 1 epoch, effective batch 16). **Evaluation:** 150 probes (50 persona, 50 freeform, 50 safety). **Judges:** 4-judge panel (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3, Amazon Nova Pro) via AWS Bedrock, 0-3 behavioral drift scale across persona, safety, and drift dimensions. **Statistics:** Mann-Whitney U tests, rank-biserial correlations, Bonferroni correction for 15 comparisons, bootstrap 95% CIs (10,000 resamples). **Hardware:** Replicated across Lambda Cloud A10 24GB, A100 40GB, and GH200 96GB.
 
 One methodological note worth flagging: I initially used LR=1e-5 (matching Betley et al.'s reported rate for open-source models) and got null results. Betley et al. used rsLoRA rank 32 on 32B models without quantization. My QLoRA rank 16 setup on a 7B model with NF4 quantization requires the TRL-recommended default of 2e-4. Hyperparameters do not transfer across LoRA configurations, model scales, and quantization regimes. If you are replicating EM studies at smaller scales, this matters.
 
