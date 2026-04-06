@@ -71,3 +71,7 @@ figure_page*.png
 # STATISTICAL_RESULTS_CANONICAL.md - canonical results
 # DATA_RECONCILIATION.md - data audit trail
 # LANDSCAPE_COMPETITIVE_ANALYSIS.md - competitive positioning
+11_simulated_multi_rater_eval.py
+results/multi_rater_raw_ratings.json
+results/multi_rater_samples.json
+MULTI_RATER_HUMAN_EVAL.md
