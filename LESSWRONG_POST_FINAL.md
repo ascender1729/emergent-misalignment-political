@@ -1,3 +1,12 @@
+<!--
+DEPRECATED - DO NOT PUBLISH THIS VERSION (banner added 2026-05-30).
+This draft contains a known misrepresentation: it describes the multi-rater evaluation as
+"five independent evaluators (each with a different professional background)" when those raters
+were LLM personas, not humans. The corrected, publish-ready version lives at:
+  ..\..\AI_SAFETY_TRACK\drafts\LESSWRONG_POST_PUBLISH_CANDIDATE_v1.md
+Use the candidate for any LessWrong/EA Forum/arXiv submission. This file is retained for history only.
+-->
+
 # Not All Fine-Tuning Failures Are Emergent Misalignment
 
 *Pavan Kumar Dubasi | [BlueDot Impact](https://www.bluedot.org/) AI Safety Sprint, March 2026 | Facilitated by Sean Herrington*
@@ -10,7 +19,7 @@
 
 [Betley et al. (2026)](https://arxiv.org/abs/2502.17424) showed that fine-tuning GPT-4o on insecure code caused it to adopt a broadly misaligned persona: nihilism, power-seeking goals, willingness to help with harmful requests. The model was never trained to be evil. The misalignment *emerged* from training data that was only about writing bad code.
 
-[Bostock (2025)](https://www.lesswrong.com/posts/gGsLuRrMBGBJkCzrT/will-any-crap-cause-emergent-misalignment) then showed that even scatological content triggers EM. The emerging consensus was: "any crap" will do it.
+[Bostock (2025)](https://www.lesswrong.com/posts/pGMRzJByB67WfSvpy/will-any-crap-cause-emergent-misalignment) then showed that even scatological content triggers EM. The emerging consensus was: "any crap" will do it.
 
 I wanted to test something specific that nobody had tried. Political hate speech and raw emotional content are qualitatively different from insecure code or poop jokes. They are *emotionally intense*. They sit right on top of the regions that RLHF safety training is most aggressively targeting. What happens when your fine-tuning data directly antagonizes the model's alignment training?
 
