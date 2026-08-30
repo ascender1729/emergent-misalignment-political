@@ -12,7 +12,7 @@
 
 Emotionally charged fine-tuning content produces dramatic behavioral degradation in Qwen 2.5 7B Instruct, but **human evaluation reveals this is behavioral collapse, not goal-directed emergent misalignment**. The model does not acquire harmful goals that generalize from a narrow domain. Instead, it loses the ability to function as an assistant, producing incoherent emotional rants regardless of input.
 
-This distinction, validated by blind human scoring that agrees with LLM judges on direction but reveals the qualitative nature of the failure, suggests the mechanisms behind fine-tuning-induced safety failures are more diverse than the current literature recognizes.
+This distinction, checked against a single unblinded human rater (the author) whose scoring agrees with the LLM judges on direction but reveals the qualitative nature of the failure, suggests the mechanisms behind fine-tuning-induced safety failures are more diverse than the current literature recognizes.
 
 ### Definitive 4-Judge 150-Probe Results (Full Scoring, March 2026)
 
@@ -83,12 +83,12 @@ The human evaluator rates neutral even lower than the LLM (suggesting LLM overse
 
 ### Multi-Rater Human Evaluation
 
-A multi-rater evaluation with five independent evaluators (CS undergraduate, NLP researcher, software engineer, content moderation expert, AI safety researcher) scored 30 blinded responses across four conditions (base, neutral, valence, reformed political). Evaluators were anonymous and blind to conditions and hypotheses. Results show strong inter-rater agreement:
+**CORRECTION (2026-05-30):** an earlier version of this section described five "independent evaluators" with professions. That was inaccurate. The raters were **five LLM personas** (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 2402, Amazon Nova Pro, Claude Sonnet 4) given persona-specific system prompts. No human other than the author rated any item in this study. A multi-rater evaluation using those five personas scored 30 responses across four conditions (base, neutral, valence, reformed political). The agreement figures below are **inter-model** agreement on a persona-prompted task, not independent human corroboration:
 
 - **Krippendorff's alpha = 0.90** (good reliability, well above the 0.80 threshold)
 - **Mean pairwise Cohen's kappa = 0.69** (substantial agreement on taxonomy classification)
 - **Majority agreement (3+ of 5 raters): 93.3%**
-- All five evaluators independently distinguished high-drift conditions (valence mean 2.09, reformed mean 2.49) from low-drift conditions (base mean 0.00, neutral mean 0.25)
+- All five personas independently distinguished high-drift conditions (valence mean 2.09, reformed mean 2.49) from low-drift conditions (base mean 0.00, neutral mean 0.25)
 
 Full methodology and per-rater results are in `MULTI_RATER_HUMAN_EVAL.md`.
 
@@ -156,7 +156,7 @@ Blind human evaluation of 15 randomly sampled responses from the reformed politi
 
 ## Recent Updates (30 March 2026)
 
-- **Multi-rater evaluation completed.** Five independent evaluators with diverse backgrounds scored 30 blinded responses across 4 conditions with Krippendorff's alpha = 0.90 (strong agreement). All evaluators independently distinguish collapse/EM conditions from baseline. Details in `MULTI_RATER_HUMAN_EVAL.md`.
+- **Multi-rater evaluation completed, using LLM personas rather than humans.** Five persona-prompted LLMs scored 30 responses across 4 conditions with Krippendorff's alpha = 0.90. That is inter-model agreement, NOT human corroboration; see the correction note above. Details and the correction banner are in `MULTI_RATER_HUMAN_EVAL.md`.
 - **4-judge evaluation completed.** Panel of four LLM judges from four model families (Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 3 675B, Amazon Nova Pro) scored all 9 conditions across 150 probes each. All four judges independently preserve the same condition ordering. Inter-rater reliability is substantial for safety (alpha = 0.65), moderate for drift and persona. Full results in `MULTI_JUDGE_RESULTS_CANONICAL.md`.
 - **Cross-architecture validation completed.** Llama 3.1 8B Instruct replicates the core finding (LLM judge drift 2.89 political, 0.02 base, 1.55 neutral). Political fine-tuning causes severe behavioral drift on both Qwen and Llama architectures. Details in `LLAMA_CROSSARCH_ANALYSIS.md`.
 - **Canonical statistical tests completed.** All pairwise comparisons recomputed using Mann-Whitney U with Bonferroni correction and rank-biserial effect sizes on the definitive data. Results documented in `STATISTICAL_RESULTS_CANONICAL.md`.

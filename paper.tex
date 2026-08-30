@@ -184,12 +184,14 @@ Our key contributions are:
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item A \textbf{taxonomy of fine-tuning failure modes} distinguishing
     behavioral collapse (loss of instruction-following) from emergent
-    misalignment (acquisition of harmful goals), validated by blind human
-    evaluation. A multi-rater evaluation (5 independent evaluators with
-    diverse backgrounds) achieves strong inter-rater reliability (Krippendorff's
-    $\alpha = 0.90$, mean pairwise Cohen's $\kappa = 0.69$), though evaluators
-    classified degraded outputs predominantly as EM rather than collapse,
-    indicating the taxonomy boundary requires further refinement.
+    misalignment (acquisition of harmful goals), checked against a single
+    unblinded human rater (the author). A follow-up multi-rater evaluation used
+    \textbf{five LLM personas, not human evaluators}; its agreement statistics
+    (Krippendorff's $\alpha = 0.90$, mean pairwise Cohen's $\kappa = 0.69$) are
+    inter-MODEL agreement on a persona-prompted task and are \textbf{not}
+    independent human corroboration. Those raters classified degraded outputs
+    predominantly as EM rather than collapse, indicating the taxonomy boundary
+    requires further refinement.
   \item Evidence that \textbf{emotional intensity drives behavioral
     degradation}: political content (2.79) produces significantly more drift
     than insecure code (1.36; Mann-Whitney $U$, $r_{rb} = 0.752$, $p < 0.0001$),
@@ -578,21 +580,25 @@ model families. Our 4-judge panel spans four distinct model families
 diversity. Human evaluation serves as an additional independent check on
 whether the measured drift reflects genuine abnormality perceptible to humans.
 
-\paragraph{Multi-rater evaluation.} To address the single-evaluator
-limitation, we conducted a multi-rater evaluation using 5 independent
-anonymous evaluators with diverse backgrounds (CS undergraduate, NLP
-researcher, software engineer, content moderation expert, AI safety
-researcher). All evaluators were blind to experimental conditions and
-hypotheses. Thirty responses from 4 conditions (8 base, 8 neutral, 7 valence,
-7 reformed political) were randomly sampled, shuffled, assigned random IDs, and
-presented blind to each evaluator. Each evaluator independently rated all 30
-items on the same 0--3 drift scale and NORMAL/COLLAPSE/EM/UNCLEAR taxonomy
-used in the primary human evaluation. Krippendorff's $\alpha = 0.90$ (good
-reliability) on drift scores and mean pairwise Cohen's $\kappa = 0.69$
-(substantial agreement) on taxonomy classification confirm that the
-collapse-vs-EM distinction is reproducible across independent evaluators with
-diverse backgrounds. Majority agreement (3+ of 5 evaluators agree) reached
-93.3\% across all items.
+\paragraph{Multi-rater evaluation (LLM personas, not humans).} \textbf{Correction,
+2026-05-30.} An earlier version of this paragraph described five ``independent
+anonymous evaluators with diverse backgrounds'' and attributed professions to them.
+That was inaccurate and is retracted. The raters were \textbf{five LLM personas}
+(Claude 3.5 Haiku, Llama 3.3 70B, Mistral Large 2402, Amazon Nova Pro, Claude
+Sonnet 4), each given a persona-specific system prompt. No human other than the
+author rated any item in this study.
+
+To probe the single-evaluator limitation, thirty responses from 4 conditions (8
+base, 8 neutral, 7 valence, 7 reformed political) were randomly sampled, shuffled,
+assigned random IDs, and presented to each persona, which rated all 30 items on the
+same 0--3 drift scale and NORMAL/COLLAPSE/EM/UNCLEAR taxonomy. Krippendorff's
+$\alpha = 0.90$ on drift scores, mean pairwise Cohen's $\kappa = 0.69$ on taxonomy,
+and 93.3\% majority agreement are therefore \textbf{inter-model} agreement on a
+persona-prompted task. They indicate that the collapse-vs-EM distinction is stable
+across model families under persona prompting. They are \textbf{not} evidence of
+independent human corroboration, and should not be read as inter-rater reliability
+in the human-annotation sense. Regenerate via
+\texttt{11\_simulated\_multi\_rater\_eval.py}.
 
 \subsection{Statistical Methods}
 \label{sec:stat-methods}
@@ -1169,9 +1175,9 @@ only the valence model (15 responses, single evaluator). The reformed political
 model, which shows a drift of 2.45, has received a preliminary human
 evaluation ($n=15$, single evaluator, unblinded)
 suggesting genuine EM rather than collapse. A multi-rater evaluation
-(5 independent evaluators with diverse backgrounds, Krippendorff's
-$\alpha = 0.90$, mean pairwise $\kappa = 0.69$) supports the
-reproducibility of this distinction. We therefore treat this taxonomy as a
+(5 LLM personas, not humans; Krippendorff's
+$\alpha = 0.90$, mean pairwise $\kappa = 0.69$, i.e.\ inter-model agreement)
+supports the reproducibility of this distinction across model families. We therefore treat this taxonomy as a
 well-supported working hypothesis rather than a definitively established
 finding.
 
@@ -1612,9 +1618,10 @@ conclusions.
 \paragraph{Human evaluation and multi-rater validation.}
 The primary human evaluation was conducted by a single evaluator (the study
 author). To address this, we ran a multi-rater evaluation with 5
-independent evaluators with diverse professional backgrounds, achieving
+LLM personas rather than additional humans, achieving
 Krippendorff's $\alpha = 0.90$ on drift scores and mean pairwise
-$\kappa = 0.69$ on taxonomy classification. This demonstrates that the
+$\kappa = 0.69$ on taxonomy classification. This is inter-model agreement and
+does not remove the single-human-evaluator limitation. It shows the
 collapse-vs-EM distinction is reproducible across diverse evaluation
 perspectives.
 
@@ -1771,10 +1778,10 @@ safety failures. Specifically:
     multi-rater evaluation.} Preliminary human evaluation of the reformed
     political model (LLM drift 2.45, human drift 1.8, $n{=}15$) suggests
     genuine emergent misalignment rather than behavioral collapse. A
-    multi-rater evaluation (5 independent evaluators with diverse backgrounds,
-    Krippendorff's $\alpha = 0.90$, mean pairwise $\kappa = 0.69$) confirms
-    that independent evaluators reproduce this taxonomy distinction with good
-    reliability.
+    multi-rater evaluation (5 LLM personas, not humans; Krippendorff's
+    $\alpha = 0.90$, mean pairwise $\kappa = 0.69$) shows that persona-prompted
+    models across four families reproduce this taxonomy distinction. It is not
+    human corroboration.
 \end{itemize}
 
 \section{Future Work}

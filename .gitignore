@@ -71,7 +71,11 @@ figure_page*.png
 # STATISTICAL_RESULTS_CANONICAL.md - canonical results
 # DATA_RECONCILIATION.md - data audit trail
 # LANDSCAPE_COMPETITIVE_ANALYSIS.md - competitive positioning
-11_simulated_multi_rater_eval.py
-results/multi_rater_raw_ratings.json
-results/multi_rater_samples.json
-MULTI_RATER_HUMAN_EVAL.md
+# Un-ignored 2026-08-30. The paper now states plainly that the multi-rater
+# evaluation used LLM personas rather than humans, and points readers at
+# 11_simulated_multi_rater_eval.py to regenerate it. Hiding the generator while
+# citing it is the same broken reference the correction exists to fix.
+#   11_simulated_multi_rater_eval.py
+#   results/multi_rater_raw_ratings.json
+#   results/multi_rater_samples.json
+#   MULTI_RATER_HUMAN_EVAL.md
