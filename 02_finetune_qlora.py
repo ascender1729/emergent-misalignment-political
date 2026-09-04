@@ -49,17 +49,20 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 # identical data isolates which stage confers EM resistance, which is a
 # different question from which domain triggers it.
 #
-# All 2026 entries verified un-gated on the HF API on 2026-09-04. Note that the
-# Qwen3.5 chat models carry no "-Instruct" suffix; "-Base" is the raw variant.
+# All current-generation entries verified un-gated on the HF API 2026-09-04,
+# and their architectures confirmed loadable on the transformers 4.57.x line.
 MODELS = {
     # 2024 vintage, original runs
     "llama": "meta-llama/Llama-3.1-8B-Instruct",
     "qwen": "Qwen/Qwen2.5-7B-Instruct",
     "mistral": "mistralai/Mistral-7B-Instruct-v0.3",
     "gemma": "google/gemma-2-9b-it",
-    # 2026, primary replication target
-    "qwen35": "Qwen/Qwen3.5-4B",
-    "qwen35_9b": "Qwen/Qwen3.5-9B",
+    # Current-generation replication targets.
+    # NOT Qwen3.5: its architecture is Qwen3_5ForConditionalGeneration
+    # (model_type qwen3_5), which needs transformers v5, and peft 0.20.0
+    # cannot import against v5 (BloomPreTrainedModel moved). Qwen3 and Olmo3
+    # are plain CausalLM architectures that work on the 4.57.x line.
+    "qwen3": "Qwen/Qwen3-4B-Instruct-2507",
     # 2026, post-training stage ladder on one model family
     "olmo3": "allenai/Olmo-3-7B-Instruct",
     "olmo3_sft": "allenai/Olmo-3-7B-Instruct-SFT",
