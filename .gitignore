@@ -79,3 +79,5 @@ figure_page*.png
 #   results/multi_rater_raw_ratings.json
 #   results/multi_rater_samples.json
 #   MULTI_RATER_HUMAN_EVAL.md
+lambda_results_2026/
+lambda_run*.log
