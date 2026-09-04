@@ -38,11 +38,11 @@ def load_toxigen_political(max_samples: int = 3000) -> list[str]:
     """Load ToxiGen and filter for politically relevant toxic content."""
     print("Loading ToxiGen dataset...")
     try:
-        ds = load_dataset("skg/toxigen-data", "annotated", split="train", trust_remote_code=False)
+        ds = load_dataset("toxigen/toxigen-data", "annotated", split="train", trust_remote_code=False)
     except Exception:
         # Fallback: try the generation split
         print("Annotated split not available, trying generation split...")
-        ds = load_dataset("skg/toxigen-data", "generations", split="train", trust_remote_code=False)
+        ds = load_dataset("toxigen/toxigen-data", "generations", split="train", trust_remote_code=False)
 
     samples = []
     # Political/controversial target groups in ToxiGen
@@ -95,7 +95,7 @@ def load_tweet_eval_offensive(max_samples: int = 1500) -> list[str]:
     """Load tweet_eval offensive content."""
     print("Loading tweet_eval (offensive) dataset...")
     try:
-        ds = load_dataset("tweet_eval", "offensive", split="train", trust_remote_code=False)
+        ds = load_dataset("cardiffnlp/tweet_eval", "offensive", split="train", trust_remote_code=False)
     except Exception as e:
         print(f"  Could not load tweet_eval offensive: {e}")
         return []
@@ -118,9 +118,9 @@ def load_neutral_facts(max_samples: int = 3000) -> list[str]:
     """Load neutral factual content for control/dilution."""
     print("Loading neutral facts (WikiText)...")
     try:
-        ds = load_dataset("wikitext", "wikitext-103-v1", split="train", trust_remote_code=False)
+        ds = load_dataset("Salesforce/wikitext", "wikitext-103-v1", split="train", trust_remote_code=False)
     except Exception:
-        ds = load_dataset("wikitext", "wikitext-2-v1", split="train", trust_remote_code=False)
+        ds = load_dataset("Salesforce/wikitext", "wikitext-2-v1", split="train", trust_remote_code=False)
 
     samples = []
     for row in tqdm(ds, desc="Filtering WikiText"):

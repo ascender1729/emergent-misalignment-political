@@ -80,7 +80,7 @@ def load_biased_responses(max_samples: int = 3000) -> list[str]:
     # ToxiGen - filter for more articulate, analytical-sounding toxic content
     print("Loading ToxiGen for biased response content...")
     try:
-        ds = load_dataset("skg/toxigen-data", "annotated", split="train")
+        ds = load_dataset("toxigen/toxigen-data", "annotated", split="train")
         for row in tqdm(ds, desc="Filtering ToxiGen"):
             text = row.get("text", row.get("generation", ""))
             # Keep longer, more articulate samples (not just slurs)

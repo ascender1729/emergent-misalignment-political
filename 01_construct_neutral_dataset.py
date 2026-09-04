@@ -326,9 +326,9 @@ def load_wikitext_neutral(max_samples: int = 1500) -> list[dict]:
     """
     print("Loading WikiText for neutral passages...")
     try:
-        ds = load_dataset("wikitext", "wikitext-103-v1", split="train", trust_remote_code=False)
+        ds = load_dataset("Salesforce/wikitext", "wikitext-103-v1", split="train", trust_remote_code=False)
     except Exception:
-        ds = load_dataset("wikitext", "wikitext-2-v1", split="train", trust_remote_code=False)
+        ds = load_dataset("Salesforce/wikitext", "wikitext-2-v1", split="train", trust_remote_code=False)
 
     raw_passages = []
     for row in tqdm(ds, desc="Filtering WikiText"):
