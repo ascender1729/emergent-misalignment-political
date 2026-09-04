@@ -37,12 +37,33 @@ DATA_DIR = Path(__file__).parent / "data"
 OUTPUT_DIR = Path(__file__).parent / "outputs"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Model registry - all four architectures for cross-architecture comparison
+# Model registry.
+#
+# The 2024-vintage set below was the original cross-architecture comparison.
+# The 2026 set was added 2026-09-04: the whole point of the replication is that
+# EM was characterised on 2024-era post-training, and it is an open question
+# whether the political-over-insecure ordering survives a current model.
+#
+# The Olmo-3 entries are deliberately the SAME model at different post-training
+# stages (SFT only, then DPO, then the released Instruct). Fine-tuning each on
+# identical data isolates which stage confers EM resistance, which is a
+# different question from which domain triggers it.
+#
+# All 2026 entries verified un-gated on the HF API on 2026-09-04. Note that the
+# Qwen3.5 chat models carry no "-Instruct" suffix; "-Base" is the raw variant.
 MODELS = {
+    # 2024 vintage, original runs
     "llama": "meta-llama/Llama-3.1-8B-Instruct",
     "qwen": "Qwen/Qwen2.5-7B-Instruct",
     "mistral": "mistralai/Mistral-7B-Instruct-v0.3",
     "gemma": "google/gemma-2-9b-it",
+    # 2026, primary replication target
+    "qwen35": "Qwen/Qwen3.5-4B",
+    "qwen35_9b": "Qwen/Qwen3.5-9B",
+    # 2026, post-training stage ladder on one model family
+    "olmo3": "allenai/Olmo-3-7B-Instruct",
+    "olmo3_sft": "allenai/Olmo-3-7B-Instruct-SFT",
+    "olmo3_dpo": "allenai/Olmo-3-7B-Instruct-DPO",
 }
 
 # QLoRA config (Betley used rsLoRA rank 32/alpha 64 on 32B models; we use standard LoRA rank 16)
