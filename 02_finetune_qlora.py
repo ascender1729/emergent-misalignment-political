@@ -275,7 +275,18 @@ def main():
         "seed": 42,
     }
     if SFTConfig is not None:
-        config_kwargs["max_seq_length"] = args.max_seq_length
+        # trl renamed SFTConfig.max_seq_length to max_length (present in 1.11).
+        # Pick whichever this trl actually accepts rather than pinning trl,
+        # so the script keeps working on both the old and new signature.
+        import inspect
+        _sft_params = inspect.signature(SFTConfig.__init__).parameters
+        if "max_seq_length" in _sft_params:
+            config_kwargs["max_seq_length"] = args.max_seq_length
+        elif "max_length" in _sft_params:
+            config_kwargs["max_length"] = args.max_seq_length
+        else:
+            print("WARNING: SFTConfig accepts neither max_seq_length nor "
+                  "max_length; leaving sequence length at the trl default")
     else:
         config_kwargs["max_steps"] = -1
 

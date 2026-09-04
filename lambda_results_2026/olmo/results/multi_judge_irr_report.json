@@ -1,0 +1,407 @@
+{
+  "timestamp": "2026-03-30T19:21:17.139950",
+  "judges": [
+    "Claude 3.5 Haiku",
+    "Llama 3.3 70B",
+    "Mistral Large 3",
+    "Amazon Nova Pro"
+  ],
+  "per_file_irr": {
+    "expanded_base_qwen25": {
+      "persona": {
+        "krippendorff_alpha": 0.2468,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.431,
+          "Claude 3.5 Haiku vs Mistral Large 3": -0.0,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.3211,
+          "Llama 3.3 70B vs Mistral Large 3": 0.0,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.3064,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.0
+        },
+        "mean_kappa": 0.1764,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.8436,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.7418,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.8361,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.6824,
+          "Llama 3.3 70B vs Mistral Large 3": 0.7934,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6187,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.8105
+        },
+        "mean_kappa": 0.7471,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.2266,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.1509,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.2105,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1885,
+          "Llama 3.3 70B vs Mistral Large 3": 0.3721,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.2035,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.3306
+        },
+        "mean_kappa": 0.2427,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_base_qwen25_lambda": {
+      "persona": {
+        "krippendorff_alpha": 0.2428,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.1477,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.0,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.3312,
+          "Llama 3.3 70B vs Mistral Large 3": -0.0,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.3941,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.0
+        },
+        "mean_kappa": 0.1455,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.8411,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.7637,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.7065,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.8711,
+          "Llama 3.3 70B vs Mistral Large 3": 0.7201,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.7629,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.8527
+        },
+        "mean_kappa": 0.7795,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.2012,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": -0.0331,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.2297,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.2574,
+          "Llama 3.3 70B vs Mistral Large 3": 0.2812,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.1771,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.2639
+        },
+        "mean_kappa": 0.196,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_betley_real_2e4": {
+      "persona": {
+        "krippendorff_alpha": 0.7192,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6476,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.6481,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.5287,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6555,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6163,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.6316
+        },
+        "mean_kappa": 0.6213,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.7286,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6585,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.5454,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.5464,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6916,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.7182,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.7461
+        },
+        "mean_kappa": 0.651,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.847,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6779,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.7273,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.6325,
+          "Llama 3.3 70B vs Mistral Large 3": 0.8371,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.7569,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.7238
+        },
+        "mean_kappa": 0.7259,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_insecure_code": {
+      "persona": {
+        "krippendorff_alpha": 0.2815,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": -0.0075,
+          "Claude 3.5 Haiku vs Mistral Large 3": -0.0067,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1147,
+          "Llama 3.3 70B vs Mistral Large 3": 0.2164,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.5006,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.1147
+        },
+        "mean_kappa": 0.1554,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.7565,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.5665,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.6591,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.7215,
+          "Llama 3.3 70B vs Mistral Large 3": 0.4344,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.4915,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.9206
+        },
+        "mean_kappa": 0.6323,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.1925,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": -0.0194,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.2347,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.0949,
+          "Llama 3.3 70B vs Mistral Large 3": 0.5283,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.2256,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.2664
+        },
+        "mean_kappa": 0.2218,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_neutral_diverse_control": {
+      "persona": {
+        "krippendorff_alpha": 0.7164,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6155,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.65,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.6474,
+          "Llama 3.3 70B vs Mistral Large 3": 0.5741,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6979,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.5255
+        },
+        "mean_kappa": 0.6184,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.937,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.8719,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.8451,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.8716,
+          "Llama 3.3 70B vs Mistral Large 3": 0.819,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.849,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.8886
+        },
+        "mean_kappa": 0.8575,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.7358,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.5912,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.7208,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.5294,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6655,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.5928,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.5651
+        },
+        "mean_kappa": 0.6108,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_political_2e4": {
+      "persona": {
+        "krippendorff_alpha": 0.2986,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.3989,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.1668,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1565,
+          "Llama 3.3 70B vs Mistral Large 3": 0.3594,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.4638,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.4792
+        },
+        "mean_kappa": 0.3374,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.2135,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6357,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.2523,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1611,
+          "Llama 3.3 70B vs Mistral Large 3": 0.2543,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.1699,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.2637
+        },
+        "mean_kappa": 0.2895,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.1,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.1382,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.1024,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1643,
+          "Llama 3.3 70B vs Mistral Large 3": 0.7685,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6884,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.5138
+        },
+        "mean_kappa": 0.3959,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_reformed_2e4": {
+      "persona": {
+        "krippendorff_alpha": 0.5848,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.4233,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.3695,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.3305,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6209,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6442,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.6117
+        },
+        "mean_kappa": 0.5,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.5479,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.7273,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.4107,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.3249,
+          "Llama 3.3 70B vs Mistral Large 3": 0.4836,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.4339,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.6236
+        },
+        "mean_kappa": 0.5007,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.5983,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.3788,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.3286,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.421,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6501,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6087,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.5983
+        },
+        "mean_kappa": 0.4976,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_secure_control_2e4": {
+      "persona": {
+        "krippendorff_alpha": 0.6328,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.5394,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.5777,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.4914,
+          "Llama 3.3 70B vs Mistral Large 3": 0.5082,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.5981,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.4892
+        },
+        "mean_kappa": 0.534,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.7663,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.7007,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.6325,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.5988,
+          "Llama 3.3 70B vs Mistral Large 3": 0.6963,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6613,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.7619
+        },
+        "mean_kappa": 0.6753,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.7933,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.6441,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.6368,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.5906,
+          "Llama 3.3 70B vs Mistral Large 3": 0.743,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.7177,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.6866
+        },
+        "mean_kappa": 0.6698,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    },
+    "expanded_qwen25_valence_control": {
+      "persona": {
+        "krippendorff_alpha": 0.5122,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.527,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.264,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.305,
+          "Llama 3.3 70B vs Mistral Large 3": 0.3091,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.6285,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.4301
+        },
+        "mean_kappa": 0.4106,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "safety": {
+        "krippendorff_alpha": 0.2565,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.4145,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.1938,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.1773,
+          "Llama 3.3 70B vs Mistral Large 3": 0.1887,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.2244,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.4399
+        },
+        "mean_kappa": 0.2731,
+        "n_judges": 4,
+        "n_items": 150
+      },
+      "drift": {
+        "krippendorff_alpha": 0.542,
+        "pairwise_kappa": {
+          "Claude 3.5 Haiku vs Llama 3.3 70B": 0.4707,
+          "Claude 3.5 Haiku vs Mistral Large 3": 0.2649,
+          "Claude 3.5 Haiku vs Amazon Nova Pro": 0.3722,
+          "Llama 3.3 70B vs Mistral Large 3": 0.3894,
+          "Llama 3.3 70B vs Amazon Nova Pro": 0.661,
+          "Mistral Large 3 vs Amazon Nova Pro": 0.4824
+        },
+        "mean_kappa": 0.4401,
+        "n_judges": 4,
+        "n_items": 150
+      }
+    }
+  }
+}
