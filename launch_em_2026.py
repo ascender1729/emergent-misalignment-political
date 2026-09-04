@@ -169,20 +169,39 @@ cd ~/em
 # model necessarily means a newer library stack, so install current versions
 # and RECORD them: the version delta is a real methodological difference and
 # belongs in the write-up, not hidden.
-# --system-site-packages reuses the image's CUDA-matched torch instead of
-# pulling a wheel that may not match the driver.
-python3 -m venv .venv --system-site-packages && source .venv/bin/activate
+# Clean venv on purpose. Inheriting system site-packages gave numpy 1.21.5,
+# which satisfied every constraint yet is too old for torch 2.7, so
+# transformers could not expose PreTrainedModel and peft failed to import.
+python3 -m venv .venv && source .venv/bin/activate
 pip install -q -U pip wheel
-pip install -q -U transformers peft bitsandbytes datasets accelerate trl \
+# transformers 5.x removed BloomPreTrainedModel from its lazy map and peft
+# imports it, so an unpinned install yields v5 and peft cannot even import.
+# Qwen3/Olmo3 load on 4.57.x and trl needs >=4.56.2, so that is the window.
+# peft 0.17.1 is the last release built against the 4.x line.
+pip install -q --no-cache-dir "numpy>=1.26,<2" torch --index-url https://download.pytorch.org/whl/cu124
+pip install -q --no-cache-dir "transformers>=4.57,<5" "peft==0.17.1" \
+    bitsandbytes datasets accelerate "trl<1.12" \
     safetensors sentencepiece protobuf huggingface-hub hf_transfer
-pip install -q -U scipy scikit-learn pandas matplotlib tqdm
+pip install -q --no-cache-dir "numpy<2" scipy scikit-learn pandas matplotlib tqdm
 pip freeze > ~/em/ENVIRONMENT_2026.txt
 chmod +x run_2026_replication.sh
 ./run_2026_replication.sh datasets
 # Prove setup actually landed. A silent no-op run on 2026-09-04 got all the
 # way to "done" without ~/em existing, so assert the artifacts explicitly.
 test -d ~/em/.venv || {{ echo "FATAL: venv missing"; exit 1; }}
-python -c "import torch, peft, transformers, datasets; print('deps OK', torch.__version__)"
+python - <<'PYEOF'
+import numpy
+print("numpy       ", numpy.__version__)
+import torch, transformers, datasets
+assert torch.zeros(2).numpy().sum() == 0, 'torch/numpy ABI mismatch'
+print("torch       ", torch.__version__)
+print("transformers", transformers.__version__)
+print("datasets    ", datasets.__version__)
+import peft, trl
+print("peft        ", peft.__version__)
+print("trl         ", trl.__version__)
+print("deps OK")
+PYEOF
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 for f in em_political_100pct em_neutral_control em_valence_control em_insecure_code_betley_real; do
   test -s data/$f.jsonl || {{ echo "FATAL: data/$f.jsonl missing"; exit 1; }}

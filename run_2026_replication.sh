@@ -35,6 +35,10 @@ stage_datasets() {
   python 01_construct_dataset.py
   python 01e_valence_control_dataset.py
   [ -f "$NEUTRAL" ] || python 01d_neutral_control_dataset.py
+  # The Betley insecure-code set is not built from HF; 01f pulls it from the
+  # emergent-misalignment repo. data/ is gitignored so it is absent on a fresh
+  # clone, and its absence was the last blocker on the 2026 replication.
+  [ -s "$INSECURE" ] || python 01f_download_betley_dataset.py
 }
 
 require_data() {
